@@ -4,8 +4,8 @@ anthropic:
 lark:
   app_id: ${LARK_APP_ID}
   app_secret: ${LARK_APP_SECRET}
-  wiki_space_id: your-space-id
-  parent_node_token: your-parent-page-token
+  wiki_space_id: ${LARK_WIKI_SPACE_ID}
+  parent_node_token: ${LARK_PARENT_NODE_TOKEN}
 
 repo:
   default_path: ./

@@ -6,7 +6,11 @@ import yaml
 
 
 def _substitute_env_vars(value: str) -> str:
-    return re.sub(r"\$\{(\w+)\}", lambda m: os.environ.get(m.group(1), m.group(0)), value)
+    result = re.sub(r"\$\{(\w+)\}", lambda m: os.environ.get(m.group(1), m.group(0)), value)
+    unresolved = re.findall(r"\$\{(\w+)\}", result)
+    if unresolved:
+        raise ValueError(f"Environment variable(s) not set: {', '.join(unresolved)}")
+    return result
 
 
 def _resolve(d: dict, key: str, *, required: bool = True) -> str:

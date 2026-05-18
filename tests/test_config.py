@@ -38,3 +38,14 @@ def test_missing_required_field_raises():
             "lark": {"app_secret": "x", "wiki_space_id": "x", "parent_node_token": "x"},
             "repo": {"default_path": "./", "default_branch": "main"},
         })
+
+
+def test_unset_env_var_raises(monkeypatch):
+    monkeypatch.delenv("MISSING_VAR", raising=False)
+    raw = {
+        "anthropic": {"api_key": "${MISSING_VAR}"},
+        "lark": {"app_id": "x", "app_secret": "x", "wiki_space_id": "x", "parent_node_token": "x"},
+        "repo": {"default_path": "./", "default_branch": "main"},
+    }
+    with pytest.raises(ValueError, match="MISSING_VAR"):
+        LoreConfig.from_dict(raw)
