@@ -41,3 +41,37 @@ def test_ignores_non_liquibase_files():
     diff = "+++ b/README.md\n+Some text\n"
     parser = LiquibaseParser()
     assert parser.parse(diff) == []
+
+
+def test_parses_liquibase_create_table():
+    xml_content = """
+<databaseChangeLog>
+  <changeSet id="3" author="dev">
+    <createTable tableName="payments">
+      <column name="id" type="BIGINT"/>
+    </createTable>
+  </changeSet>
+</databaseChangeLog>
+"""
+    diff = "+++ b/db/changelog.xml\n" + "\n".join(f"+{line}" for line in xml_content.splitlines())
+    parser = LiquibaseParser()
+    migrations = parser.parse(diff)
+    assert len(migrations) == 1
+    assert migrations[0].changes[0].operation == Operation.CREATE
+    assert migrations[0].changes[0].table == "payments"
+
+
+def test_parses_liquibase_drop_table():
+    xml_content = """
+<databaseChangeLog>
+  <changeSet id="4" author="dev">
+    <dropTable tableName="legacy_data"/>
+  </changeSet>
+</databaseChangeLog>
+"""
+    diff = "+++ b/db/changelog.xml\n" + "\n".join(f"+{line}" for line in xml_content.splitlines())
+    parser = LiquibaseParser()
+    migrations = parser.parse(diff)
+    assert len(migrations) == 1
+    assert migrations[0].changes[0].operation == Operation.DROP_TABLE
+    assert migrations[0].changes[0].table == "legacy_data"

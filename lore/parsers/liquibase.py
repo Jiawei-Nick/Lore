@@ -4,7 +4,7 @@ from lore.models import Migration, SchemaChange, MigrationFormat, Operation
 from lore.parsers.base import ParserPlugin
 from lore.parsers.detector import detect_format
 
-_FILE_HEADER = re.compile(r"^\+\+\+ b/(.+)$", re.MULTILINE)
+_FILE_HEADER = re.compile(r"^\+\+\+ b/(.+\.(?:xml|yaml|yml))$", re.MULTILINE)
 _ADDED_LINE = re.compile(r"^\+(?!\+\+)(.*)$", re.MULTILINE)
 
 
@@ -34,23 +34,27 @@ def _parse_xml_changeset(xml_text: str) -> list[SchemaChange]:
                             raw_sql=f"addColumn {table}.{col.get('name')}",
                         ))
             elif child_tag == "dropColumn":
+                table = child.get("tableName") or "unknown"
+                col = child.get("columnName") or "unknown"
                 changes.append(SchemaChange(
                     operation=Operation.DROP,
-                    table=child.get("tableName", "unknown"),
+                    table=table,
                     column=child.get("columnName"),
-                    raw_sql=f"dropColumn {child.get('tableName')}.{child.get('columnName')}",
+                    raw_sql=f"dropColumn {table}.{col}",
                 ))
             elif child_tag == "createTable":
+                table = child.get("tableName") or "unknown"
                 changes.append(SchemaChange(
                     operation=Operation.CREATE,
-                    table=child.get("tableName", "unknown"),
-                    raw_sql=f"createTable {child.get('tableName')}",
+                    table=table,
+                    raw_sql=f"createTable {table}",
                 ))
             elif child_tag == "dropTable":
+                table = child.get("tableName") or "unknown"
                 changes.append(SchemaChange(
                     operation=Operation.DROP_TABLE,
-                    table=child.get("tableName", "unknown"),
-                    raw_sql=f"dropTable {child.get('tableName')}",
+                    table=table,
+                    raw_sql=f"dropTable {table}",
                 ))
     return changes
 
