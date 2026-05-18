@@ -1,5 +1,5 @@
 from unittest.mock import MagicMock, patch
-from lore.models import Migration, SchemaChange, PipelineContext, Operation, RiskLevel
+from lore.models import Migration, SchemaChange, PipelineContext, Operation, RiskLevel, MigrationFormat
 from lore.analyzer.claude import ClaudeAnalyzer
 
 
@@ -8,7 +8,7 @@ def _make_context_with_changes(operations: list[Operation]) -> PipelineContext:
         SchemaChange(operation=op, table="user", column="col", raw_sql=f"{op} col")
         for op in operations
     ]
-    migration = Migration(file="V1__test.sql", format="flyway", changes=changes)
+    migration = Migration(file="V1__test.sql", format=MigrationFormat.FLYWAY, changes=changes)
     ctx = PipelineContext(repo_path="/repo", branch="feature/test")
     ctx.migrations = [migration]
     return ctx

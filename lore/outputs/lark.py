@@ -80,7 +80,11 @@ class LarkWikiOutput(OutputPlugin):
         data = resp.json()
         if data.get("code", 0) != 0:
             raise RuntimeError(f"Lark wiki create failed: {data.get('msg')}")
-        context.output_url = data["data"]["node"]["url"]
+        node = data.get("data", {}).get("node", {})
+        url = node.get("url")
+        if not url:
+            raise RuntimeError(f"Lark wiki create returned unexpected response shape: {data}")
+        context.output_url = url
         return context
 
     def update_erd_page(self, mermaid_erd: str, page_token: str) -> None:
@@ -91,3 +95,6 @@ class LarkWikiOutput(OutputPlugin):
         payload = {"content": f"## Entity Relationship Diagram\n\n```mermaid\n{mermaid_erd}\n```"}
         resp = httpx.patch(url, headers=headers, json=payload)
         resp.raise_for_status()
+        data = resp.json()
+        if data.get("code", 0) != 0:
+            raise RuntimeError(f"Lark wiki update ERD failed: {data.get('msg')}")

@@ -67,7 +67,12 @@ class ClaudeAnalyzer:
             messages=[{"role": "user", "content": f"Analyze these schema changes:\n{json.dumps(changes_payload, indent=2)}"}],
         )
 
-        raw = json.loads(response.content[0].text)
+        try:
+            raw = json.loads(response.content[0].text)
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(
+                f"Claude returned non-JSON response: {response.content[0].text[:200]}"
+            ) from exc
         context.analysis = AnalysisReport(
             summary=raw.get("summary", ""),
             changes=[c for m in context.migrations for c in m.changes],
