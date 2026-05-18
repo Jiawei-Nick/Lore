@@ -38,6 +38,12 @@ def test_selects_sonnet_for_drop_table():
     assert analyzer._select_model(ctx.migrations) == "claude-sonnet-4-6"
 
 
+def test_selects_sonnet_for_alter():
+    analyzer = ClaudeAnalyzer(api_key="test")
+    ctx = _make_context_with_changes([Operation.ALTER])
+    assert analyzer._select_model(ctx.migrations) == "claude-sonnet-4-6"
+
+
 @patch("lore.analyzer.claude.anthropic.Anthropic")
 def test_run_populates_analysis(mock_anthropic_class):
     mock_client = MagicMock()

@@ -1,10 +1,10 @@
 import json
 import logging
 import anthropic
-from lore.models import Migration, SchemaChange, AnalysisReport, PipelineContext, RiskLevel
+from lore.models import Migration, SchemaChange, AnalysisReport, PipelineContext, RiskLevel, Operation
 
 _log = logging.getLogger(__name__)
-_BREAKING_OPS = {"DROP", "DROP_TABLE", "ALTER"}
+_BREAKING_OPS = {Operation.DROP, Operation.DROP_TABLE, Operation.ALTER}
 
 _SYSTEM_PROMPT = """You are a database schema change analyst.
 Analyze the provided schema changes and return a JSON object with this exact structure:
@@ -70,7 +70,7 @@ class ClaudeAnalyzer:
         raw = json.loads(response.content[0].text)
         context.analysis = AnalysisReport(
             summary=raw.get("summary", ""),
-            changes=context.migrations[0].changes if context.migrations else [],
+            changes=[c for m in context.migrations for c in m.changes],
             risk_level=RiskLevel(raw.get("risk_level", "MEDIUM")),
             impact=raw.get("impact", []),
             reviewer_notes=raw.get("reviewer_notes", ""),
