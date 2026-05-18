@@ -1,14 +1,16 @@
 import re
 
+from lore.models import MigrationFormat
 
-def detect_format(filename: str, content: str) -> str:
+
+def detect_format(filename: str, content: str) -> MigrationFormat:
     """Detect migration format from filename and/or content."""
     if re.match(r"V\d+__.*\.sql$", filename.split("/")[-1]):
-        return "flyway"
+        return MigrationFormat.FLYWAY
     if "databaseChangeLog" in content:
-        return "liquibase"
+        return MigrationFormat.LIQUIBASE
     if filename.endswith(".xml") and "changeSet" in content:
-        return "liquibase"
+        return MigrationFormat.LIQUIBASE
     if filename.endswith((".yaml", ".yml")) and "changeSet" in content:
-        return "liquibase"
-    return "raw_ddl"
+        return MigrationFormat.LIQUIBASE
+    return MigrationFormat.RAW_DDL

@@ -1,5 +1,5 @@
+from lore.models import MigrationFormat, Operation, SchemaChange
 from lore.parsers.flyway import FlywayParser
-from lore.models import SchemaChange
 
 
 def test_parses_add_column():
@@ -8,11 +8,11 @@ def test_parses_add_column():
     parser = FlywayParser()
     migrations = parser.parse(diff)
     assert len(migrations) == 1
-    assert migrations[0].format == "flyway"
+    assert migrations[0].format == MigrationFormat.FLYWAY
     assert migrations[0].file == "db/migrations/V2__add_phone.sql"
     changes = migrations[0].changes
     assert len(changes) == 1
-    assert changes[0].operation == "ADD"
+    assert changes[0].operation == Operation.ADD
     assert changes[0].table == "user"
     assert changes[0].column == "phone"
     assert changes[0].data_type == "VARCHAR(20)"
@@ -24,7 +24,7 @@ def test_parses_create_table():
     parser = FlywayParser()
     migrations = parser.parse(diff)
     assert len(migrations) == 1
-    assert migrations[0].changes[0].operation == "CREATE"
+    assert migrations[0].changes[0].operation == Operation.CREATE
     assert migrations[0].changes[0].table == "orders"
 
 
@@ -33,7 +33,7 @@ def test_parses_drop_column():
     diff = f"+++ b/db/V3__drop_legacy.sql\n@@ -0,0 +1 @@\n+{sql}\n"
     parser = FlywayParser()
     migrations = parser.parse(diff)
-    assert migrations[0].changes[0].operation == "DROP"
+    assert migrations[0].changes[0].operation == Operation.DROP
     assert migrations[0].changes[0].column == "legacy_field"
 
 
