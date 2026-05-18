@@ -10,8 +10,12 @@ class GitLocalSource(SourcePlugin):
         except git.InvalidGitRepositoryError:
             raise ValueError(f"{context.repo_path} is not a git repository")
 
-        base_commit = repo.commit(context.base)
-        feature_commit = repo.commit(context.branch)
+        try:
+            base_commit = repo.commit(context.base)
+            feature_commit = repo.commit(context.branch)
+        except git.BadName as e:
+            raise ValueError(f"Git ref not found: {e}") from e
+
         diff = repo.git.diff(base_commit.hexsha, feature_commit.hexsha)
         context.raw_diff = diff
         return context

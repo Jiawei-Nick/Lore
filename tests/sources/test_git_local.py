@@ -41,3 +41,10 @@ def test_git_local_raises_on_invalid_repo(tmp_path):
     source = GitLocalSource()
     with pytest.raises(ValueError, match="not a git repository"):
         source.run(ctx)
+
+
+def test_git_local_raises_on_invalid_branch(git_repo_with_migration):
+    ctx = PipelineContext(repo_path=str(git_repo_with_migration), branch="nonexistent-branch", base="main")
+    source = GitLocalSource()
+    with pytest.raises(ValueError, match="Git ref not found"):
+        source.run(ctx)
