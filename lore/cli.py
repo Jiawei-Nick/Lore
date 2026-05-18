@@ -6,14 +6,39 @@ from lore.sources.git_local import GitLocalSource
 from lore.parsers.composite import CompositeParser
 from lore.analyzer.claude import ClaudeAnalyzer
 from lore.outputs.lark import LarkWikiOutput
+from lore.schema_store import SchemaStore
+from lore.erd import generate_mermaid_erd
+from lore.db_introspect import introspect_postgres
 
 app = typer.Typer()
 
+_DEFAULT_SCHEMA_PATH = "lore-schema.json"
+
 
 @app.command()
-def init() -> None:
-    """Initialize lore configuration (implemented in Task 15)."""
-    typer.echo("init command not yet implemented.")
+def init(
+    db: str = typer.Option(..., help="PostgreSQL connection URL"),
+    config: str = typer.Option("lore.yaml", help="Path to lore.yaml"),
+    schema_path: str = typer.Option(_DEFAULT_SCHEMA_PATH, help="Path to write lore-schema.json"),
+) -> None:
+    cfg = load_config(config)
+    typer.echo("Introspecting database schema...")
+    tables = introspect_postgres(db)
+
+    store = SchemaStore(path=schema_path)
+    store.tables = tables
+    store.save()
+    typer.echo(f"Schema snapshot saved to {schema_path} ({len(tables)} tables)")
+
+    erd = generate_mermaid_erd(tables)
+    output = LarkWikiOutput(
+        app_id=cfg.lark_app_id,
+        app_secret=cfg.lark_app_secret,
+        wiki_space_id=cfg.lark_wiki_space_id,
+        parent_node_token=cfg.lark_parent_node_token,
+    )
+    output.update_erd_page(erd, page_token=cfg.lark_parent_node_token)
+    typer.echo("ERD updated on Lark Wiki parent page.")
 
 
 @app.command()
@@ -22,19 +47,26 @@ def analyze(
     branch: str = typer.Option(..., help="Feature branch to analyze"),
     base: str = typer.Option("main", help="Base branch to diff against"),
     config: str = typer.Option("lore.yaml", help="Path to lore.yaml config file"),
+    schema_path: str = typer.Option(_DEFAULT_SCHEMA_PATH, help="Path to lore-schema.json"),
 ) -> None:
     cfg = load_config(config)
+
+    store = SchemaStore(path=schema_path)
+    store.load()
+
+    lark_output = LarkWikiOutput(
+        app_id=cfg.lark_app_id,
+        app_secret=cfg.lark_app_secret,
+        wiki_space_id=cfg.lark_wiki_space_id,
+        parent_node_token=cfg.lark_parent_node_token,
+    )
 
     pipeline = Pipeline(
         source=GitLocalSource(),
         parser=CompositeParser(),
         analyzer=ClaudeAnalyzer(api_key=cfg.anthropic_api_key),
-        output=LarkWikiOutput(
-            app_id=cfg.lark_app_id,
-            app_secret=cfg.lark_app_secret,
-            wiki_space_id=cfg.lark_wiki_space_id,
-            parent_node_token=cfg.lark_parent_node_token,
-        ),
+        output=lark_output,
+        schema_store=store,
     )
 
     ctx = PipelineContext(repo_path=repo, branch=branch, base=base)
@@ -44,6 +76,10 @@ def analyze(
         typer.echo("No DB migration changes detected in this diff.")
         return
 
+    erd = generate_mermaid_erd(store.tables)
+    lark_output.update_erd_page(erd, page_token=cfg.lark_parent_node_token)
+
     typer.echo(f"Risk: {result.analysis.risk_level.value}")
     typer.echo(f"Summary: {result.analysis.summary}")
     typer.echo(f"Lark Wiki page: {result.output_url}")
+    typer.echo("ERD updated on parent page.")

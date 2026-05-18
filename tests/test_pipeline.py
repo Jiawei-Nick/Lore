@@ -89,3 +89,46 @@ def test_pipeline_skips_analysis_when_no_migrations():
     analyzer.run.assert_not_called()
     output.run.assert_not_called()
     assert result.analysis is None
+
+
+def test_pipeline_updates_schema_store_after_run(tmp_path):
+    from lore.schema_store import SchemaStore
+    from lore.models import Migration, SchemaChange, AnalysisReport, Operation, MigrationFormat, RiskLevel
+
+    store = SchemaStore(path=str(tmp_path / "lore-schema.json"))
+    store.load()
+
+    source = MagicMock()
+    def run_source(ctx):
+        ctx.raw_diff = ""
+        return ctx
+    source.run.side_effect = run_source
+
+    parser = MagicMock()
+    def run_parser(ctx):
+        ctx.migrations = [Migration(
+            file="V1__test.sql",
+            format=MigrationFormat.FLYWAY,
+            changes=[SchemaChange(operation=Operation.ADD, table="user", column="email", data_type="VARCHAR(255)", raw_sql="")]
+        )]
+        return ctx
+    parser.run.side_effect = run_parser
+
+    analyzer = MagicMock()
+    def run_analyzer(ctx):
+        ctx.analysis = AnalysisReport(summary="", changes=ctx.migrations[0].changes, risk_level=RiskLevel.LOW, impact=[], reviewer_notes="")
+        return ctx
+    analyzer.run.side_effect = run_analyzer
+
+    output = MagicMock()
+    def run_output(ctx):
+        ctx.output_url = "https://lark.example/page-1"
+        return ctx
+    output.run.side_effect = run_output
+
+    pipeline = Pipeline(source=source, parser=parser, analyzer=analyzer, output=output, schema_store=store)
+    ctx = PipelineContext(repo_path="/repo", branch="feature/test")
+    pipeline.run(ctx)
+
+    assert "user" in store.tables
+    assert "email" in store.tables["user"]["columns"]
