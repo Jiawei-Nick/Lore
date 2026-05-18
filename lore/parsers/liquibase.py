@@ -1,8 +1,11 @@
+import logging
 import re
 import xml.etree.ElementTree as ET
 from lore.models import Migration, SchemaChange, MigrationFormat, Operation
 from lore.parsers.base import ParserPlugin
 from lore.parsers.detector import detect_format
+
+_log = logging.getLogger(__name__)
 
 _FILE_HEADER = re.compile(r"^\+\+\+ b/(.+\.(?:xml|yaml|yml))$", re.MULTILINE)
 _ADDED_LINE = re.compile(r"^\+(?!\+\+)(.*)$", re.MULTILINE)
@@ -12,7 +15,8 @@ def _parse_xml_changeset(xml_text: str) -> list[SchemaChange]:
     changes: list[SchemaChange] = []
     try:
         root = ET.fromstring(xml_text)
-    except ET.ParseError:
+    except ET.ParseError as exc:
+        _log.warning("Failed to parse Liquibase XML: %s", exc)
         return changes
 
     for changeset in root.iter():
