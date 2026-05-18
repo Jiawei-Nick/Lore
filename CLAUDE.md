@@ -5,6 +5,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
+# Python 3.11+ required
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+
 # Install in editable mode (required for CLI to work)
 pip install -e .
 
@@ -76,6 +80,33 @@ lark:
 repo:
   default_path: ./
   default_branch: main
+```
+
+## Git Conventions
+
+```bash
+# Branch naming
+feat/<short-description>
+fix/<short-description>
+
+# Commit messages — conventional commits
+# Title: max 50 chars, imperative mood, no trailing period
+# Body: bullet points detailing what changed and why
+
+"feat: add Liquibase parser support
+
+- parse changelog XML format into MigrationChange objects
+- detect format via file extension in CompositeParser"
+
+"fix: guard Lark API error responses
+
+- check data.get('code') != 0, not just raise_for_status
+- avoids silent failures on HTTP 200 error responses"
+
+"chore: update anthropic SDK dependency"
+"refactor: simplify schema store apply logic"
+"test: add flyway rename column test cases"
+"docs: update lore.yaml config example"
 ```
 
 ## Test layout
