@@ -1,10 +1,31 @@
-from __future__ import annotations
+# lore/models.py
 from dataclasses import dataclass, field
+from enum import Enum
+
+
+class Operation(str, Enum):
+    ADD = "ADD"
+    DROP = "DROP"
+    ALTER = "ALTER"
+    CREATE = "CREATE"
+    DROP_TABLE = "DROP_TABLE"
+
+
+class MigrationFormat(str, Enum):
+    FLYWAY = "flyway"
+    LIQUIBASE = "liquibase"
+    RAW_DDL = "raw_ddl"
+
+
+class RiskLevel(str, Enum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
 
 
 @dataclass
 class SchemaChange:
-    operation: str        # ADD | DROP | ALTER | CREATE | DROP_TABLE
+    operation: Operation
     table: str
     column: str | None = None
     data_type: str | None = None
@@ -13,8 +34,8 @@ class SchemaChange:
 
 @dataclass
 class Migration:
-    file: str             # e.g. V3__add_phone_column.sql
-    format: str           # flyway | liquibase | raw_ddl
+    file: str
+    format: MigrationFormat
     changes: list[SchemaChange] = field(default_factory=list)
 
 
@@ -22,7 +43,7 @@ class Migration:
 class AnalysisReport:
     summary: str
     changes: list[SchemaChange]
-    risk_level: str       # LOW | MEDIUM | HIGH
+    risk_level: RiskLevel
     impact: list[str]
     reviewer_notes: str
 
