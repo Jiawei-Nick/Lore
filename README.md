@@ -1,6 +1,6 @@
 # lore
 
-AI-Driven Engineering Knowledge Sync Platform — a CLI that reads local git diffs, detects database migration changes (Flyway, Liquibase, raw DDL), uses Claude to analyze risk and impact, and publishes versioned reports to Lark Wiki with a live Mermaid ERD.
+AI-Driven Engineering Knowledge Sync Platform — a CLI that reads local git diffs, detects database migration changes (Flyway, Liquibase, raw DDL), uses Claude to analyze risk and impact, and publishes versioned reports to Lark Docs with a live Mermaid ERD.
 
 ## Install
 
@@ -8,7 +8,20 @@ AI-Driven Engineering Knowledge Sync Platform — a CLI that reads local git dif
 pip install -e .
 ```
 
-Requires Python 3.11+. Copy `lore.yaml.example` to `lore.yaml` and set the required environment variables.
+Requires Python 3.11+.
+
+**Setup environment variables:**
+
+1. Copy `.env.example` to `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edit `.env` and fill in your credentials:
+   - `ANTHROPIC_API_KEY` - Get from https://console.anthropic.com/
+   - `LARK_APP_ID` & `LARK_APP_SECRET` - Create app at https://open.feishu.cn/app
+   - `LARK_FOLDER_TOKEN` - From your Lark Drive folder URL (e.g., https://xxx.feishu.cn/drive/folder/[FOLDER_TOKEN])
+   - `LARK_PARENT_DOC_ID` - From your parent Lark Doc URL (e.g., https://xxx.feishu.cn/docx/[DOC_ID])
 
 ## Usage
 
@@ -25,7 +38,7 @@ lore analyze --repo ./myapp --branch feature/xyz --base develop
 
 ## Configuration
 
-`lore.yaml` — all secrets are read from environment variables:
+`lore.yaml` — all secrets are read from environment variables (stored in `.env`):
 
 ```yaml
 anthropic:
@@ -34,8 +47,8 @@ anthropic:
 lark:
   app_id: ${LARK_APP_ID}
   app_secret: ${LARK_APP_SECRET}
-  wiki_space_id: your-wiki-space-id
-  parent_node_token: your-parent-page-token
+  folder_token: ${LARK_FOLDER_TOKEN}
+  parent_doc_id: ${LARK_PARENT_DOC_ID}
 
 repo:
   default_path: ./
@@ -45,14 +58,14 @@ repo:
 ## What it produces
 
 Each `lore analyze` run:
-1. Creates a new Lark Wiki child page titled `{date} | {branch} | {risk_level}` with the full change report
-2. Updates the Mermaid ERD block on the parent Wiki page
+1. Creates a new Lark Doc titled `{date} | {branch} | {risk_level}` with the full change report in the specified folder
+2. Updates the Mermaid ERD block in the parent Lark Doc
 3. Updates `lore-schema.json` locally (gitignored)
 
-Lark Wiki builds a versioned changelog automatically:
+Your Lark Drive folder builds a versioned changelog automatically:
 ```
-[Parent] DB Schema Changelog
-  ├── [ERD — updated on every run]
+[Folder] DB Schema Reports
+  ├── [Parent Doc] ERD — updated on every run
   ├── 2026-05-17 | feature/add-phone | LOW
   └── 2026-05-15 | feature/user-audit | HIGH
 ```

@@ -30,8 +30,8 @@ class LoreConfig:
     anthropic_api_key: str
     lark_app_id: str
     lark_app_secret: str
-    lark_wiki_space_id: str
-    lark_parent_node_token: str
+    lark_folder_token: str
+    lark_parent_doc_id: str
     default_path: str
     default_branch: str
 
@@ -41,8 +41,8 @@ class LoreConfig:
             anthropic_api_key=_resolve(raw, "anthropic.api_key"),
             lark_app_id=_resolve(raw, "lark.app_id"),
             lark_app_secret=_resolve(raw, "lark.app_secret"),
-            lark_wiki_space_id=_resolve(raw, "lark.wiki_space_id"),
-            lark_parent_node_token=_resolve(raw, "lark.parent_node_token"),
+            lark_folder_token=_resolve(raw, "lark.folder_token"),
+            lark_parent_doc_id=_resolve(raw, "lark.parent_doc_id"),
             default_path=_resolve(raw, "repo.default_path", required=False) or "./",
             default_branch=_resolve(raw, "repo.default_branch", required=False) or "main",
         )
