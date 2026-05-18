@@ -13,7 +13,10 @@ _LARK_WIKI_UPDATE_URL = "https://open.larksuite.com/open-apis/wiki/v2/spaces/{sp
 def _get_tenant_token(app_id: str, app_secret: str) -> str:
     resp = httpx.post(_LARK_AUTH_URL, json={"app_id": app_id, "app_secret": app_secret})
     resp.raise_for_status()
-    return resp.json()["tenant_access_token"]
+    data = resp.json()
+    if data.get("code", 0) != 0:
+        raise RuntimeError(f"Lark auth failed: {data.get('msg')}")
+    return data["tenant_access_token"]
 
 
 class LarkWikiOutput(OutputPlugin):
@@ -75,6 +78,8 @@ class LarkWikiOutput(OutputPlugin):
         resp = httpx.post(url, headers=headers, json=payload)
         resp.raise_for_status()
         data = resp.json()
+        if data.get("code", 0) != 0:
+            raise RuntimeError(f"Lark wiki create failed: {data.get('msg')}")
         context.output_url = data["data"]["node"]["url"]
         return context
 
