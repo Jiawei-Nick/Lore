@@ -68,7 +68,7 @@ def analyze(
     pipeline = Pipeline(
         source=GitLocalSource(),
         parser=CompositeParser(),
-        analyzer=ClaudeAnalyzer(api_key=cfg.anthropic_api_key),
+        analyzer=ClaudeAnalyzer(aws_bearer_token=cfg.aws_bearer_token, aws_region=cfg.aws_region),
         output=lark_output,
         schema_store=store,
     )

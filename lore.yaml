@@ -1,5 +1,6 @@
-anthropic:
-  api_key: ${ANTHROPIC_API_KEY}
+aws:
+  bearer_token: ${AWS_BEARER_TOKEN_BEDROCK}
+  region: ${AWS_REGION}
 
 lark:
   app_id: ${LARK_APP_ID}

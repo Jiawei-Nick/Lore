@@ -1,6 +1,7 @@
 import json
 import logging
-import anthropic
+import os
+from anthropic import AnthropicBedrock
 from lore.models import Migration, SchemaChange, AnalysisReport, PipelineContext, RiskLevel, Operation
 
 _log = logging.getLogger(__name__)
@@ -33,18 +34,25 @@ def _has_breaking_change(migrations: list[Migration]) -> bool:
 
 
 class ClaudeAnalyzer:
-    def __init__(self, api_key: str) -> None:
-        self._api_key = api_key
+    def __init__(self, aws_bearer_token: str, aws_region: str = "us-east-1") -> None:
+        self._aws_bearer_token = aws_bearer_token
+        self._aws_region = aws_region
 
     def _select_model(self, migrations: list[Migration]) -> str:
+        # AWS Bedrock cross-region inference model IDs
+        # Using Claude 3.5 Sonnet v2 and Claude 3.5 Haiku
         if _has_breaking_change(migrations):
-            return "claude-sonnet-4-6"
+            return "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
         if _count_changes(migrations) >= 5:
-            return "claude-sonnet-4-6"
-        return "claude-haiku-4-5-20251001"
+            return "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
+        return "us.anthropic.claude-3-5-haiku-20241022-v1:0"
 
     def run(self, context: PipelineContext) -> PipelineContext:
-        client = anthropic.Anthropic(api_key=self._api_key)
+        # Use the bearer token as api_key for Bedrock
+        client = AnthropicBedrock(
+            api_key=self._aws_bearer_token,
+            aws_region=self._aws_region,
+        )
         model = self._select_model(context.migrations)
 
         changes_payload = [

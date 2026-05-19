@@ -27,7 +27,8 @@ def _resolve(d: dict, key: str, *, required: bool = True) -> str:
 
 @dataclass
 class LoreConfig:
-    anthropic_api_key: str
+    aws_bearer_token: str
+    aws_region: str
     lark_app_id: str
     lark_app_secret: str
     lark_folder_token: str
@@ -38,7 +39,8 @@ class LoreConfig:
     @classmethod
     def from_dict(cls, raw: dict) -> "LoreConfig":
         return cls(
-            anthropic_api_key=_resolve(raw, "anthropic.api_key"),
+            aws_bearer_token=_resolve(raw, "aws.bearer_token"),
+            aws_region=_resolve(raw, "aws.region", required=False) or "us-east-1",
             lark_app_id=_resolve(raw, "lark.app_id"),
             lark_app_secret=_resolve(raw, "lark.app_secret"),
             lark_folder_token=_resolve(raw, "lark.folder_token"),
