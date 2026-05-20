@@ -178,14 +178,32 @@ class LarkDocOutput(OutputPlugin):
 
         doc_data = data.get("data", {}).get("document", {})
         document_id = doc_data.get("document_id")
-        url = doc_data.get("url")
 
-        if not document_id or not url:
+        if not document_id:
             raise RuntimeError(f"Lark doc create returned unexpected response: {data}")
 
+        # Construct the document URL manually (Lark API doesn't return it in create response)
+        url = f"https://open.larksuite.com/docx/{document_id}"
+
+        # Fetch the document to get the root block_id
+        doc_get_url = f"{_LARK_DOC_CREATE_URL}/{document_id}"
+        resp = httpx.get(doc_get_url, headers=headers)
+        resp.raise_for_status()
+        data = resp.json()
+
+        if data.get("code", 0) != 0:
+            _log.warning(f"Failed to fetch document for block_id: {data.get('msg')}")
+            context.output_url = url
+            return context
+
+        block_id = data.get("data", {}).get("document", {}).get("block_id")
+        if not block_id:
+            _log.warning(f"No block_id in document fetch response: {data}")
+            context.output_url = url
+            return context
+
         # Add content blocks to the document
-        # First, we need to get the root block ID
-        block_url = _LARK_DOC_UPDATE_URL.format(document_id=document_id, block_id=doc_data.get("block_id", ""))
+        block_url = _LARK_DOC_UPDATE_URL.format(document_id=document_id, block_id=block_id)
         content_payload = {
             "children": blocks,
             "index": 0
