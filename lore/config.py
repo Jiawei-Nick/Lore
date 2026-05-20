@@ -44,7 +44,7 @@ class LoreConfig:
             lark_app_id=_resolve(raw, "lark.app_id"),
             lark_app_secret=_resolve(raw, "lark.app_secret"),
             lark_folder_token=_resolve(raw, "lark.folder_token"),
-            lark_parent_doc_id=_resolve(raw, "lark.parent_doc_id"),
+            lark_parent_doc_id=_resolve(raw, "lark.parent_doc_id", required=False),
             default_path=_resolve(raw, "repo.default_path", required=False) or "./",
             default_branch=_resolve(raw, "repo.default_branch", required=False) or "main",
         )

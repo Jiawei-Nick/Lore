@@ -19,6 +19,30 @@ app = typer.Typer()
 _DEFAULT_SCHEMA_PATH = "lore-schema.json"
 
 
+@app.command("init-parent")
+def init_parent(
+    config: str = typer.Option("lore.yaml", help="Path to lore.yaml"),
+    title: str = typer.Option("Lore — Schema ERD", help="Title for the new parent doc"),
+) -> None:
+    """Create a new Lark Doc owned by the bot to use as the ERD parent doc.
+
+    Use this when the bot can't be added as an editor on an existing doc.
+    """
+    cfg = load_config(config)
+    output = LarkDocOutput(
+        app_id=cfg.lark_app_id,
+        app_secret=cfg.lark_app_secret,
+        folder_token=cfg.lark_folder_token,
+    )
+    document_id, url = output.create_parent_doc(title=title)
+    typer.echo(f"Created parent doc: {url}")
+    typer.echo(f"document_id: {document_id}")
+    typer.echo("")
+    typer.echo("Next step: add this line to ~/.zshrc and restart your shell:")
+    typer.echo(f"  export LARK_PARENT_DOC_ID={document_id}")
+    typer.echo("Then run: lore init --db <your-db-url>")
+
+
 @app.command()
 def init(
     db: str = typer.Option(..., help="PostgreSQL connection URL"),

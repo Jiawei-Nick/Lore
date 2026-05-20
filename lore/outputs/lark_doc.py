@@ -41,110 +41,45 @@ class LarkDocOutput(OutputPlugin):
         return f"{run_date.isoformat()} | {context.branch} | {risk}"
 
     def _build_blocks(self, context: PipelineContext, run_date: date) -> list:
-        """Build Lark Doc blocks (structured content)."""
+        """Build Lark Doc blocks. block_type: 2=text, 3=heading1, 4=heading2, 14=code."""
         report = context.analysis
         if not report:
-            return [{"block_type": 1, "text": {"elements": [{"text_run": {"content": "No analysis available."}}]}}]
+            return [{"block_type": 2, "text": {"elements": [{"text_run": {"content": "No analysis available."}}]}}]
+
+        def text(content: str, bold: bool = False) -> dict:
+            run = {"text_run": {"content": content}}
+            if bold:
+                run["text_run"]["text_element_style"] = {"bold": True}
+            return run
 
         blocks = [
-            # Heading 1: Schema Change Report
-            {
-                "block_type": 2,
-                "heading1": {
-                    "elements": [{"text_run": {"content": "Schema Change Report"}}]
-                }
-            },
-            # Metadata
-            {
-                "block_type": 1,
-                "text": {
-                    "elements": [
-                        {"text_run": {"content": f"Branch: {context.branch}\n"}},
-                        {"text_run": {"content": f"Date: {run_date.isoformat()}\n"}},
-                        {"text_run": {"content": f"Risk: ", "text_element_style": {"bold": True}}},
-                        {"text_run": {"content": report.risk_level.value}},
-                    ]
-                }
-            },
-            # Summary heading
-            {
-                "block_type": 3,
-                "heading2": {
-                    "elements": [{"text_run": {"content": "Summary"}}]
-                }
-            },
-            # Summary content
-            {
-                "block_type": 1,
-                "text": {
-                    "elements": [{"text_run": {"content": report.summary}}]
-                }
-            },
-            # Changes heading
-            {
-                "block_type": 3,
-                "heading2": {
-                    "elements": [{"text_run": {"content": "Changes"}}]
-                }
-            },
+            {"block_type": 3, "heading1": {"elements": [text("Schema Change Report")]}},
+            {"block_type": 2, "text": {"elements": [
+                text(f"Branch: {context.branch}\n"),
+                text(f"Date: {run_date.isoformat()}\n"),
+                text("Risk: ", bold=True),
+                text(report.risk_level.value),
+            ]}},
+            {"block_type": 4, "heading2": {"elements": [text("Summary")]}},
+            {"block_type": 2, "text": {"elements": [text(report.summary)]}},
+            {"block_type": 4, "heading2": {"elements": [text("Changes")]}},
         ]
 
-        # Add table for changes
-        if report.changes:
-            table_cells = []
-            # Header row
-            table_cells.append([
-                {"text": "Table"},
-                {"text": "Operation"},
-                {"text": "Column"},
-                {"text": "Type"}
-            ])
-            # Data rows
-            for change in report.changes:
-                table_cells.append([
-                    {"text": change.table},
-                    {"text": change.operation.value},
-                    {"text": change.column or "-"},
-                    {"text": change.data_type or "-"}
-                ])
+        for change in report.changes:
+            line = f"• {change.table} — {change.operation.value}"
+            if change.column:
+                line += f" {change.column}"
+            if change.data_type:
+                line += f" ({change.data_type})"
+            blocks.append({"block_type": 2, "text": {"elements": [text(line)]}})
 
-            blocks.append({
-                "block_type": 17,
-                "table": {
-                    "cells": table_cells
-                }
-            })
-
-        # Impact section
-        blocks.append({
-            "block_type": 3,
-            "heading2": {
-                "elements": [{"text_run": {"content": "Potential Impact"}}]
-            }
-        })
-
+        blocks.append({"block_type": 4, "heading2": {"elements": [text("Potential Impact")]}})
         for item in report.impact:
-            blocks.append({
-                "block_type": 1,
-                "text": {
-                    "elements": [{"text_run": {"content": f"• {item}"}}]
-                }
-            })
+            blocks.append({"block_type": 2, "text": {"elements": [text(f"• {item}")]}})
 
-        # Reviewer notes
         blocks.extend([
-            {
-                "block_type": 3,
-                "heading2": {
-                    "elements": [{"text_run": {"content": "Reviewer Notes"}}]
-                }
-            },
-            {
-                "block_type": 1,
-                "text": {
-                    "elements": [{"text_run": {"content": report.reviewer_notes}}]
-                }
-            }
+            {"block_type": 4, "heading2": {"elements": [text("Reviewer Notes")]}},
+            {"block_type": 2, "text": {"elements": [text(report.reviewer_notes)]}},
         ])
 
         return blocks
@@ -182,33 +117,12 @@ class LarkDocOutput(OutputPlugin):
         if not document_id:
             raise RuntimeError(f"Lark doc create returned unexpected response: {data}")
 
-        # Construct the document URL manually (Lark API doesn't return it in create response)
         url = f"https://open.larksuite.com/docx/{document_id}"
 
-        # Fetch the document to get the root block_id
-        doc_get_url = f"{_LARK_DOC_CREATE_URL}/{document_id}"
-        resp = httpx.get(doc_get_url, headers=headers)
-        resp.raise_for_status()
-        data = resp.json()
-
-        if data.get("code", 0) != 0:
-            _log.warning(f"Failed to fetch document for block_id: {data.get('msg')}")
-            context.output_url = url
-            return context
-
-        block_id = data.get("data", {}).get("document", {}).get("block_id")
-        if not block_id:
-            _log.warning(f"No block_id in document fetch response: {data}")
-            context.output_url = url
-            return context
-
-        # Add content blocks to the document
-        block_url = _LARK_DOC_UPDATE_URL.format(document_id=document_id, block_id=block_id)
-        content_payload = {
-            "children": blocks,
-            "index": 0
-        }
-        resp = httpx.patch(block_url, headers=headers, json=content_payload)
+        # In Lark Docs (docx), the root block_id equals the document_id.
+        block_url = _LARK_DOC_UPDATE_URL.format(document_id=document_id, block_id=document_id)
+        content_payload = {"children": blocks, "index": 0}
+        resp = httpx.post(block_url, headers=headers, json=content_payload)
         resp.raise_for_status()
         data = resp.json()
         if data.get("code", 0) != 0:
@@ -216,6 +130,44 @@ class LarkDocOutput(OutputPlugin):
 
         context.output_url = url
         return context
+
+    def create_parent_doc(self, title: str = "Lore — Schema ERD") -> tuple[str, str]:
+        """Create a new doc in the configured folder, owned by the bot, with a placeholder ERD.
+
+        Returns (document_id, url). Use this to bootstrap a parent doc when the bot
+        cannot be added as an editor on a pre-existing doc via Lark's Share dialog.
+        """
+        token = _get_tenant_token(self._app_id, self._app_secret)
+        headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+        resp = httpx.post(_LARK_DOC_CREATE_URL, headers=headers,
+                          json={"folder_token": self._folder_token, "title": title})
+        data = resp.json()
+        if resp.status_code != 200 or data.get("code", 0) != 0:
+            raise RuntimeError(f"Lark doc create failed: {data}")
+
+        document_id = data.get("data", {}).get("document", {}).get("document_id")
+        if not document_id:
+            raise RuntimeError(f"Lark doc create returned unexpected response: {data}")
+
+        seed_blocks = [
+            {"block_type": 3, "heading1": {"elements": [{"text_run": {"content": "Schema ERD"}}]}},
+            {"block_type": 2, "text": {"elements": [{"text_run": {"content":
+                "This doc is auto-updated by Lore on each `lore analyze` run. The Mermaid block below reflects the latest schema snapshot."
+            }}]}},
+            {"block_type": 14, "code": {
+                "elements": [{"text_run": {"content": "erDiagram\n  %% populated by `lore init`"}}],
+                "style": {"language": 1},
+            }},
+        ]
+        block_url = _LARK_DOC_UPDATE_URL.format(document_id=document_id, block_id=document_id)
+        resp = httpx.post(block_url, headers=headers, json={"children": seed_blocks, "index": 0})
+        resp.raise_for_status()
+        data = resp.json()
+        if data.get("code", 0) != 0:
+            raise RuntimeError(f"Lark seed-content insert failed: {data}")
+
+        return document_id, f"https://open.larksuite.com/docx/{document_id}"
 
     def update_erd_page(self, mermaid_erd: str, page_token: str = None) -> None:
         """Update the ERD in the parent Lark Doc."""
@@ -227,43 +179,25 @@ class LarkDocOutput(OutputPlugin):
         token = _get_tenant_token(self._app_id, self._app_secret)
         headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
-        # Create ERD block
+        # Mermaid posted as a plain code block. block_type: 3=heading1, 14=code.
         erd_blocks = [
-            {
-                "block_type": 2,
-                "heading1": {
-                    "elements": [{"text_run": {"content": "Entity Relationship Diagram"}}]
-                }
-            },
-            {
-                "block_type": 19,  # Code block
-                "code": {
-                    "elements": [{"text_run": {"content": mermaid_erd}}],
-                    "language": 1  # Plain text; mermaid rendering may need special handling
-                }
-            }
+            {"block_type": 3, "heading1": {"elements": [{"text_run": {"content": "Entity Relationship Diagram"}}]}},
+            {"block_type": 14, "code": {
+                "elements": [{"text_run": {"content": mermaid_erd}}],
+                "style": {"language": 1},
+            }},
         ]
 
-        # Get document structure to find where to append
-        # For simplicity, we'll append to the end by getting the document's root block
-        url = f"{_LARK_DOC_CREATE_URL}/{doc_id}"
-        resp = httpx.get(url, headers=headers)
-        resp.raise_for_status()
-        data = resp.json()
-
-        if data.get("code", 0) != 0:
-            raise RuntimeError(f"Lark doc get failed: {data.get('msg')}")
-
-        doc_data = data.get("data", {}).get("document", {})
-        block_id = doc_data.get("block_id")
-
-        # Append ERD blocks
-        block_url = _LARK_DOC_UPDATE_URL.format(document_id=doc_id, block_id=block_id)
-        payload = {
-            "children": erd_blocks,
-            "index": -1  # Append to end
-        }
-        resp = httpx.patch(block_url, headers=headers, json=payload)
+        # In Lark Docs (docx), the root block_id equals the document_id.
+        block_url = _LARK_DOC_UPDATE_URL.format(document_id=doc_id, block_id=doc_id)
+        payload = {"children": erd_blocks, "index": -1}
+        resp = httpx.post(block_url, headers=headers, json=payload)
+        if resp.status_code == 403:
+            raise RuntimeError(
+                f"Lark doc ERD update failed with 403 Forbidden on parent doc {doc_id}. "
+                "The bot needs editor access. Easiest fix: run `lore init-parent` to create "
+                "a fresh parent doc the bot owns, then update LARK_PARENT_DOC_ID to its id."
+            )
         resp.raise_for_status()
         data = resp.json()
         if data.get("code", 0) != 0:
