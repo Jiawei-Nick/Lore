@@ -27,6 +27,10 @@ lore init --db mysql://user:pass@host:3306/dbname
 lore analyze --repo ./myapp --branch feature/add-phone
 lore analyze --repo ./myapp --branch feature/xyz --base develop
 
+# Local testing without a live DB — use the sample schema snapshot
+cp lore-schema.example.json lore-schema.json   # copy once, then run analyze normally
+# lore-schema.json is gitignored (runtime state); lore-schema.example.json is the committed reference
+
 # Generate category-based ERDs from schema snapshot
 lore generate-erd --output-dir ./erd_output              # Save all categories to files (.mmd)
 lore generate-erd --overview --output-dir ./erd_output   # Save overview to file
