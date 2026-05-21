@@ -88,6 +88,7 @@ class LarkDocOutput(OutputPlugin):
     def run(self, context: PipelineContext) -> PipelineContext:
         run_date = date.today()
         title = self._build_title(context, run_date)
+
         blocks = self._build_blocks(context, run_date)
 
         token = _get_tenant_token(self._app_id, self._app_secret)
@@ -127,7 +128,7 @@ class LarkDocOutput(OutputPlugin):
         resp.raise_for_status()
         data = resp.json()
         if data.get("code", 0) != 0:
-            _log.warning(f"Lark doc content update failed: {data.get('msg')}")
+            raise RuntimeError(f"Lark doc content update failed: {data.get('msg')}")
 
         context.output_url = url
         return context
@@ -266,6 +267,35 @@ class LarkDocOutput(OutputPlugin):
         if data.get("code", 0) != 0:
             raise RuntimeError(f"Lark doc ERD update failed: {data.get('msg')}")
 
+    def append_erd_to_doc(self, document_id: str | None, mermaid_erd: str) -> None:
+        """Append a focused ERD section to an existing Lark Doc (e.g. an analysis sub-page).
+
+        Args:
+            document_id: Lark Doc ID to append to. No-op if None.
+            mermaid_erd: Mermaid diagram source to append as a code block.
+        """
+        if not document_id:
+            _log.warning("No document_id provided to append_erd_to_doc, skipping")
+            return
+
+        token = _get_tenant_token(self._app_id, self._app_secret)
+        headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+        erd_blocks = [
+            {"block_type": 3, "heading1": {"elements": [{"text_run": {"content": "Affected Tables — ERD"}}]}},
+            {"block_type": 14, "code": {
+                "elements": [{"text_run": {"content": mermaid_erd}}],
+                "style": {"language": 1},
+            }},
+        ]
+
+        block_url = _LARK_DOC_UPDATE_URL.format(document_id=document_id, block_id=document_id)
+        resp = httpx.post(block_url, headers=headers, json={"children": erd_blocks, "index": -1})
+        data = resp.json()
+        if data.get("code", 0) != 0:
+            raise RuntimeError(f"Lark doc ERD append failed: {data.get('msg')}")
+        resp.raise_for_status()
+
     def upload_category_erds(self, erd_map: dict[str, str], page_token: str = None, max_categories: int = 20, render_as_image: bool = True) -> None:
         """Upload multiple category ERDs to a Lark Doc.
 
@@ -318,10 +348,6 @@ class LarkDocOutput(OutputPlugin):
                     _log.info(f"Skipping {category} (ERD too large: {len(erd_content)} chars)")
                     # Skip code block to avoid hitting 100K char limit
                     continue
-                all_blocks.append({"block_type": 14, "code": {
-                    "elements": [{"text_run": {"content": erd_content}}],
-                    "style": {"language": 1},
-                }})
                 all_blocks.append({"block_type": 14, "code": {
                     "elements": [{"text_run": {"content": erd_content}}],
                     "style": {"language": 1},
