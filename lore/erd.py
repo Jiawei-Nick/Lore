@@ -86,24 +86,27 @@ def _generate_erd_content(tables: dict) -> str:
 
 
 def generate_mermaid_erd(tables: dict, modified_tables: Optional[set[str]] = None) -> str:
-    """Generate Mermaid ERD, filtering if needed to fit Lark's 100K character limit.
+    """Generate Mermaid ERD, filtering to modified tables when provided, or to fit Lark's 100K limit.
 
     Args:
         tables: Full schema dict
-        modified_tables: Optional set of table names that were modified. If provided, ERD focuses on these.
+        modified_tables: If provided, ERD always focuses on these tables + FK neighbours.
 
     Returns:
-        Mermaid ERD string with header comment explaining any filtering
+        Mermaid ERD string with optional header comment explaining any filtering
     """
-    # Try full ERD first
+    # When modified_tables provided, always filter to them regardless of schema size
+    if modified_tables:
+        filtered, note = _filter_tables_for_erd(tables, modified_tables, max_chars=90000)
+        erd_content = _generate_erd_content(filtered)
+        if len(filtered) < len(tables):
+            return f"%% {note}\n" + erd_content
+        return erd_content
+
+    # No filter: try full ERD, fall back to size-based sampling
     full_erd = _generate_erd_content(tables)
     if len(full_erd) <= 90000:
         return full_erd
 
-    # Need to filter
-    filtered, note = _filter_tables_for_erd(tables, modified_tables, max_chars=90000)
-    erd_content = _generate_erd_content(filtered)
-
-    # Add explanatory comment at the top
-    header = f"%% {note}\n"
-    return header + erd_content
+    filtered, note = _filter_tables_for_erd(tables, max_chars=90000)
+    return f"%% {note}\n" + _generate_erd_content(filtered)
