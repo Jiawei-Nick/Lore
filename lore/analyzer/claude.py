@@ -1,8 +1,7 @@
 import json
 import logging
-import os
 from anthropic import AnthropicBedrock
-from lore.models import Migration, SchemaChange, AnalysisReport, PipelineContext, RiskLevel, Operation
+from lore.models import Migration, AnalysisReport, PipelineContext, RiskLevel, Operation
 
 _log = logging.getLogger(__name__)
 _BREAKING_OPS = {Operation.DROP, Operation.DROP_TABLE, Operation.ALTER}
@@ -24,6 +23,19 @@ Risk guidelines:
 
 Return only valid JSON. No markdown, no explanation outside the JSON."""
 
+# Bedrock cross-region inference profile prefixes by region family.
+# ap-* regions use "ap." prefix; us-* regions use "us." prefix.
+_REGION_PREFIX = {
+    "ap": "ap",
+    "us": "us",
+    "eu": "eu",
+}
+
+
+def _bedrock_model_prefix(region: str) -> str:
+    family = region.split("-")[0]
+    return _REGION_PREFIX.get(family, "us")
+
 
 def _count_changes(migrations: list[Migration]) -> int:
     return sum(len(m.changes) for m in migrations)
@@ -34,25 +46,37 @@ def _has_breaking_change(migrations: list[Migration]) -> bool:
 
 
 class ClaudeAnalyzer:
-    def __init__(self, aws_bearer_token: str, aws_region: str = "us-east-1") -> None:
-        self._aws_bearer_token = aws_bearer_token
+    def __init__(
+        self,
+        aws_region: str = "ap-southeast-1",
+        aws_access_key_id: str = "",
+        aws_secret_access_key: str = "",
+        aws_session_token: str = "",
+    ) -> None:
         self._aws_region = aws_region
+        self._aws_access_key_id = aws_access_key_id
+        self._aws_secret_access_key = aws_secret_access_key
+        self._aws_session_token = aws_session_token
+        # Build client once — reused across run() calls
+        self._client = self._build_client()
+
+    def _build_client(self) -> AnthropicBedrock:
+        kwargs: dict = {
+            "aws_access_key": self._aws_access_key_id,
+            "aws_secret_key": self._aws_secret_access_key,
+            "aws_region": self._aws_region,
+        }
+        if self._aws_session_token:
+            kwargs["aws_session_token"] = self._aws_session_token
+        return AnthropicBedrock(**kwargs)
 
     def _select_model(self, migrations: list[Migration]) -> str:
-        # AWS Bedrock cross-region inference model IDs
-        # Using Claude 3.5 Sonnet v2 and Claude 3.5 Haiku
-        if _has_breaking_change(migrations):
-            return "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
-        if _count_changes(migrations) >= 5:
-            return "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
-        return "us.anthropic.claude-3-5-haiku-20241022-v1:0"
+        prefix = _bedrock_model_prefix(self._aws_region)
+        if _has_breaking_change(migrations) or _count_changes(migrations) >= 5:
+            return f"{prefix}.anthropic.claude-3-5-sonnet-20241022-v2:0"
+        return f"{prefix}.anthropic.claude-3-5-haiku-20241022-v1:0"
 
     def run(self, context: PipelineContext) -> PipelineContext:
-        # Use the bearer token as api_key for Bedrock
-        client = AnthropicBedrock(
-            api_key=self._aws_bearer_token,
-            aws_region=self._aws_region,
-        )
         model = self._select_model(context.migrations)
 
         changes_payload = [
@@ -68,7 +92,7 @@ class ClaudeAnalyzer:
             for m in context.migrations
         ]
 
-        response = client.messages.create(
+        response = self._client.messages.create(
             model=model,
             max_tokens=1024,
             system=[{"type": "text", "text": _SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
@@ -81,6 +105,7 @@ class ClaudeAnalyzer:
             raise RuntimeError(
                 f"Claude returned non-JSON response: {response.content[0].text[:200]}"
             ) from exc
+
         context.analysis = AnalysisReport(
             summary=raw.get("summary", ""),
             changes=[c for m in context.migrations for c in m.changes],
