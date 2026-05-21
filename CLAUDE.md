@@ -142,7 +142,8 @@ Project-level Claude Code automations live in `.claude/`:
 ├── settings.json          # hooks: block .env edits, auto-run pytest after source edits
 ├── agents/
 │   ├── lark-integration-reviewer.md   # validates Lark HTTP-200-error handling
-│   └── schema-migration-analyzer.md   # validates pipeline parse→route→serialize
+│   ├── schema-migration-analyzer.md   # validates pipeline parse→route→serialize
+│   └── erd-reviewer.md               # validates ERD generation, FK inference, size limits
 └── skills/
     ├── add-parser/SKILL.md   # /add-parser — scaffold a new migration parser
     └── add-output/SKILL.md   # /add-output — scaffold a new output plugin
@@ -161,6 +162,10 @@ Change to lore/analyzer/claude.py
   or lore/models.py (enums)
   or any lore/parsers/*.py              → schema-migration-analyzer
 
+Change to lore/erd.py
+  or lore/erd_categorized.py
+  or lore/mermaid_renderer.py           → erd-reviewer
+
 # Skills — invoked by user or by Claude when the task matches
 
 User asks to add a new migration format parser  → /add-parser
@@ -173,6 +178,7 @@ User asks to add a new output destination       → /add-output
 |---|---|---|
 | `lark-integration-reviewer` | Any edit to `lore/outputs/lark_doc.py`, `lark.py`, or `mermaid_renderer.py` | HTTP-200 error guards, token handling, image size limits |
 | `schema-migration-analyzer` | Any edit to `claude.py` (model routing), `models.py` (enums), or parsers | Model routing thresholds, enum serialization, parser output shape |
+| `erd-reviewer` | Any edit to `lore/erd.py`, `erd_categorized.py`, or `mermaid_renderer.py` | FK inference, type sanitization, 100K char limit, 5KB mermaid.ink guard, category grouping |
 
 ### When to invoke each skill
 
