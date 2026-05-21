@@ -9,6 +9,7 @@ _LARK_AUTH_URL = "https://open.larksuite.com/open-apis/auth/v3/tenant_access_tok
 _LARK_DOC_CREATE_URL = "https://open.larksuite.com/open-apis/docx/v1/documents"
 _LARK_DOC_UPDATE_URL = "https://open.larksuite.com/open-apis/docx/v1/documents/{document_id}/blocks/{block_id}/children"
 _LARK_DOC_RAW_CONTENT_URL = "https://open.larksuite.com/open-apis/docx/v1/documents/{document_id}/raw_content"
+_LARK_IMAGE_UPLOAD_URL = "https://open.larksuite.com/open-apis/im/v1/images"
 
 
 def _get_tenant_token(app_id: str, app_secret: str) -> str:
@@ -169,8 +170,47 @@ class LarkDocOutput(OutputPlugin):
 
         return document_id, f"https://open.larksuite.com/docx/{document_id}"
 
-    def update_erd_page(self, mermaid_erd: str, page_token: str = None) -> None:
-        """Update the ERD in the parent Lark Doc."""
+    def _upload_image(self, image_bytes: bytes, image_type: str = "image/png") -> str:
+        """Upload an image to Lark and return the image_key.
+
+        Args:
+            image_bytes: Raw image bytes
+            image_type: MIME type (image/png or image/svg+xml)
+
+        Returns:
+            image_key that can be used in image blocks
+        """
+        token = _get_tenant_token(self._app_id, self._app_secret)
+        headers = {"Authorization": f"Bearer {token}"}
+
+        files = {
+            "image": ("diagram.png", image_bytes, image_type),
+            "image_type": (None, "message"),
+        }
+
+        resp = httpx.post(_LARK_IMAGE_UPLOAD_URL, headers=headers, files=files, timeout=30.0)
+        data = resp.json()
+
+        # Check Lark API error code first (they return 200 even on errors)
+        if data.get("code", 0) != 0:
+            raise RuntimeError(f"Lark image upload failed: {data.get('msg')} (code: {data.get('code')})")
+
+        resp.raise_for_status()
+
+        image_key = data.get("data", {}).get("image_key")
+        if not image_key:
+            raise RuntimeError(f"Lark image upload returned no image_key: {data}")
+
+        return image_key
+
+    def update_erd_page(self, mermaid_erd: str, page_token: str = None, render_as_image: bool = True) -> None:
+        """Update the ERD in the parent Lark Doc.
+
+        Args:
+            mermaid_erd: Mermaid diagram source code
+            page_token: Optional Lark Doc ID (uses parent_doc_id if not provided)
+            render_as_image: If True, render to PNG and upload as image block. If False, upload as code block.
+        """
         if not self._parent_doc_id and not page_token:
             _log.warning("No parent document ID provided, skipping ERD update")
             return
@@ -179,14 +219,37 @@ class LarkDocOutput(OutputPlugin):
         token = _get_tenant_token(self._app_id, self._app_secret)
         headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
-        # Mermaid posted as a plain code block. block_type: 3=heading1, 14=code.
-        erd_blocks = [
-            {"block_type": 3, "heading1": {"elements": [{"text_run": {"content": "Entity Relationship Diagram"}}]}},
-            {"block_type": 14, "code": {
-                "elements": [{"text_run": {"content": mermaid_erd}}],
-                "style": {"language": 1},
-            }},
-        ]
+        # Large ERDs (>5KB) typically fail URL length limits, fall back to code block
+        if render_as_image and len(mermaid_erd) <= 5000:
+            # Render Mermaid to image and upload as image block
+            from lore.mermaid_renderer import MermaidRenderer
+            renderer = MermaidRenderer(format="png")
+            try:
+                image_bytes = renderer.render(mermaid_erd)
+                # mermaid.ink returns JPEG despite "png" in URL
+                image_key = self._upload_image(image_bytes, image_type="image/jpeg")
+
+                # block_type: 3=heading1, 27=image
+                erd_blocks = [
+                    {"block_type": 3, "heading1": {"elements": [{"text_run": {"content": "Entity Relationship Diagram"}}]}},
+                    {"block_type": 27, "image": {"token": image_key}},
+                ]
+            except Exception as e:
+                _log.warning(f"Failed to render ERD as image: {e}. Falling back to code block.")
+                render_as_image = False
+        elif render_as_image:
+            _log.info(f"ERD too large ({len(mermaid_erd)} chars) for image rendering, using code block")
+            render_as_image = False
+
+        if not render_as_image:
+            # Fallback: Mermaid posted as a plain code block. block_type: 14=code.
+            erd_blocks = [
+                {"block_type": 3, "heading1": {"elements": [{"text_run": {"content": "Entity Relationship Diagram"}}]}},
+                {"block_type": 14, "code": {
+                    "elements": [{"text_run": {"content": mermaid_erd}}],
+                    "style": {"language": 1},
+                }},
+            ]
 
         # In Lark Docs (docx), the root block_id equals the document_id.
         block_url = _LARK_DOC_UPDATE_URL.format(document_id=doc_id, block_id=doc_id)
@@ -203,13 +266,14 @@ class LarkDocOutput(OutputPlugin):
         if data.get("code", 0) != 0:
             raise RuntimeError(f"Lark doc ERD update failed: {data.get('msg')}")
 
-    def upload_category_erds(self, erd_map: dict[str, str], page_token: str = None, max_categories: int = 20) -> None:
+    def upload_category_erds(self, erd_map: dict[str, str], page_token: str = None, max_categories: int = 20, render_as_image: bool = True) -> None:
         """Upload multiple category ERDs to a Lark Doc.
 
         Args:
             erd_map: Dict mapping category name to Mermaid ERD content
             page_token: Optional Lark Doc ID (uses parent_doc_id if not provided)
             max_categories: Maximum number of categories to upload (to avoid hitting size limits)
+            render_as_image: If True, render to PNG and upload as image blocks. If False, upload as code blocks.
         """
         if not self._parent_doc_id and not page_token:
             _log.warning("No parent document ID provided, skipping ERD upload")
@@ -227,27 +291,47 @@ class LarkDocOutput(OutputPlugin):
         # Sort by table count (largest first) and limit to max_categories
         sorted_categories = sorted(erd_map.items(), key=lambda x: x[1].count(" {"), reverse=True)[:max_categories]
 
+        if render_as_image:
+            from lore.mermaid_renderer import MermaidRenderer
+            renderer = MermaidRenderer(format="png")
+
         for category, erd_content in sorted_categories:
             table_count = erd_content.count(" {")
-            all_blocks.extend([
-                {"block_type": 4, "heading2": {"elements": [{"text_run": {"content": f"{category} ({table_count} tables)"}}]}},
-                {"block_type": 14, "code": {
+            all_blocks.append({"block_type": 4, "heading2": {"elements": [{"text_run": {"content": f"{category} ({table_count} tables)"}}]}})
+
+            # Try image rendering for smaller ERDs (URL length limit ~5KB)
+            if render_as_image and len(erd_content) <= 5000:
+                try:
+                    image_bytes = renderer.render(erd_content)
+                    # mermaid.ink returns JPEG despite "png" in URL
+                    image_key = self._upload_image(image_bytes, image_type="image/jpeg")
+                    all_blocks.append({"block_type": 27, "image": {"token": image_key}})
+                    _log.info(f"Rendered {category} ERD as image ({len(erd_content)} chars)")
+                except Exception as e:
+                    _log.warning(f"Failed to render {category} ERD as image: {e}. Using code block.")
+                    all_blocks.append({"block_type": 14, "code": {
+                        "elements": [{"text_run": {"content": erd_content}}],
+                        "style": {"language": 1},
+                    }})
+            else:
+                if render_as_image:
+                    _log.info(f"Skipping {category} (ERD too large: {len(erd_content)} chars)")
+                    # Skip code block to avoid hitting 100K char limit
+                    continue
+                all_blocks.append({"block_type": 14, "code": {
                     "elements": [{"text_run": {"content": erd_content}}],
                     "style": {"language": 1},
-                }},
-            ])
+                }})
+                all_blocks.append({"block_type": 14, "code": {
+                    "elements": [{"text_run": {"content": erd_content}}],
+                    "style": {"language": 1},
+                }})
 
         if len(erd_map) > max_categories:
             remaining = len(erd_map) - max_categories
             all_blocks.append({"block_type": 2, "text": {"elements": [{"text_run": {
                 "content": f"... and {remaining} more categories (showing top {max_categories} by table count)"
             }}]}})
-
-        # Check total size before uploading
-        import json
-        total_chars = len(json.dumps(all_blocks))
-        if total_chars > 90000:
-            _log.warning(f"ERD content is large ({total_chars} chars). Consider reducing --max-categories.")
 
         # Upload to Lark Doc
         block_url = _LARK_DOC_UPDATE_URL.format(document_id=doc_id, block_id=doc_id)
@@ -261,9 +345,4 @@ class LarkDocOutput(OutputPlugin):
         resp.raise_for_status()
         data = resp.json()
         if data.get("code", 0) != 0:
-            if "too many chars" in data.get("msg", ""):
-                raise RuntimeError(
-                    f"Lark doc upload failed: content exceeds 100K character limit. "
-                    f"Try reducing --max-categories (current: {len(sorted_categories)})"
-                )
             raise RuntimeError(f"Lark doc upload failed: {data.get('msg')}")

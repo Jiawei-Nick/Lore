@@ -28,10 +28,11 @@ lore analyze --repo ./myapp --branch feature/add-phone
 lore analyze --repo ./myapp --branch feature/xyz --base develop
 
 # Generate category-based ERDs from schema snapshot
-lore generate-erd --output-dir ./erd_output              # Save all categories to files
+lore generate-erd --output-dir ./erd_output              # Save all categories to files (.mmd)
 lore generate-erd --overview --output-dir ./erd_output   # Save overview to file
-lore generate-erd --upload --overview                    # Upload overview to Lark parent doc
-lore generate-erd --output-dir ./docs --upload --overview  # Both file + Lark
+lore generate-erd --upload --max-categories 5            # Upload top 5 as images to Lark
+lore generate-erd --upload --overview                    # Upload overview (code block if >5KB)
+lore generate-erd --output-dir ./docs --upload --max-categories 10  # Both file + Lark
 ```
 
 ## Architecture
@@ -55,11 +56,13 @@ After the pipeline runs, `SchemaStore.apply()` + `SchemaStore.save()` update `lo
 - **`lore/parsers/`** — three concrete parsers (Flyway, Liquibase, raw DDL) plus `CompositeParser` which runs all three and merges results. Each parser filters its own file types internally using `detect_format`.
 - **`lore/parsers/flyway.py`** — shared `_FILE_HEADER`, `_ADDED_LINE`, `_parse_statement` helpers are imported directly by `raw_ddl.py` (intentional).
 - **`lore/analyzer/claude.py`** — model routing: `claude-haiku-4-5-20251001` for <5 non-breaking changes, `claude-sonnet-4-6` for ≥5 or any breaking change. Breaking ops: `{Operation.DROP, Operation.DROP_TABLE, Operation.ALTER}`. System prompt is sent with `cache_control: ephemeral` for prompt caching.
-- **`lore/outputs/lark.py`** — Lark API returns HTTP 200 even on errors; always check `data.get("code", 0) != 0` in the response body, not just `raise_for_status()`.
+- **`lore/outputs/lark.py`** — Legacy Lark Wiki API (deprecated, replaced by lark_doc.py).
+- **`lore/outputs/lark_doc.py`** — Lark Docs API integration. Uploads analysis reports and ERD diagrams. ERDs are rendered as images (via `mermaid_renderer.py`) when <5KB; larger diagrams use code blocks. Image upload uses block_type 27. API returns HTTP 200 even on errors; always check `data.get("code", 0) != 0` in the response body.
 - **`lore/db_introspect.py`** — database introspection for PostgreSQL and MySQL. Auto-detects DB type from connection URL scheme (`postgresql://` or `mysql://`). Uses `information_schema` queries for both. PostgreSQL requires `psycopg2-binary`, MySQL requires `pymysql`.
 - **`lore/schema_store.py`** — `lore-schema.json` is gitignored and updated incrementally on each `lore analyze` run. `lore analyze` never needs DB access after `lore init`.
 - **`lore/erd.py`** — Mermaid ERD generated from the schema snapshot. FK relationships inferred from `*_id` columns if the parent table exists in the snapshot. Type strings are sanitized: `VARCHAR(20)` → `VARCHAR_20_`. Used by `lore analyze` to show modified tables + related tables.
 - **`lore/erd_categorized.py`** — Category-based ERD generator. Groups tables by prefix (`tb_wallet_*` → wallet, `tb_user_*` → user, etc.) and generates separate `.mmd` files per category. Includes cross-category reference annotations. Used by `lore generate-erd` command for full schema documentation.
+- **`lore/mermaid_renderer.py`** — Renders Mermaid diagrams to images (JPEG) using mermaid.ink API. Used by `lore generate-erd --upload` to convert ERDs to images for Lark Docs. Skips rendering for diagrams >5KB (URL length limit). Falls back to code blocks on error.
 - **`lore/config.py`** — loads `lore.yaml`, substitutes `${ENV_VAR}` references, raises on unresolved vars.
 
 ### sqlglot API notes
