@@ -148,7 +148,38 @@ Project-level Claude Code automations live in `.claude/`:
     └── add-output/SKILL.md   # /add-output — scaffold a new output plugin
 ```
 
-Invoke skills with `/add-parser` or `/add-output` in Claude Code. Agents are dispatched by Claude automatically when relevant (Lark changes, pipeline regressions).
+### Auto-Spawn Rules
+
+```
+# Agents — dispatched by Claude when the trigger condition is met
+
+Change to lore/outputs/lark_doc.py
+  or lore/outputs/lark.py
+  or lore/mermaid_renderer.py           → lark-integration-reviewer
+
+Change to lore/analyzer/claude.py
+  or lore/models.py (enums)
+  or any lore/parsers/*.py              → schema-migration-analyzer
+
+# Skills — invoked by user or by Claude when the task matches
+
+User asks to add a new migration format parser  → /add-parser
+User asks to add a new output destination       → /add-output
+```
+
+### When to dispatch each agent
+
+| Agent | Trigger | What it checks |
+|---|---|---|
+| `lark-integration-reviewer` | Any edit to `lore/outputs/lark_doc.py`, `lark.py`, or `mermaid_renderer.py` | HTTP-200 error guards, token handling, image size limits |
+| `schema-migration-analyzer` | Any edit to `claude.py` (model routing), `models.py` (enums), or parsers | Model routing thresholds, enum serialization, parser output shape |
+
+### When to invoke each skill
+
+| Skill | When to use |
+|---|---|
+| `/add-parser` | Adding support for a new SQL migration format (Atlas, Alembic, TypeORM, etc.) |
+| `/add-output` | Adding a new documentation target (Confluence, Notion, GitHub Wiki, Slack, etc.) |
 
 ## Test layout
 
