@@ -19,7 +19,7 @@ def test_introspect_builds_schema_dict():
     mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
     mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
 
-    with patch("lore.db_introspect.psycopg2.connect", return_value=mock_conn):
+    with patch("psycopg2.connect", return_value=mock_conn):
         schema = introspect_postgres("postgresql://user:pass@host/db")
 
     assert "user" in schema

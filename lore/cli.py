@@ -9,7 +9,7 @@ from lore.analyzer.claude import ClaudeAnalyzer
 from lore.outputs.lark_doc import LarkDocOutput
 from lore.schema_store import SchemaStore
 from lore.erd import generate_mermaid_erd
-from lore.db_introspect import introspect_postgres
+from lore.db_introspect import introspect_database
 
 # Load environment variables from .env file
 load_dotenv()
@@ -45,19 +45,21 @@ def init_parent(
 
 @app.command()
 def init(
-    db: str = typer.Option(..., help="PostgreSQL connection URL"),
+    db: str = typer.Option(..., help="Database connection URL (postgresql://... or mysql://...)"),
     config: str = typer.Option("lore.yaml", help="Path to lore.yaml"),
     schema_path: str = typer.Option(_DEFAULT_SCHEMA_PATH, help="Path to write lore-schema.json"),
+    schema: str = typer.Option(None, help="Schema/database name (default: 'public' for PostgreSQL, auto-detected for MySQL)"),
 ) -> None:
     cfg = load_config(config)
     typer.echo("Introspecting database schema...")
-    tables = introspect_postgres(db)
+    tables = introspect_database(db, schema)
 
     store = SchemaStore(path=schema_path)
     store.tables = tables
     store.save()
     typer.echo(f"Schema snapshot saved to {schema_path} ({len(tables)} tables)")
 
+    # Generate ERD with smart filtering if needed
     erd = generate_mermaid_erd(tables)
     output = LarkDocOutput(
         app_id=cfg.lark_app_id,
@@ -65,8 +67,15 @@ def init(
         folder_token=cfg.lark_folder_token,
         parent_doc_id=cfg.lark_parent_doc_id,
     )
-    output.update_erd_page(erd, page_token=cfg.lark_parent_doc_id)
-    typer.echo("ERD updated on Lark Doc parent page.")
+
+    try:
+        output.update_erd_page(erd, page_token=cfg.lark_parent_doc_id)
+        typer.echo(f"ERD updated on Lark Doc parent page ({len(tables)} tables).")
+    except RuntimeError as e:
+        if "too many chars" in str(e):
+            typer.echo(f"⚠️  ERD update failed: {e}")
+        else:
+            raise
 
 
 @app.command()
@@ -104,10 +113,20 @@ def analyze(
         typer.echo("No DB migration changes detected in this diff.")
         return
 
-    erd = generate_mermaid_erd(store.tables)
-    lark_output.update_erd_page(erd, page_token=cfg.lark_parent_doc_id)
+    # Extract modified table names from migrations
+    modified_tables = {change.table for migration in result.migrations for change in migration.changes}
+
+    # Generate ERD focused on modified tables
+    erd = generate_mermaid_erd(store.tables, modified_tables=modified_tables)
+    try:
+        lark_output.update_erd_page(erd, page_token=cfg.lark_parent_doc_id)
+        typer.echo(f"ERD updated on parent page (showing {len(modified_tables)} modified tables + related).")
+    except RuntimeError as e:
+        if "too many chars" in str(e):
+            typer.echo(f"⚠️  ERD update failed: {e}")
+        else:
+            raise
 
     typer.echo(f"Risk: {result.analysis.risk_level.value}")
     typer.echo(f"Summary: {result.analysis.summary}")
     typer.echo(f"Lark Doc: {result.output_url}")
-    typer.echo("ERD updated on parent page.")

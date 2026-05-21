@@ -7,13 +7,14 @@ runner = CliRunner()
 
 def test_analyze_prints_success(tmp_path):
     (tmp_path / "lore.yaml").write_text("""
-anthropic:
-  api_key: test-key
+aws:
+  bearer_token: test-token
+  region: us-east-1
 lark:
   app_id: app1
   app_secret: sec1
-  wiki_space_id: space1
-  parent_node_token: parent1
+  folder_token: folder1
+  parent_doc_id: parent1
 repo:
   default_path: ./
   default_branch: main
@@ -23,7 +24,7 @@ repo:
          patch("lore.cli.GitLocalSource"), \
          patch("lore.cli.CompositeParser"), \
          patch("lore.cli.ClaudeAnalyzer"), \
-         patch("lore.cli.LarkWikiOutput"):
+         patch("lore.cli.LarkDocOutput"):
 
         mock_pipeline = MagicMock()
         mock_pipeline_cls.return_value = mock_pipeline
@@ -48,13 +49,14 @@ repo:
 
 def test_analyze_exits_cleanly_when_no_migrations(tmp_path):
     (tmp_path / "lore.yaml").write_text("""
-anthropic:
-  api_key: test-key
+aws:
+  bearer_token: test-token
+  region: us-east-1
 lark:
   app_id: app1
   app_secret: sec1
-  wiki_space_id: space1
-  parent_node_token: parent1
+  folder_token: folder1
+  parent_doc_id: parent1
 repo:
   default_path: ./
   default_branch: main
@@ -63,7 +65,7 @@ repo:
          patch("lore.cli.GitLocalSource"), \
          patch("lore.cli.CompositeParser"), \
          patch("lore.cli.ClaudeAnalyzer"), \
-         patch("lore.cli.LarkWikiOutput"):
+         patch("lore.cli.LarkDocOutput"):
 
         mock_pipeline = MagicMock()
         mock_pipeline_cls.return_value = mock_pipeline
@@ -85,19 +87,20 @@ repo:
 
 def test_init_command_creates_schema_and_updates_erd(tmp_path):
     (tmp_path / "lore.yaml").write_text("""
-anthropic:
-  api_key: test-key
+aws:
+  bearer_token: test-token
+  region: us-east-1
 lark:
   app_id: app1
   app_secret: sec1
-  wiki_space_id: space1
-  parent_node_token: parent1
+  folder_token: folder1
+  parent_doc_id: parent1
 repo:
   default_path: ./
   default_branch: main
 """)
-    with patch("lore.cli.introspect_postgres") as mock_introspect, \
-         patch("lore.cli.LarkWikiOutput") as mock_lark_cls:
+    with patch("lore.cli.introspect_database") as mock_introspect, \
+         patch("lore.cli.LarkDocOutput") as mock_lark_cls:
 
         mock_introspect.return_value = {
             "user": {"columns": {"id": {"type": "bigint", "nullable": False}}}
