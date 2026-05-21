@@ -13,7 +13,7 @@ Large schemas with hundreds of tables (like the 766-table fintech schema) are ov
 
 ## Usage
 
-### Generate all category ERDs
+### Generate all category ERDs (to files)
 
 ```bash
 lore generate-erd --output-dir ./erd_output
@@ -35,12 +35,21 @@ erd_output/
 ### Generate category overview
 
 ```bash
-lore generate-erd --output-dir ./erd_output --overview
+# Save to file
+lore generate-erd --overview --output-dir ./erd_output
+
+# Upload to Lark parent document
+lore generate-erd --upload --overview
+
+# Both
+lore generate-erd --overview --output-dir ./erd_output --upload
 ```
 
-This creates `erd_overview.mmd` showing:
+This creates/uploads `erd_overview.mmd` showing:
 - All categories as high-level entities
 - Cross-category relationships (e.g., `wallet_domain` → `user_domain`)
+
+**Note**: For large schemas (100+ tables), only `--overview` works for Lark uploads due to the 100K character limit. Detailed category ERDs are best saved to files.
 
 ## Viewing ERDs
 

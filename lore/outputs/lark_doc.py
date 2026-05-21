@@ -202,3 +202,68 @@ class LarkDocOutput(OutputPlugin):
         data = resp.json()
         if data.get("code", 0) != 0:
             raise RuntimeError(f"Lark doc ERD update failed: {data.get('msg')}")
+
+    def upload_category_erds(self, erd_map: dict[str, str], page_token: str = None, max_categories: int = 20) -> None:
+        """Upload multiple category ERDs to a Lark Doc.
+
+        Args:
+            erd_map: Dict mapping category name to Mermaid ERD content
+            page_token: Optional Lark Doc ID (uses parent_doc_id if not provided)
+            max_categories: Maximum number of categories to upload (to avoid hitting size limits)
+        """
+        if not self._parent_doc_id and not page_token:
+            _log.warning("No parent document ID provided, skipping ERD upload")
+            return
+
+        doc_id = page_token or self._parent_doc_id
+        token = _get_tenant_token(self._app_id, self._app_secret)
+        headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+        # Build blocks for all categories
+        all_blocks = [
+            {"block_type": 3, "heading1": {"elements": [{"text_run": {"content": "Schema ERDs by Category"}}]}},
+        ]
+
+        # Sort by table count (largest first) and limit to max_categories
+        sorted_categories = sorted(erd_map.items(), key=lambda x: x[1].count(" {"), reverse=True)[:max_categories]
+
+        for category, erd_content in sorted_categories:
+            table_count = erd_content.count(" {")
+            all_blocks.extend([
+                {"block_type": 4, "heading2": {"elements": [{"text_run": {"content": f"{category} ({table_count} tables)"}}]}},
+                {"block_type": 14, "code": {
+                    "elements": [{"text_run": {"content": erd_content}}],
+                    "style": {"language": 1},
+                }},
+            ])
+
+        if len(erd_map) > max_categories:
+            remaining = len(erd_map) - max_categories
+            all_blocks.append({"block_type": 2, "text": {"elements": [{"text_run": {
+                "content": f"... and {remaining} more categories (showing top {max_categories} by table count)"
+            }}]}})
+
+        # Check total size before uploading
+        import json
+        total_chars = len(json.dumps(all_blocks))
+        if total_chars > 90000:
+            _log.warning(f"ERD content is large ({total_chars} chars). Consider reducing --max-categories.")
+
+        # Upload to Lark Doc
+        block_url = _LARK_DOC_UPDATE_URL.format(document_id=doc_id, block_id=doc_id)
+        payload = {"children": all_blocks, "index": -1}
+        resp = httpx.post(block_url, headers=headers, json=payload)
+        if resp.status_code == 403:
+            raise RuntimeError(
+                f"Lark doc upload failed with 403 Forbidden on doc {doc_id}. "
+                "The bot needs editor access."
+            )
+        resp.raise_for_status()
+        data = resp.json()
+        if data.get("code", 0) != 0:
+            if "too many chars" in data.get("msg", ""):
+                raise RuntimeError(
+                    f"Lark doc upload failed: content exceeds 100K character limit. "
+                    f"Try reducing --max-categories (current: {len(sorted_categories)})"
+                )
+            raise RuntimeError(f"Lark doc upload failed: {data.get('msg')}")

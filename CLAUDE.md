@@ -28,8 +28,10 @@ lore analyze --repo ./myapp --branch feature/add-phone
 lore analyze --repo ./myapp --branch feature/xyz --base develop
 
 # Generate category-based ERDs from schema snapshot
-lore generate-erd --output-dir ./erd_output         # Split by category (wallet, user, card, etc.)
-lore generate-erd --output-dir ./erd_output --overview  # High-level category relationships
+lore generate-erd --output-dir ./erd_output              # Save all categories to files
+lore generate-erd --overview --output-dir ./erd_output   # Save overview to file
+lore generate-erd --upload --overview                    # Upload overview to Lark parent doc
+lore generate-erd --output-dir ./docs --upload --overview  # Both file + Lark
 ```
 
 ## Architecture
