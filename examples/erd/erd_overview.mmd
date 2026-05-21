@@ -1,0 +1,522 @@
+%% Schema Overview: Categories and Cross-Category Relationships
+erDiagram
+    ab_domain {
+        int table_count "4 tables"
+        string examples "tb_ab_testing_detail, tb_ab_testing_info, tb_ab_testing_template..."
+    }
+    account_domain {
+        int table_count "11 tables"
+        string examples "tb_account_adjustment_log, tb_account_change_whitelist, tb_account_indicator_daily_summary..."
+    }
+    admin_domain {
+        int table_count "6 tables"
+        string examples "tb_admin_casbin_policy, tb_admin_role, tb_admin_role_module..."
+    }
+    affiliate_domain {
+        int table_count "5 tables"
+        string examples "tb_affiliate_cpa, tb_affiliate_cpa_backup, tb_affiliate_cpa_country..."
+    }
+    agreement_domain {
+        int table_count "2 tables"
+        string examples "tb_agreement_template, tb_agreement_template_size..."
+    }
+    alpha_domain {
+        int table_count "1 tables"
+        string examples "tb_alpha_config..."
+    }
+    anti_domain {
+        int table_count "1 tables"
+        string examples "tb_anti_attack_history..."
+    }
+    article_domain {
+        int table_count "1 tables"
+        string examples "tb_article_info..."
+    }
+    auto_domain {
+        int table_count "2 tables"
+        string examples "tb_auto_assignment_monthly_count, tb_auto_withdraw_config..."
+    }
+    bank_domain {
+        int table_count "1 tables"
+        string examples "tb_bank_list..."
+    }
+    batch_domain {
+        int table_count "1 tables"
+        string examples "tb_batch_ib_commission_operation_log..."
+    }
+    bizsequence_domain {
+        int table_count "2 tables"
+        string examples "tb_bizsequence, tb_bizsequence_temp..."
+    }
+    blacklist_domain {
+        int table_count "5 tables"
+        string examples "tb_blacklist_acc_creation_edit_history, tb_blacklist_account_creation, tb_blacklist_promotionallink..."
+    }
+    business_domain {
+        int table_count "3 tables"
+        string examples "tb_business_file, tb_business_file_rel, tb_business_group_rel..."
+    }
+    bybit_domain {
+        int table_count "8 tables"
+        string examples "tb_bybit_balance_record_bak, tb_bybit_deposit_record_bak, tb_bybit_exchange_record_bak..."
+    }
+    call_domain {
+        int table_count "1 tables"
+        string examples "tb_call_files..."
+    }
+    campaign_domain {
+        int table_count "5 tables"
+        string examples "tb_campaign_action_template, tb_campaign_betting_quotes, tb_campaign_condition_template..."
+    }
+    card_domain {
+        int table_count "70 tables"
+        string examples "tb_card_account, tb_card_apply_channel_audit, tb_card_apply_channel_reconciliation..."
+    }
+    cc_domain {
+        int table_count "3 tables"
+        string examples "tb_cc_commission, tb_cc_report_net_deposit, tb_cc_report_qftd..."
+    }
+    channel_domain {
+        int table_count "2 tables"
+        string examples "tb_channel_config, tb_channel_time_statistics..."
+    }
+    city_domain {
+        int table_count "1 tables"
+        string examples "tb_city..."
+    }
+    client_domain {
+        int table_count "5 tables"
+        string examples "tb_client_email_attachment, tb_client_email_recipient, tb_client_email_record..."
+    }
+    commission_domain {
+        int table_count "18 tables"
+        string examples "tb_commission_code, tb_commission_package, tb_commission_package_currency_rate..."
+    }
+    commissions_domain {
+        int table_count "1 tables"
+        string examples "tb_commissions_cpa..."
+    }
+    component_domain {
+        int table_count "4 tables"
+        string examples "tb_component, tb_component_filter_condition, tb_component_group_tag_relation..."
+    }
+    config_domain {
+        int table_count "8 tables"
+        string examples "tb_config_meta, tb_config_module, tb_config_permission..."
+    }
+    country_domain {
+        int table_count "4 tables"
+        string examples "tb_country, tb_country_back_2025-1-16, tb_country_payment_stats..."
+    }
+    coupon_domain {
+        int table_count "5 tables"
+        string examples "tb_coupon, tb_coupon_amount, tb_coupon_condition..."
+    }
+    cpa_domain {
+        int table_count "19 tables"
+        string examples "tb_cpa_allot_cr_cpa, tb_cpa_allot_cr_log, tb_cpa_allot_cr_sales..."
+    }
+    cr_domain {
+        int table_count "6 tables"
+        string examples "tb_cr_commission, tb_cr_report_net_deposit, tb_cr_report_qftd..."
+    }
+    dap_domain {
+        int table_count "8 tables"
+        string examples "tb_dap_manual_edit_history, tb_dap_payment_risk_audit, tb_dap_payment_withdraw..."
+    }
+    dashboard_domain {
+        int table_count "5 tables"
+        string examples "tb_dashboard, tb_dashboard_component_rel, tb_dashboard_filter..."
+    }
+    data_domain {
+        int table_count "13 tables"
+        string examples "tb_data_cleaning_record, tb_data_source, tb_data_source_225-8-19..."
+    }
+    datascope_domain {
+        int table_count "1 tables"
+        string examples "tb_datascope_type..."
+    }
+    dc_domain {
+        int table_count "5 tables"
+        string examples "tb_dc, tb_dc_20230522, tb_dc_copy1..."
+    }
+    deposit_domain {
+        int table_count "2 tables"
+        string examples "tb_deposit_constraints, tb_deposit_version..."
+    }
+    desensitize_domain {
+        int table_count "1 tables"
+        string examples "tb_desensitize_whitelist..."
+    }
+    dmd_domain {
+        int table_count "3 tables"
+        string examples "tb_dmd_biz_domain, tb_dmd_seed, tb_dmd_snapshot..."
+    }
+    doris_domain {
+        int table_count "1 tables"
+        string examples "tb_doris_catalog_task_retry..."
+    }
+    edit_domain {
+        int table_count "1 tables"
+        string examples "tb_edit_sync_email_log..."
+    }
+    eodprice_domain {
+        int table_count "1 tables"
+        string examples "tb_eodprice_run_status..."
+    }
+    error_domain {
+        int table_count "1 tables"
+        string examples "tb_error_config..."
+    }
+    event_domain {
+        int table_count "2 tables"
+        string examples "tb_event_handler_config, tb_event_update..."
+    }
+    exchange_domain {
+        int table_count "2 tables"
+        string examples "tb_exchange_rate, tb_exchange_rate_limit..."
+    }
+    extra_domain {
+        int table_count "1 tables"
+        string examples "tb_extra..."
+    }
+    facebook_domain {
+        int table_count "1 tables"
+        string examples "tb_facebook_s2s_record..."
+    }
+    filter_domain {
+        int table_count "1 tables"
+        string examples "tb_filter_group_tag_relation..."
+    }
+    first_domain {
+        int table_count "1 tables"
+        string examples "tb_first_login_brand..."
+    }
+    follow_domain {
+        int table_count "3 tables"
+        string examples "tb_follow_up, tb_follow_up_method, tb_follow_up_test..."
+    }
+    four_domain {
+        int table_count "1 tables"
+        string examples "tb_four_element_bank..."
+    }
+    function_domain {
+        int table_count "2 tables"
+        string examples "tb_function_security_record, tb_function_security_rule..."
+    }
+    global_domain {
+        int table_count "1 tables"
+        string examples "tb_global_sequence..."
+    }
+    group_domain {
+        int table_count "4 tables"
+        string examples "tb_group_detail, tb_group_sales_detail, tb_group_tag..."
+    }
+    historical_domain {
+        int table_count "1 tables"
+        string examples "tb_historical_task..."
+    }
+    history_domain {
+        int table_count "1 tables"
+        string examples "tb_history_data_processing_config..."
+    }
+    i18n_domain {
+        int table_count "1 tables"
+        string examples "tb_i18n..."
+    }
+    ib_domain {
+        int table_count "9 tables"
+        string examples "tb_ib_campaign_info, tb_ib_funnel_admin_manual_upg, tb_ib_funnel_current_level..."
+    }
+    id3_domain {
+        int table_count "1 tables"
+        string examples "tb_id3_profile_setting..."
+    }
+    indicator_domain {
+        int table_count "1 tables"
+        string examples "tb_indicator_info..."
+    }
+    language_domain {
+        int table_count "1 tables"
+        string examples "tb_language..."
+    }
+    lark_domain {
+        int table_count "3 tables"
+        string examples "tb_lark_message_item_management, tb_lark_message_item_push_type_relation, tb_lark_message_user_push_type_relation..."
+    }
+    leadsource_domain {
+        int table_count "1 tables"
+        string examples "tb_leadsource_mapping..."
+    }
+    legacy_domain {
+        int table_count "18 tables"
+        string examples "old_tb_bybit_balance_record, old_tb_bybit_deposit_record, old_tb_bybit_exchange_record..."
+    }
+    liquibase_domain {
+        int table_count "2 tables"
+        string examples "databasechangelog, databasechangeloglock..."
+    }
+    locale_domain {
+        int table_count "2 tables"
+        string examples "tb_locale, tb_locale_prop..."
+    }
+    login_domain {
+        int table_count "1 tables"
+        string examples "tb_login_white_ip..."
+    }
+    mail_domain {
+        int table_count "3 tables"
+        string examples "tb_mail_config, tb_mail_info, tb_mail_server..."
+    }
+    marketing_domain {
+        int table_count "1 tables"
+        string examples "tb_marketing_dashboard_user..."
+    }
+    match_domain {
+        int table_count "2 tables"
+        string examples "tb_match_group_rule, tb_match_group_rule_backup..."
+    }
+    message_domain {
+        int table_count "4 tables"
+        string examples "tb_message_push_group_relation, tb_message_push_management, tb_message_push_type_relation..."
+    }
+    migration_domain {
+        int table_count "1 tables"
+        string examples "tb_migration_log..."
+    }
+    monitor_domain {
+        int table_count "1 tables"
+        string examples "tb_monitor_average_spreads..."
+    }
+    mq_domain {
+        int table_count "1 tables"
+        string examples "tb_mq_send_log..."
+    }
+    mt4_domain {
+        int table_count "15 tables"
+        string examples "mt4_old_new_ticket_mapping, mt4_symbols, mt4_trades_archived_temp..."
+    }
+    mt5_domain {
+        int table_count "8 tables"
+        string examples "mt5_deals_archived_temp, mt5_symbols, mt5_users_archived_temp..."
+    }
+    multifactor_domain {
+        int table_count "3 tables"
+        string examples "tb_multifactor_auth_config, tb_multifactor_auth_config_record, tb_multifactor_auth_i18n..."
+    }
+    nationality_domain {
+        int table_count "2 tables"
+        string examples "tb_nationality, tb_nationality_country_relation..."
+    }
+    news_domain {
+        int table_count "1 tables"
+        string examples "tb_news..."
+    }
+    oauth_domain {
+        int table_count "2 tables"
+        string examples "oauth_client_details, oauth_exception_log..."
+    }
+    other_domain {
+        int table_count "7 tables"
+        string examples "export_result, personstest, qianyimingdan..."
+    }
+    participant_domain {
+        int table_count "1 tables"
+        string examples "tb_participant_status_type..."
+    }
+    partner_domain {
+        int table_count "2 tables"
+        string examples "tb_partner_symbol_whitelist, tb_partner_task..."
+    }
+    payment_domain {
+        int table_count "15 tables"
+        string examples "tb_payment_bridgerpay_exception, tb_payment_channel_stats, tb_payment_deposit_channel_stats..."
+    }
+    pcs_domain {
+        int table_count "3 tables"
+        string examples "tb_pcs_country_limit, tb_pcs_function_prop, tb_pcs_user_whitelist..."
+    }
+    phone_domain {
+        int table_count "2 tables"
+        string examples "tb_phone_call_log, tb_phone_call_log_user..."
+    }
+    play_domain {
+        int table_count "1 tables"
+        string examples "tb_play_vip_temp_copy_trading_notional_value..."
+    }
+    product_domain {
+        int table_count "1 tables"
+        string examples "tb_product_trade_data..."
+    }
+    province_domain {
+        int table_count "1 tables"
+        string examples "tb_province..."
+    }
+    pt_domain {
+        int table_count "15 tables"
+        string examples "tb_pt_account, tb_pt_balance_log, tb_pt_compensation..."
+    }
+    question_domain {
+        int table_count "3 tables"
+        string examples "tb_question, tb_question_answer, tb_question_option..."
+    }
+    regulator_domain {
+        int table_count "1 tables"
+        string examples "tb_regulator_group_rule..."
+    }
+    remote_domain {
+        int table_count "1 tables"
+        string examples "tb_remote_intercept_strategy..."
+    }
+    retail_domain {
+        int table_count "1 tables"
+        string examples "tb_retail_source_log..."
+    }
+    retention_domain {
+        int table_count "1 tables"
+        string examples "tb_retention_collect..."
+    }
+    ring_domain {
+        int table_count "1 tables"
+        string examples "tb_ring_central_call_event_log..."
+    }
+    role_domain {
+        int table_count "2 tables"
+        string examples "tb_role, tb_role_datascope..."
+    }
+    rollback_domain {
+        int table_count "2 tables"
+        string examples "tb_rollback_data, tb_rollback_data_associate..."
+    }
+    safety_domain {
+        int table_count "3 tables"
+        string examples "tb_safety_reject_log, tb_safety_rule, tb_safety_rule_details..."
+    }
+    salary_domain {
+        int table_count "15 tables"
+        string examples "tb_salary_activity, tb_salary_activity_sales, tb_salary_activity_sales_result..."
+    }
+    sale_domain {
+        int table_count "2 tables"
+        string examples "tb_sale_allot_user_max, tb_sale_table_setting..."
+    }
+    sales_domain {
+        int table_count "21 tables"
+        string examples "tb_sales, tb_sales_configs, tb_sales_data_statistics_global..."
+    }
+    schedule_domain {
+        int table_count "1 tables"
+        string examples "tb_schedule_retry..."
+    }
+    sec_domain {
+        int table_count "6 tables"
+        string examples "tb_sec_apply_auth_record, tb_sec_auth_blacklist, tb_sec_auth_config..."
+    }
+    security_domain {
+        int table_count "1 tables"
+        string examples "tb_security_config_operator_log..."
+    }
+    sensors_domain {
+        int table_count "1 tables"
+        string examples "tb_sensors_event_record..."
+    }
+    server_domain {
+        int table_count "1 tables"
+        string examples "tb_server_follow_details..."
+    }
+    sms_domain {
+        int table_count "1 tables"
+        string examples "tb_sms_history..."
+    }
+    social_domain {
+        int table_count "1 tables"
+        string examples "tb_social_trading_subscriptions..."
+    }
+    statistics_domain {
+        int table_count "2 tables"
+        string examples "tb_statistics_display_data, tb_statistics_template..."
+    }
+    stock_domain {
+        int table_count "1 tables"
+        string examples "tb_stock..."
+    }
+    sub_domain {
+        int table_count "2 tables"
+        string examples "tb_sub_user_info, tb_sub_user_operate_log..."
+    }
+    survey_domain {
+        int table_count "4 tables"
+        string examples "tb_survey, tb_survey_answer, tb_survey_question..."
+    }
+    switch_domain {
+        int table_count "1 tables"
+        string examples "tb_switch_bonus_info..."
+    }
+    sync_domain {
+        int table_count "2 tables"
+        string examples "tb_sync_leads_record, tb_sync_salesnote_record..."
+    }
+    sys_domain {
+        int table_count "13 tables"
+        string examples "tb_sys_config, tb_sys_menu, tb_sys_menu_20240327..."
+    }
+    taboola_domain {
+        int table_count "1 tables"
+        string examples "tb_taboola_s2s_record..."
+    }
+    task_domain {
+        int table_count "4 tables"
+        string examples "tb_task, tb_task_20240419, tb_task_rule..."
+    }
+    telegram_domain {
+        int table_count "1 tables"
+        string examples "tb_telegram_user_info..."
+    }
+    test_domain {
+        int table_count "1 tables"
+        string examples "tb_test_account_change_group_log..."
+    }
+    third_domain {
+        int table_count "1 tables"
+        string examples "tb_third_party_data..."
+    }
+    tier_domain {
+        int table_count "4 tables"
+        string examples "tb_tier_criterion_condition_relation, tb_tier_criterion_relation, tb_tier_group_relation..."
+    }
+    tmx_domain {
+        int table_count "1 tables"
+        string examples "tb_tmx_session_query..."
+    }
+    trading_domain {
+        int table_count "3 tables"
+        string examples "tb_trading_group, tb_trading_group_symbol, tb_trading_promotion..."
+    }
+    transfer_domain {
+        int table_count "1 tables"
+        string examples "tb_transfer_owner_report..."
+    }
+    upgrade_domain {
+        int table_count "1 tables"
+        string examples "tb_upgrade_ib_org_set..."
+    }
+    user_domain {
+        int table_count "81 tables"
+        string examples "tb_user_active_statistics, tb_user_all, tb_user_bak_20250901..."
+    }
+    vip_domain {
+        int table_count "2 tables"
+        string examples "tb_vip_temp_copy_trading_notional_value, tb_vip_test_temp_copy_trading_notional_value..."
+    }
+    wallet_domain {
+        int table_count "170 tables"
+        string examples "tb_wallet_account_0816_bak, tb_wallet_account_0901_bak, tb_wallet_account_bak..."
+    }
+    withdraw_domain {
+        int table_count "2 tables"
+        string examples "tb_withdraw_country_config, tb_withdraw_type..."
+    }
+    withdrawlimit_domain {
+        int table_count "3 tables"
+        string examples "tb_withdrawlimit, tb_withdrawlimit_trade_record, tb_withdrawlimit_unfreeze_log..."
+    }

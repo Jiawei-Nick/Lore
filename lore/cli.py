@@ -9,6 +9,7 @@ from lore.analyzer.claude import ClaudeAnalyzer
 from lore.outputs.lark_doc import LarkDocOutput
 from lore.schema_store import SchemaStore
 from lore.erd import generate_mermaid_erd
+from lore.erd_categorized import generate_categorized_erds, generate_category_overview
 from lore.db_introspect import introspect_database
 
 # Load environment variables from .env file
@@ -130,3 +131,50 @@ def analyze(
     typer.echo(f"Risk: {result.analysis.risk_level.value}")
     typer.echo(f"Summary: {result.analysis.summary}")
     typer.echo(f"Lark Doc: {result.output_url}")
+
+
+@app.command("generate-erd")
+def generate_erd_command(
+    schema_path: str = typer.Option(_DEFAULT_SCHEMA_PATH, help="Path to lore-schema.json"),
+    output_dir: str = typer.Option("./erd_output", help="Directory to write ERD files"),
+    overview: bool = typer.Option(False, help="Generate category overview ERD"),
+) -> None:
+    """Generate category-based ERD files from the schema snapshot.
+
+    Creates separate .mmd (Mermaid) files for each category (wallet, user, card, etc.).
+    Each category ERD includes only tables from that category plus cross-category
+    reference annotations.
+
+    Use --overview to generate a high-level ERD showing categories and their relationships.
+    """
+    from pathlib import Path
+
+    store = SchemaStore(path=schema_path)
+    store.load()
+
+    if not store.tables:
+        typer.echo("No schema found. Run `lore init` first to create a schema snapshot.")
+        raise typer.Exit(1)
+
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    if overview:
+        # Generate overview ERD
+        overview_content = generate_category_overview(store.tables)
+        overview_file = output_path / "erd_overview.mmd"
+        overview_file.write_text(overview_content)
+        typer.echo(f"✓ Generated category overview: {overview_file}")
+        typer.echo(f"  View at: https://mermaid.live/edit#{overview_content[:100]}...")
+    else:
+        # Generate per-category ERDs
+        erd_map = generate_categorized_erds(store.tables, output_dir=str(output_path))
+        typer.echo(f"✓ Generated {len(erd_map)} category ERDs in {output_path}/")
+        typer.echo("")
+        typer.echo("Categories:")
+        for category, content in sorted(erd_map.items()):
+            table_count = content.count(" {")
+            typer.echo(f"  - {category:15s} ({table_count:3d} tables) → erd_{category}.mmd")
+
+        typer.echo("")
+        typer.echo(f"To view ERDs, upload .mmd files to https://mermaid.live or use a Mermaid viewer.")

@@ -26,6 +26,10 @@ lore init --db postgresql://user:pass@host/dbname
 lore init --db mysql://user:pass@host:3306/dbname
 lore analyze --repo ./myapp --branch feature/add-phone
 lore analyze --repo ./myapp --branch feature/xyz --base develop
+
+# Generate category-based ERDs from schema snapshot
+lore generate-erd --output-dir ./erd_output         # Split by category (wallet, user, card, etc.)
+lore generate-erd --output-dir ./erd_output --overview  # High-level category relationships
 ```
 
 ## Architecture
@@ -52,7 +56,8 @@ After the pipeline runs, `SchemaStore.apply()` + `SchemaStore.save()` update `lo
 - **`lore/outputs/lark.py`** — Lark API returns HTTP 200 even on errors; always check `data.get("code", 0) != 0` in the response body, not just `raise_for_status()`.
 - **`lore/db_introspect.py`** — database introspection for PostgreSQL and MySQL. Auto-detects DB type from connection URL scheme (`postgresql://` or `mysql://`). Uses `information_schema` queries for both. PostgreSQL requires `psycopg2-binary`, MySQL requires `pymysql`.
 - **`lore/schema_store.py`** — `lore-schema.json` is gitignored and updated incrementally on each `lore analyze` run. `lore analyze` never needs DB access after `lore init`.
-- **`lore/erd.py`** — Mermaid ERD generated from the schema snapshot. FK relationships inferred from `*_id` columns if the parent table exists in the snapshot. Type strings are sanitized: `VARCHAR(20)` → `VARCHAR_20_`.
+- **`lore/erd.py`** — Mermaid ERD generated from the schema snapshot. FK relationships inferred from `*_id` columns if the parent table exists in the snapshot. Type strings are sanitized: `VARCHAR(20)` → `VARCHAR_20_`. Used by `lore analyze` to show modified tables + related tables.
+- **`lore/erd_categorized.py`** — Category-based ERD generator. Groups tables by prefix (`tb_wallet_*` → wallet, `tb_user_*` → user, etc.) and generates separate `.mmd` files per category. Includes cross-category reference annotations. Used by `lore generate-erd` command for full schema documentation.
 - **`lore/config.py`** — loads `lore.yaml`, substitutes `${ENV_VAR}` references, raises on unresolved vars.
 
 ### sqlglot API notes
