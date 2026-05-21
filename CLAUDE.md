@@ -99,11 +99,18 @@ repo:
 ```bash
 # Branch naming
 feat/<short-description>
+feat/<ticket-id>-<short-description>   # when ticket is known
 fix/<short-description>
+fix/<ticket-id>-<short-description>    # when ticket is known
+
+# Always create a branch before starting any work — never commit directly to main
+git checkout -b feat/<short-description>
+git checkout -b fix/<short-description>
 
 # Commit messages — conventional commits
 # Title: max 50 chars, imperative mood, no trailing period
-# Body: bullet points detailing what changed and why
+# Body: bullet points detailing WHAT changed and WHY (not just what the code does)
+# Never commit .env — only .env.example
 
 "feat: add Liquibase parser support
 
@@ -119,7 +126,29 @@ fix/<short-description>
 "refactor: simplify schema store apply logic"
 "test: add flyway rename column test cases"
 "docs: update lore.yaml config example"
+
+# Pull Requests
+# Target: main
+# Title: same as commit message title
+# Body: summary bullets + test plan
 ```
+
+## Claude Code Automations
+
+Project-level Claude Code automations live in `.claude/`:
+
+```
+.claude/
+├── settings.json          # hooks: block .env edits, auto-run pytest after source edits
+├── agents/
+│   ├── lark-integration-reviewer.md   # validates Lark HTTP-200-error handling
+│   └── schema-migration-analyzer.md   # validates pipeline parse→route→serialize
+└── skills/
+    ├── add-parser/SKILL.md   # /add-parser — scaffold a new migration parser
+    └── add-output/SKILL.md   # /add-output — scaffold a new output plugin
+```
+
+Invoke skills with `/add-parser` or `/add-output` in Claude Code. Agents are dispatched by Claude automatically when relevant (Lark changes, pipeline regressions).
 
 ## Test layout
 
