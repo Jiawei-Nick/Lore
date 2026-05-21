@@ -23,18 +23,8 @@ Risk guidelines:
 
 Return only valid JSON. No markdown, no explanation outside the JSON."""
 
-# Bedrock cross-region inference profile prefixes by region family.
-# ap-* regions use "ap." prefix; us-* regions use "us." prefix.
-_REGION_PREFIX = {
-    "ap": "ap",
-    "us": "us",
-    "eu": "eu",
-}
-
-
-def _bedrock_model_prefix(region: str) -> str:
-    family = region.split("-")[0]
-    return _REGION_PREFIX.get(family, "us")
+_MODEL_SONNET = "global.anthropic.claude-sonnet-4-6"
+_MODEL_HAIKU = "global.anthropic.claude-sonnet-4-6"
 
 
 def _count_changes(migrations: list[Migration]) -> int:
@@ -71,10 +61,9 @@ class ClaudeAnalyzer:
         return AnthropicBedrock(**kwargs)
 
     def _select_model(self, migrations: list[Migration]) -> str:
-        prefix = _bedrock_model_prefix(self._aws_region)
         if _has_breaking_change(migrations) or _count_changes(migrations) >= 5:
-            return f"{prefix}.anthropic.claude-3-5-sonnet-20241022-v2:0"
-        return f"{prefix}.anthropic.claude-3-5-haiku-20241022-v1:0"
+            return _MODEL_SONNET
+        return _MODEL_HAIKU
 
     def run(self, context: PipelineContext) -> PipelineContext:
         model = self._select_model(context.migrations)
@@ -100,7 +89,13 @@ class ClaudeAnalyzer:
         )
 
         try:
-            raw = json.loads(response.content[0].text)
+            text = response.content[0].text.strip()
+            if text.startswith("```"):
+                text = text.split("```", 2)[1]
+                if text.startswith("json"):
+                    text = text[4:]
+                text = text.strip()
+            raw = json.loads(text)
         except json.JSONDecodeError as exc:
             raise RuntimeError(
                 f"Claude returned non-JSON response: {response.content[0].text[:200]}"

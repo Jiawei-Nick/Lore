@@ -222,10 +222,9 @@ class LarkDocOutput(OutputPlugin):
 
         # Large ERDs (>5KB) typically fail URL length limits, fall back to code block
         if render_as_image and len(mermaid_erd) <= 5000:
-            # Render Mermaid to image and upload as image block
-            from lore.mermaid_renderer import MermaidRenderer
-            renderer = MermaidRenderer(format="png")
             try:
+                from lore.mermaid_renderer import MermaidRenderer
+                renderer = MermaidRenderer(format="png")
                 image_bytes = renderer.render(mermaid_erd)
                 # mermaid.ink returns JPEG despite "png" in URL
                 image_key = self._upload_image(image_bytes, image_type="image/jpeg")
@@ -322,8 +321,12 @@ class LarkDocOutput(OutputPlugin):
         sorted_categories = sorted(erd_map.items(), key=lambda x: x[1].count(" {"), reverse=True)[:max_categories]
 
         if render_as_image:
-            from lore.mermaid_renderer import MermaidRenderer
-            renderer = MermaidRenderer(format="png")
+            try:
+                from lore.mermaid_renderer import MermaidRenderer
+                renderer = MermaidRenderer(format="png")
+            except ImportError:
+                _log.warning("mermaid_renderer not available, falling back to code blocks")
+                render_as_image = False
 
         for category, erd_content in sorted_categories:
             table_count = erd_content.count(" {")
