@@ -143,6 +143,7 @@ Project-level Claude Code automations live in `.claude/`:
 ├── agents/
 │   ├── lark-integration-reviewer.md   # validates Lark HTTP-200-error handling
 │   ├── schema-migration-analyzer.md   # validates pipeline parse→route→serialize
+│   ├── erd-generator.md              # implements ERD features (run before erd-reviewer)
 │   └── erd-reviewer.md               # validates ERD generation, FK inference, size limits
 └── skills/
     ├── add-parser/SKILL.md   # /add-parser — scaffold a new migration parser
@@ -162,6 +163,8 @@ Change to lore/analyzer/claude.py
   or lore/models.py (enums)
   or any lore/parsers/*.py              → schema-migration-analyzer
 
+User asks to add/modify ERD feature        → erd-generator → erd-reviewer (in sequence)
+
 Change to lore/erd.py
   or lore/erd_categorized.py
   or lore/mermaid_renderer.py           → erd-reviewer
@@ -178,7 +181,13 @@ User asks to add a new output destination       → /add-output
 |---|---|---|
 | `lark-integration-reviewer` | Any edit to `lore/outputs/lark_doc.py`, `lark.py`, or `mermaid_renderer.py` | HTTP-200 error guards, token handling, image size limits |
 | `schema-migration-analyzer` | Any edit to `claude.py` (model routing), `models.py` (enums), or parsers | Model routing thresholds, enum serialization, parser output shape |
-| `erd-reviewer` | Any edit to `lore/erd.py`, `erd_categorized.py`, or `mermaid_renderer.py` | FK inference, type sanitization, 100K char limit, 5KB mermaid.ink guard, category grouping |
+| `erd-generator` | Implementing any ERD feature | Writes ERD code following domain invariants (FK inference, size limits, type sanitization) |
+| `erd-reviewer` | After `erd-generator` completes; any edit to `lore/erd.py`, `erd_categorized.py`, or `mermaid_renderer.py` | FK inference, type sanitization, 100K char limit, 5KB mermaid.ink guard, category grouping |
+
+**ERD feature development workflow:**
+```
+New ERD feature requested → erd-generator (implement) → erd-reviewer (review) → commit
+```
 
 ### When to invoke each skill
 
