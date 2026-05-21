@@ -24,7 +24,7 @@ Risk guidelines:
 Return only valid JSON. No markdown, no explanation outside the JSON."""
 
 _MODEL_SONNET = "global.anthropic.claude-sonnet-4-6"
-_MODEL_HAIKU = "global.anthropic.claude-sonnet-4-6"
+_MODEL_HAIKU = "global.anthropic.claude-haiku-4-5-20251001-v1:0"
 
 
 def _count_changes(migrations: list[Migration]) -> int:
