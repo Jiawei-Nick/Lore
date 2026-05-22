@@ -74,7 +74,7 @@ def init(
         typer.echo(f"ERD updated on Lark Doc parent page ({len(tables)} tables).")
     except RuntimeError as e:
         if "too many chars" in str(e):
-            typer.echo(f"⚠️  ERD update failed: {e}")
+            typer.echo(f"[WARN] ERD update failed: {e}")
         else:
             raise
 
@@ -125,7 +125,7 @@ def analyze(
         lark_output.update_erd_page(overview_erd, page_token=cfg.lark_parent_doc_id)
         typer.echo("Overview ERD updated on parent page.")
     except RuntimeError as e:
-        typer.echo(f"⚠️  Overview ERD update failed: {e}")
+        typer.echo(f"[WARN] Overview ERD update failed: {e}")
 
     # Focused ERD → sub-page (generated AFTER pipeline so schema store is updated)
     modified_tables = {change.table for migration in result.migrations for change in migration.changes}
@@ -135,7 +135,7 @@ def analyze(
         lark_output.append_erd_to_doc(sub_doc_id, focused_erd)
         typer.echo(f"Focused ERD appended to analysis doc ({len(modified_tables)} modified tables).")
     except RuntimeError as e:
-        typer.echo(f"⚠️  Focused ERD append failed: {e}")
+        typer.echo(f"[WARN] Focused ERD append failed: {e}")
 
     if result.analysis:
         typer.echo(f"Risk: {result.analysis.risk_level.value}")
@@ -155,9 +155,9 @@ def generate_erd_command(
     """Generate category-based ERD diagrams from the schema snapshot.
 
     Output modes:
-      • Default: Save detailed ERDs to files (one .mmd file per category)
-      • --overview: Generate high-level category relationship diagram
-      • --upload: Upload ERDs to Lark parent document
+      - Default: Save detailed ERDs to files (one .mmd file per category)
+      - --overview: Generate high-level category relationship diagram
+      - --upload: Upload ERDs to Lark parent document
 
     Examples:
       lore generate-erd --output-dir ./docs/erd                    # Save all categories to files
@@ -197,12 +197,12 @@ def generate_erd_command(
         if overview:
             overview_file = output_path / "erd_overview.mmd"
             overview_file.write_text(overview_content)
-            typer.echo(f"✓ Saved category overview: {overview_file}")
+            typer.echo(f"[OK] Saved category overview: {overview_file}")
         else:
             for category, content in erd_map.items():
                 file_path = output_path / f"erd_{category}.mmd"
                 file_path.write_text(content)
-            typer.echo(f"✓ Saved {len(erd_map)} category ERDs to {output_path}/")
+            typer.echo(f"[OK] Saved {len(erd_map)} category ERDs to {output_path}/")
             typer.echo("")
             typer.echo("Top categories by table count:")
             sorted_cats = sorted(erd_map.items(), key=lambda x: x[1].count(" {"), reverse=True)[:10]
@@ -223,17 +223,17 @@ def generate_erd_command(
         if overview:
             lark_output.update_erd_page(overview_content, page_token=cfg.lark_parent_doc_id)
             doc_url = f"https://open.larksuite.com/docx/{cfg.lark_parent_doc_id}"
-            typer.echo(f"✓ Uploaded category overview to Lark: {doc_url}")
+            typer.echo(f"[OK] Uploaded category overview to Lark: {doc_url}")
         else:
             lark_output.upload_category_erds(erd_map, page_token=cfg.lark_parent_doc_id, max_categories=max_categories)
             doc_url = f"https://open.larksuite.com/docx/{cfg.lark_parent_doc_id}"
-            typer.echo(f"✓ Uploaded top {min(max_categories, len(erd_map))} category ERDs to Lark: {doc_url}")
+            typer.echo(f"[OK] Uploaded top {min(max_categories, len(erd_map))} category ERDs to Lark: {doc_url}")
             if len(erd_map) > max_categories:
                 typer.echo(f"  (showing top {max_categories} of {len(erd_map)} categories by table count)")
 
     # Help message if no output specified
     if not output_dir and not upload:
-        typer.echo("⚠️  No output specified. Use --output-dir or --upload to save/upload ERDs.")
+        typer.echo("[WARN] No output specified. Use --output-dir or --upload to save/upload ERDs.")
         typer.echo("   Examples:")
         typer.echo("     lore generate-erd --output-dir ./docs/erd")
         typer.echo("     lore generate-erd --upload")
