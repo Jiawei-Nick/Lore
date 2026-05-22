@@ -5,11 +5,25 @@ from pathlib import Path
 import yaml
 
 
-def _substitute_env_vars(value: str) -> str:
-    result = re.sub(r"\$\{(\w+)\}", lambda m: os.environ.get(m.group(1), m.group(0)), value)
-    unresolved = re.findall(r"\$\{(\w+)\}", result)
-    if unresolved:
-        raise ValueError(f"Environment variable(s) not set: {', '.join(unresolved)}")
+def _substitute_env_vars(value: str, *, raise_on_missing: bool = True) -> str:
+    """Substitute ${VAR} references. Uses key-presence check (not value truthiness)
+    so that variables explicitly set to "" are treated as present, not missing.
+    When raise_on_missing=False, unset vars resolve to '' with no error.
+    Note: if a value contains multiple ${VAR} refs and raise_on_missing=False,
+    all unset vars are replaced with '' and the partial result is returned silently.
+    """
+    missing = []
+
+    def replacer(m: re.Match) -> str:
+        key = m.group(1)
+        if key not in os.environ:
+            missing.append(key)
+            return ""
+        return os.environ[key]
+
+    result = re.sub(r"\$\{(\w+)\}", replacer, value)
+    if raise_on_missing and missing:
+        raise ValueError(f"Environment variable(s) not set: {', '.join(missing)}")
     return result
 
 
@@ -22,12 +36,19 @@ def _resolve(d: dict, key: str, *, required: bool = True) -> str:
                 raise ValueError(f"Missing required config key: {key}")
             return ""
         node = node[part]
-    return _substitute_env_vars(str(node))
+    if node is None:
+        if required:
+            raise ValueError(f"Missing required config key: {key}")
+        return ""
+    return _substitute_env_vars(str(node), raise_on_missing=required)
 
 
 @dataclass
 class LoreConfig:
-    aws_bearer_token: str
+    # AWS auth — use ONE of: key pair (IAM) OR session_token alone (STS/SSO)
+    aws_access_key_id: str      # IAM: required. STS/SSO: optional
+    aws_secret_access_key: str  # IAM: required. STS/SSO: optional
+    aws_session_token: str      # STS/SSO: required. IAM: leave blank
     aws_region: str
     lark_app_id: str
     lark_app_secret: str
@@ -38,9 +59,25 @@ class LoreConfig:
 
     @classmethod
     def from_dict(cls, raw: dict) -> "LoreConfig":
+        access_key_id = _resolve(raw, "aws.access_key_id", required=False)
+        secret_access_key = _resolve(raw, "aws.secret_access_key", required=False)
+        session_token = _resolve(raw, "aws.session_token", required=False)
+
+        # Accept either a key pair (IAM) or a session token alone (STS/SSO).
+        has_key_pair = bool(access_key_id and secret_access_key)
+        has_session_token = bool(session_token)
+        if not has_key_pair and not has_session_token:
+            raise ValueError(
+                "AWS credentials missing. Set either:\n"
+                "  AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY  (IAM long-term key pair)\n"
+                "  AWS_SESSION_TOKEN                           (STS/SSO temporary token)"
+            )
+
         return cls(
-            aws_bearer_token=_resolve(raw, "aws.bearer_token"),
-            aws_region=_resolve(raw, "aws.region", required=False) or "us-east-1",
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key,
+            aws_session_token=session_token,
+            aws_region=_resolve(raw, "aws.region", required=False) or "ap-southeast-1",
             lark_app_id=_resolve(raw, "lark.app_id"),
             lark_app_secret=_resolve(raw, "lark.app_secret"),
             lark_folder_token=_resolve(raw, "lark.folder_token"),

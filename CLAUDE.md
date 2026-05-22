@@ -27,6 +27,10 @@ lore init --db mysql://user:pass@host:3306/dbname
 lore analyze --repo ./myapp --branch feature/add-phone
 lore analyze --repo ./myapp --branch feature/xyz --base develop
 
+# Local testing without a live DB — use the sample schema snapshot
+cp lore-schema.example.json lore-schema.json   # copy once, then run analyze normally
+# lore-schema.json is gitignored (runtime state); lore-schema.example.json is the committed reference
+
 # Generate category-based ERDs from schema snapshot
 lore generate-erd --output-dir ./erd_output              # Save all categories to files (.mmd)
 lore generate-erd --overview --output-dir ./erd_output   # Save overview to file
@@ -99,11 +103,18 @@ repo:
 ```bash
 # Branch naming
 feat/<short-description>
+feat/<ticket-id>-<short-description>   # when ticket is known
 fix/<short-description>
+fix/<ticket-id>-<short-description>    # when ticket is known
+
+# Always create a branch before starting any work — never commit directly to main
+git checkout -b feat/<short-description>
+git checkout -b fix/<short-description>
 
 # Commit messages — conventional commits
 # Title: max 50 chars, imperative mood, no trailing period
-# Body: bullet points detailing what changed and why
+# Body: bullet points detailing WHAT changed and WHY (not just what the code does)
+# Never commit .env — only .env.example
 
 "feat: add Liquibase parser support
 
@@ -119,7 +130,75 @@ fix/<short-description>
 "refactor: simplify schema store apply logic"
 "test: add flyway rename column test cases"
 "docs: update lore.yaml config example"
+
+# Pull Requests
+# Target: main
+# Title: same as commit message title
+# Body: summary bullets + test plan
 ```
+
+## Claude Code Automations
+
+Project-level Claude Code automations live in `.claude/`:
+
+```
+.claude/
+├── settings.json          # hooks: block .env edits, auto-run pytest after source edits
+├── agents/
+│   ├── lark-integration-reviewer.md   # validates Lark HTTP-200-error handling
+│   ├── schema-migration-analyzer.md   # validates pipeline parse→route→serialize
+│   ├── erd-generator.md              # implements ERD features (run before erd-reviewer)
+│   └── erd-reviewer.md               # validates ERD generation, FK inference, size limits
+└── skills/
+    ├── add-parser/SKILL.md   # /add-parser — scaffold a new migration parser
+    └── add-output/SKILL.md   # /add-output — scaffold a new output plugin
+```
+
+### Auto-Spawn Rules
+
+```
+# Agents — dispatched by Claude when the trigger condition is met
+
+Change to lore/outputs/lark_doc.py
+  or lore/outputs/lark.py
+  or lore/mermaid_renderer.py           → lark-integration-reviewer
+
+Change to lore/analyzer/claude.py
+  or lore/models.py (enums)
+  or any lore/parsers/*.py              → schema-migration-analyzer
+
+User asks to add/modify ERD feature        → erd-generator → erd-reviewer (in sequence)
+
+Change to lore/erd.py
+  or lore/erd_categorized.py
+  or lore/mermaid_renderer.py           → erd-reviewer
+
+# Skills — invoked by user or by Claude when the task matches
+
+User asks to add a new migration format parser  → /add-parser
+User asks to add a new output destination       → /add-output
+```
+
+### When to dispatch each agent
+
+| Agent | Trigger | What it checks |
+|---|---|---|
+| `lark-integration-reviewer` | Any edit to `lore/outputs/lark_doc.py`, `lark.py`, or `mermaid_renderer.py` | HTTP-200 error guards, token handling, image size limits |
+| `schema-migration-analyzer` | Any edit to `claude.py` (model routing), `models.py` (enums), or parsers | Model routing thresholds, enum serialization, parser output shape |
+| `erd-generator` | Implementing any ERD feature | Writes ERD code following domain invariants (FK inference, size limits, type sanitization) |
+| `erd-reviewer` | After `erd-generator` completes; any edit to `lore/erd.py`, `erd_categorized.py`, or `mermaid_renderer.py` | FK inference, type sanitization, 100K char limit, 5KB mermaid.ink guard, category grouping |
+
+**ERD feature development workflow:**
+```
+New ERD feature requested → erd-generator (implement) → erd-reviewer (review) → commit
+```
+
+### When to invoke each skill
+
+| Skill | When to use |
+|---|---|
+| `/add-parser` | Adding support for a new SQL migration format (Atlas, Alembic, TypeORM, etc.) |
+| `/add-output` | Adding a new documentation target (Confluence, Notion, GitHub Wiki, Slack, etc.) |
 
 ## Test layout
 

@@ -1,11 +1,10 @@
-import os
 import pytest
 from lore.config import load_config, LoreConfig
 
 
 def test_load_config_from_dict():
     raw = {
-        "aws": {"bearer_token": "test-token", "region": "us-west-2"},
+        "aws": {"access_key_id": "test-key", "secret_access_key": "test-secret", "region": "us-west-2"},
         "lark": {
             "app_id": "app123",
             "app_secret": "secret456",
@@ -15,7 +14,8 @@ def test_load_config_from_dict():
         "repo": {"default_path": "./", "default_branch": "main"},
     }
     config = LoreConfig.from_dict(raw)
-    assert config.aws_bearer_token == "test-token"
+    assert config.aws_access_key_id == "test-key"
+    assert config.aws_secret_access_key == "test-secret"
     assert config.aws_region == "us-west-2"
     assert config.lark_app_id == "app123"
     assert config.lark_folder_token == "folder789"
@@ -23,31 +23,42 @@ def test_load_config_from_dict():
 
 
 def test_env_var_substitution(monkeypatch):
-    monkeypatch.setenv("MY_BEARER_TOKEN", "from-env")
+    monkeypatch.setenv("MY_ACCESS_KEY", "key-from-env")
+    monkeypatch.setenv("MY_SECRET_KEY", "secret-from-env")
     raw = {
-        "aws": {"bearer_token": "${MY_BEARER_TOKEN}", "region": "us-east-1"},
+        "aws": {"access_key_id": "${MY_ACCESS_KEY}", "secret_access_key": "${MY_SECRET_KEY}", "region": "us-east-1"},
         "lark": {"app_id": "x", "app_secret": "x", "folder_token": "x"},
         "repo": {"default_path": "./", "default_branch": "main"},
     }
     config = LoreConfig.from_dict(raw)
-    assert config.aws_bearer_token == "from-env"
+    assert config.aws_access_key_id == "key-from-env"
+    assert config.aws_secret_access_key == "secret-from-env"
 
 
 def test_missing_required_field_raises():
     with pytest.raises(ValueError, match="lark.app_id"):
         LoreConfig.from_dict({
-            "aws": {"bearer_token": "token"},
+            "aws": {"access_key_id": "key", "secret_access_key": "secret"},
             "lark": {"app_secret": "x", "folder_token": "x"},
             "repo": {"default_path": "./", "default_branch": "main"},
         })
 
 
+def test_missing_aws_credentials_raises():
+    with pytest.raises(ValueError, match="AWS credentials missing"):
+        LoreConfig.from_dict({
+            "aws": {"region": "us-east-1"},
+            "lark": {"app_id": "x", "app_secret": "x", "folder_token": "x"},
+            "repo": {"default_path": "./", "default_branch": "main"},
+        })
+
+
 def test_unset_env_var_raises(monkeypatch):
-    monkeypatch.delenv("MISSING_VAR", raising=False)
+    monkeypatch.delenv("MISSING_LARK_ID", raising=False)
     raw = {
-        "aws": {"bearer_token": "${MISSING_VAR}"},
-        "lark": {"app_id": "x", "app_secret": "x", "folder_token": "x"},
+        "aws": {"access_key_id": "key", "secret_access_key": "secret"},
+        "lark": {"app_id": "${MISSING_LARK_ID}", "app_secret": "x", "folder_token": "x"},
         "repo": {"default_path": "./", "default_branch": "main"},
     }
-    with pytest.raises(ValueError, match="MISSING_VAR"):
+    with pytest.raises(ValueError, match="MISSING_LARK_ID"):
         LoreConfig.from_dict(raw)

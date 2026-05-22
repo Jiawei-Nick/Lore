@@ -102,7 +102,12 @@ def analyze(
     pipeline = Pipeline(
         source=GitLocalSource(),
         parser=CompositeParser(),
-        analyzer=ClaudeAnalyzer(aws_bearer_token=cfg.aws_bearer_token, aws_region=cfg.aws_region),
+        analyzer=ClaudeAnalyzer(
+            aws_region=cfg.aws_region,
+            aws_access_key_id=cfg.aws_access_key_id,
+            aws_secret_access_key=cfg.aws_secret_access_key,
+            aws_session_token=cfg.aws_session_token,
+        ),
         output=lark_output,
         schema_store=store,
     )
@@ -114,22 +119,27 @@ def analyze(
         typer.echo("No DB migration changes detected in this diff.")
         return
 
-    # Extract modified table names from migrations
-    modified_tables = {change.table for migration in result.migrations for change in migration.changes}
-
-    # Generate ERD focused on modified tables
-    erd = generate_mermaid_erd(store.tables, modified_tables=modified_tables)
+    # Overview ERD → parent page (uses store.tables which is now updated by pipeline)
+    overview_erd = generate_category_overview(store.tables)
     try:
-        lark_output.update_erd_page(erd, page_token=cfg.lark_parent_doc_id)
-        typer.echo(f"ERD updated on parent page (showing {len(modified_tables)} modified tables + related).")
+        lark_output.update_erd_page(overview_erd, page_token=cfg.lark_parent_doc_id)
+        typer.echo("Overview ERD updated on parent page.")
     except RuntimeError as e:
-        if "too many chars" in str(e):
-            typer.echo(f"⚠️  ERD update failed: {e}")
-        else:
-            raise
+        typer.echo(f"⚠️  Overview ERD update failed: {e}")
 
-    typer.echo(f"Risk: {result.analysis.risk_level.value}")
-    typer.echo(f"Summary: {result.analysis.summary}")
+    # Focused ERD → sub-page (generated AFTER pipeline so schema store is updated)
+    modified_tables = {change.table for migration in result.migrations for change in migration.changes}
+    focused_erd = generate_mermaid_erd(store.tables, modified_tables=modified_tables)
+    sub_doc_id = result.output_url.rstrip("/").split("/")[-1] if result.output_url else None
+    try:
+        lark_output.append_erd_to_doc(sub_doc_id, focused_erd)
+        typer.echo(f"Focused ERD appended to analysis doc ({len(modified_tables)} modified tables).")
+    except RuntimeError as e:
+        typer.echo(f"⚠️  Focused ERD append failed: {e}")
+
+    if result.analysis:
+        typer.echo(f"Risk: {result.analysis.risk_level.value}")
+        typer.echo(f"Summary: {result.analysis.summary}")
     typer.echo(f"Lark Doc: {result.output_url}")
 
 

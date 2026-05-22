@@ -48,3 +48,32 @@ def test_no_false_fk_when_table_missing():
     # account table doesn't exist — no FK line should appear
     erd = generate_mermaid_erd(tables)
     assert "||--o{" not in erd
+
+
+def test_modified_tables_filter_applied_on_small_schema():
+    """modified_tables filter must be honoured even when schema fits under 90KB."""
+    tables = {
+        "user": {"columns": {"id": {"type": "BIGINT", "nullable": False}}},
+        "orders": {
+            "columns": {
+                "id": {"type": "BIGINT", "nullable": False},
+                "user_id": {"type": "BIGINT", "nullable": False},
+            }
+        },
+        "products": {"columns": {"id": {"type": "BIGINT", "nullable": False}}},
+    }
+    erd = generate_mermaid_erd(tables, modified_tables={"orders"})
+    assert "orders" in erd
+    assert "user" in erd      # FK parent of orders via user_id
+    assert "products" not in erd  # unrelated table must be excluded
+
+
+def test_no_modified_tables_returns_full_schema():
+    """Without modified_tables, small schema returns all tables."""
+    tables = {
+        "user": {"columns": {"id": {"type": "BIGINT", "nullable": False}}},
+        "products": {"columns": {"id": {"type": "BIGINT", "nullable": False}}},
+    }
+    erd = generate_mermaid_erd(tables)
+    assert "user" in erd
+    assert "products" in erd

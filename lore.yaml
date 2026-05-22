@@ -1,5 +1,9 @@
 aws:
-  bearer_token: ${AWS_BEARER_TOKEN_BEDROCK}
+  # Option A: Long-term IAM credentials
+  access_key_id: ${AWS_ACCESS_KEY_ID}
+  secret_access_key: ${AWS_SECRET_ACCESS_KEY}
+  # Option B: Temporary STS/SSO token (leave blank if using Option A)
+  session_token: ${AWS_SESSION_TOKEN}
   region: ${AWS_REGION}
 
 lark:

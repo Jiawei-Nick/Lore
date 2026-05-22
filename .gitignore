@@ -1,5 +1,5 @@
 ### lore local files
-.claude/
+.claude/settings.local.json
 *.stackdump
 lore-schema.json
 
