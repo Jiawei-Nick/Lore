@@ -43,6 +43,7 @@ def _infer_fk_relationships(tables: dict, table_subset: set[str]) -> list[tuple[
     """Return (parent_table, child_table) pairs within the given subset.
 
     Only returns relationships where both parent and child are in table_subset.
+    Intelligently matches columns ending in _id to tables with various naming patterns.
     """
     relationships = []
     for table_name in table_subset:
@@ -51,9 +52,25 @@ def _infer_fk_relationships(tables: dict, table_subset: set[str]) -> list[tuple[
         table_def = tables[table_name]
         for col_name in table_def.get("columns", {}):
             if col_name.endswith("_id") and col_name != "id":
-                parent = col_name[:-3]  # strip _id
-                if parent in table_subset:
-                    relationships.append((parent, table_name))
+                parent_base = col_name[:-3]  # strip _id (e.g., "user" from "user_id")
+
+                # Try multiple naming patterns to find parent table
+                candidates = [
+                    parent_base,  # exact: user_id → user
+                    f"tb_{parent_base}",  # prefixed: user_id → tb_user
+                    f"tb_{table_name.split('_')[1]}_{parent_base}",  # same category: package_id in tb_commission_* → tb_commission_package
+                ]
+
+                # Also check if any table name ends with the parent_base
+                for potential_parent in table_subset:
+                    if potential_parent.endswith(f"_{parent_base}") or potential_parent.endswith(parent_base):
+                        candidates.append(potential_parent)
+
+                # Find first matching candidate
+                for candidate in candidates:
+                    if candidate in table_subset and candidate != table_name:
+                        relationships.append((candidate, table_name))
+                        break  # Only add one relationship per column
     return relationships
 
 
@@ -63,16 +80,32 @@ def _infer_cross_category_relationships(tables: dict, category_tables: set[str])
     Returns relationships where child is in category_tables but parent is in a different category.
     """
     relationships = []
+    all_tables = set(tables.keys())
+
     for table_name in category_tables:
         if table_name not in tables:
             continue
         table_def = tables[table_name]
         for col_name in table_def.get("columns", {}):
             if col_name.endswith("_id") and col_name != "id":
-                parent = col_name[:-3]
-                # Cross-category: parent exists in schema but not in this category
-                if parent in tables and parent not in category_tables:
-                    relationships.append((parent, table_name))
+                parent_base = col_name[:-3]
+
+                # Try multiple naming patterns
+                candidates = [
+                    parent_base,
+                    f"tb_{parent_base}",
+                ]
+
+                # Also check if any table name ends with the parent_base
+                for potential_parent in all_tables:
+                    if potential_parent.endswith(f"_{parent_base}") or potential_parent.endswith(parent_base):
+                        candidates.append(potential_parent)
+
+                # Find first matching candidate that's NOT in this category
+                for candidate in candidates:
+                    if candidate in all_tables and candidate not in category_tables and candidate != table_name:
+                        relationships.append((candidate, table_name))
+                        break
     return relationships
 
 

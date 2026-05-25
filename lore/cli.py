@@ -44,6 +44,37 @@ def init_parent(
     typer.echo("Then run: lore init --db <your-db-url>")
 
 
+@app.command("setup-erd-folder")
+def setup_erd_folder(
+    config: str = typer.Option("lore.yaml", help="Path to lore.yaml"),
+    parent_folder: str = typer.Option(..., help="Parent folder token (e.g., OiX7fbnIWldTCSdqDSKlWjPygMg for 'Lore Sync')"),
+    subfolder_name: str = typer.Option("ERD Diagram", help="Subfolder name to create"),
+    document_id: str = typer.Option(..., help="Document ID to move into the subfolder"),
+) -> None:
+    """Create a subfolder and move a document into it.
+
+    Example:
+      lore setup-erd-folder --parent-folder OiX7fbnIWldTCSdqDSKlWjPygMg \\
+                            --subfolder-name "ERD Diagram" \\
+                            --document-id FQlEd6sEYoEiudxpVQ0l9SNvgEg
+    """
+    cfg = load_config(config)
+    output = LarkDocOutput(
+        app_id=cfg.lark_app_id,
+        app_secret=cfg.lark_app_secret,
+        folder_token=cfg.lark_folder_token,
+    )
+
+    typer.echo(f"Creating subfolder '{subfolder_name}' in parent folder...")
+    subfolder_token = output.create_folder(name=subfolder_name, parent_folder_token=parent_folder)
+    typer.echo(f"✓ Subfolder created with token: {subfolder_token}")
+
+    typer.echo(f"\nMoving document {document_id} to subfolder...")
+    output.move_document_to_folder(document_id=document_id, target_folder_token=subfolder_token)
+    typer.echo(f"✓ Document moved successfully")
+    typer.echo(f"\nDocument is now in: 'Lore Sync' / '{subfolder_name}'")
+
+
 @app.command()
 def init(
     db: str = typer.Option(..., help="Database connection URL (postgresql://... or mysql://...)"),
@@ -150,23 +181,29 @@ def generate_erd_command(
     upload: bool = typer.Option(False, "--upload", help="Upload ERDs to Lark parent document"),
     overview: bool = typer.Option(False, "--overview", help="Generate category overview instead of detailed ERDs"),
     config: str = typer.Option("lore.yaml", help="Path to lore.yaml (required if --upload)"),
-    max_categories: int = typer.Option(5, help="Max categories to upload to Lark (limited by 100K char limit)"),
+    max_categories: int = typer.Option(None, help="Max categories to upload to Lark (default: no limit, uploads all renderable categories <15KB)"),
+    individual: bool = typer.Option(False, "--individual", help="Upload each category ERD individually (one at a time, not batched)"),
+    doc_id: str = typer.Option(None, help="Override parent document ID (default: use LARK_PARENT_DOC_ID from config)"),
+    as_code: bool = typer.Option(False, "--as-code", help="Upload ERDs as code blocks without attempting image rendering (faster)"),
 ) -> None:
     """Generate category-based ERD diagrams from the schema snapshot.
 
     Output modes:
       - Default: Save detailed ERDs to files (one .mmd file per category)
       - --overview: Generate high-level category relationship diagram
-      - --upload: Upload ERDs to Lark parent document
+      - --upload: Upload ERDs to Lark parent document (automatically renders categories <15KB as images)
+      - --individual: Upload each category separately (one at a time, not batched)
 
     Examples:
       lore generate-erd --output-dir ./docs/erd                    # Save all categories to files
       lore generate-erd --overview --output-dir ./docs/erd         # Save overview to file
-      lore generate-erd --upload --overview                        # Upload overview to Lark (recommended)
-      lore generate-erd --output-dir ./docs/erd --upload --overview  # Both file + Lark
+      lore generate-erd --upload                                   # Upload all renderable categories as images (batched)
+      lore generate-erd --upload --individual                      # Upload each category separately
+      lore generate-erd --upload --max-categories 20               # Upload only top 20 renderable categories
+      lore generate-erd --upload --overview                        # Upload overview diagram
 
-    Note: For large schemas (100+ tables), use --overview for Lark uploads due to 100K char limit.
-          Detailed category ERDs work best when saved to files.
+    Note: Categories >15KB are automatically skipped to avoid rendering failures.
+          Bot feature must be enabled in Lark app to upload images.
     """
     from pathlib import Path
 
@@ -213,20 +250,26 @@ def generate_erd_command(
     # Upload to Lark if requested
     if upload:
         cfg = load_config(config)
+        target_doc_id = doc_id or cfg.lark_parent_doc_id
         lark_output = LarkDocOutput(
             app_id=cfg.lark_app_id,
             app_secret=cfg.lark_app_secret,
             folder_token=cfg.lark_folder_token,
-            parent_doc_id=cfg.lark_parent_doc_id,
+            parent_doc_id=target_doc_id,
         )
 
         if overview:
-            lark_output.update_erd_page(overview_content, page_token=cfg.lark_parent_doc_id)
-            doc_url = f"https://open.larksuite.com/docx/{cfg.lark_parent_doc_id}"
+            lark_output.update_erd_page(overview_content, page_token=target_doc_id)
+            doc_url = f"https://open.larksuite.com/docx/{target_doc_id}"
             typer.echo(f"[OK] Uploaded category overview to Lark: {doc_url}")
+        elif individual:
+            lark_output.upload_individual_category_erds(erd_map, page_token=target_doc_id, as_code=as_code)
+            doc_url = f"https://open.larksuite.com/docx/{target_doc_id}"
+            mode = "code blocks" if as_code else "images/code blocks"
+            typer.echo(f"[OK] Uploaded individual category ERDs ({mode}) to Lark: {doc_url}")
         else:
-            lark_output.upload_category_erds(erd_map, page_token=cfg.lark_parent_doc_id, max_categories=max_categories)
-            doc_url = f"https://open.larksuite.com/docx/{cfg.lark_parent_doc_id}"
+            lark_output.upload_category_erds(erd_map, page_token=target_doc_id, max_categories=max_categories)
+            doc_url = f"https://open.larksuite.com/docx/{target_doc_id}"
             typer.echo(f"[OK] Uploaded top {min(max_categories, len(erd_map))} category ERDs to Lark: {doc_url}")
             if len(erd_map) > max_categories:
                 typer.echo(f"  (showing top {max_categories} of {len(erd_map)} categories by table count)")
