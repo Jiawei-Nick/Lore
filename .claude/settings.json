@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'file=$(echo \"$CLAUDE_TOOL_INPUT\" | python3 -c \"import json,sys; print(json.load(sys.stdin).get(\\\"file_path\\\",\\\"\\\"))\"); case \"$file\" in *.env|*/.env) echo \"Blocked: .env contains live credentials — edit .env.example instead\" >&2; exit 1;; esac'",
+            "blocking": true
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'file=$(echo \"$CLAUDE_TOOL_INPUT\" | python3 -c \"import json,sys; print(json.load(sys.stdin).get(\\\"file_path\\\",\\\"\\\"))\"); echo \"$file\" | grep -qE \"lore/.*\\.py$\" && python -m pytest -x -q 2>&1 | tail -20 || true'",
+            "blocking": false
+          }
+        ]
+      }
+    ]
+  }
+}
