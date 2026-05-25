@@ -1,0 +1,43 @@
+%% Category: dmd (3 tables)
+erDiagram
+    tb_dmd_biz_domain {
+        bigint id
+        varchar_32_ env
+        varchar_255_ brand
+        tinyint client_type
+        tinyint domain_type
+        varchar_32_ biz_type
+        varchar_32_ region
+        varchar_32_ protocol
+        varchar_255_ domain
+        tinyint state
+        varchar_255_ create_by
+        datetime create_time
+        tinyint is_del
+    }
+    tb_dmd_seed {
+        bigint id
+        varchar_32_ env
+        varchar_255_ brand
+        tinyint client_type
+        varchar_255_ url
+        tinyint state
+        varchar_255_ create_by
+        datetime create_time
+        tinyint is_del
+    }
+    tb_dmd_snapshot {
+        bigint id
+        varchar_32_ env
+        varchar_255_ brand
+        tinyint client_type
+        text encryption_raw
+        tinyint sync_state
+        tinyint published_state
+        datetime published_time
+        varchar_1024_ remark
+        varchar_255_ create_by
+        varchar_255_ update_by
+        datetime create_time
+        tinyint is_del
+    }

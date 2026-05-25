@@ -1,0 +1,38 @@
+%% Category: news (1 tables)
+erDiagram
+    tb_news {
+        bigint id
+        varchar_128_ data_id
+        tinyint_unsigned data_source
+        char_1_ news_type
+        varchar_255_ news_img
+        varchar_200_ news_title
+        varchar_200_ news_titlecn
+        mediumtext news_content
+        text news_contentcn
+        varchar_500_ content_url
+        varchar_500_ content_urlcn
+        varchar_255_ push_content
+        tinyint pushed
+        int_unsigned news_reads
+        int real_news_reads
+        int_unsigned news_comments
+        varchar_40_ creter_id
+        timestamp create_time
+        varchar_500_ news_product
+        timestamp pub_time
+        varchar_500_ summary
+        tinyint status
+        varchar_128_ news_source_desc
+        varchar_1280_ news_countries
+        bigint news_created_by
+        int_unsigned news_reads_people
+        varchar_200_ news_titlecntw
+        text news_contentcntw
+        tinyint news_category
+        varchar_10_ lang
+        varchar_255_ remark
+    }
+
+    %% Cross-category references:
+    %% tb_sales_kpi_rerun_data (external) --> tb_news

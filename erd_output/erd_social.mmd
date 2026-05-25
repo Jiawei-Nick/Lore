@@ -1,0 +1,15 @@
+%% Category: social (1 tables)
+erDiagram
+    tb_social_trading_subscriptions {
+        int id
+        int account_id
+        int external_account
+        int server_id
+        varchar_11_ currency
+        decimal_18_4_ pending_fees_amount
+        datetime insert_date
+    }
+
+    %% Cross-category references:
+    %% old_tb_wallet_projection_account (external) --> tb_social_trading_subscriptions
+    %% tb_mail_server (external) --> tb_social_trading_subscriptions

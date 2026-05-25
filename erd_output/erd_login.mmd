@@ -1,0 +1,18 @@
+%% Category: login (1 tables)
+erDiagram
+    tb_login_white_ip {
+        int id
+        int user_id
+        varchar_200_ login_name
+        varchar_50_ login_ip
+        varchar_512_ login_user_agent
+        int pass_flag
+        datetime create_time
+        datetime update_time
+        varchar_500_ extends1
+        varchar_500_ extends2
+        varchar_500_ extends3
+    }
+
+    %% Cross-category references:
+    %% tb_marketing_dashboard_user (external) --> tb_login_white_ip

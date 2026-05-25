@@ -1,0 +1,43 @@
+%% Category: cc (3 tables)
+erDiagram
+    tb_cc_commission {
+        int id
+        int sales_id
+        tinyint_1_ cc_commission_type
+        tinyint_1_ cc_user_type
+        decimal_40_2_ commission_amount
+        tinyint_1_ status
+        date settle_date
+        datetime create_time
+    }
+    tb_cc_report_net_deposit {
+        int id
+        int user_id
+        int sales_id
+        int apply_sales_id
+        int transaction_id
+        tinyint_1_ transaction_type
+        decimal_40_2_ transaction_amount
+        varchar_200_ transaction_comment
+        varchar_50_ original_amount
+        varchar_10_ qftd
+        date settle_date
+        datetime create_time
+    }
+    tb_cc_report_qftd {
+        int id
+        int user_id
+        int sales_id
+        decimal_40_2_ ftd_amount
+        tinyint_1_ cc_user_type
+        date settle_date
+        datetime create_time
+    }
+
+    %% Cross-category references:
+    %% tb_marketing_dashboard_user (external) --> tb_cc_report_qftd
+    %% tb_sales (external) --> tb_cc_report_qftd
+    %% tb_sales (external) --> tb_cc_commission
+    %% tb_marketing_dashboard_user (external) --> tb_cc_report_net_deposit
+    %% tb_sales (external) --> tb_cc_report_net_deposit
+    %% tb_user_coupon_trade_record_transaction (external) --> tb_cc_report_net_deposit

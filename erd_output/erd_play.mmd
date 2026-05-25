@@ -1,0 +1,14 @@
+%% Category: play (1 tables)
+erDiagram
+    tb_play_vip_temp_copy_trading_notional_value {
+        bigint id
+        bigint tenant_id
+        bigint crm_user_id
+        varchar_50_ server_id
+        decimal_38_6_ notional_value
+        varchar_50_ day
+        datetime create_time
+    }
+
+    %% Cross-category references:
+    %% tb_mail_server (external) --> tb_play_vip_temp_copy_trading_notional_value

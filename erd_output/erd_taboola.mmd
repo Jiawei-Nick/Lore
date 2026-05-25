@@ -1,0 +1,17 @@
+%% Category: taboola (1 tables)
+erDiagram
+    tb_taboola_s2s_record {
+        int id
+        int user_id
+        varchar_255_ click_id
+        text request
+        text response
+        varchar_50_ result
+        text message
+        datetime request_time
+        datetime create_time
+        datetime update_time
+    }
+
+    %% Cross-category references:
+    %% tb_marketing_dashboard_user (external) --> tb_taboola_s2s_record

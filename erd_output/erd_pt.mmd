@@ -1,0 +1,287 @@
+%% Category: pt (15 tables)
+erDiagram
+    tb_pt_account {
+        int id
+        int session_id
+        int user_id
+        int stage_id
+        int mt4_account
+        int datasource_id
+        varchar_255_ account_group
+        int status
+        decimal_38_4_ daily_initial_balance
+        int leverage
+        varchar_10_ currency
+        datetime create_time
+        datetime update_time
+        datetime end_time
+        datetime expired_time
+        varchar_255_ processed_note
+        int operator_id
+        varchar_255_ operator_name
+        tinyint_1_ is_new
+        tinyint_1_ is_archive
+        tinyint_1_ has_exceeded_profit_limit
+        varchar_255_ risk_processed_note
+        int risk_operator_id
+        varchar_50_ risk_operator_name
+        tinyint user_type
+    }
+    tb_pt_balance_log {
+        int id
+        int mt4_account
+        decimal_38_4_ balance
+        decimal_38_4_ daily_balance
+        int trading_day
+        int trades
+        datetime create_time
+        datetime update_time
+    }
+    tb_pt_compensation {
+        int id
+        int user_id
+        varchar_255_ session_number
+        int mt4_account
+        int reason
+        decimal_38_4_ orig_price
+        decimal_38_4_ payment_amount
+        varchar_10_ currency
+        tinyint status
+        datetime redeemed_time
+        varchar_255_ redeemed_session_number
+        int redeemed_mt4_account
+        int promo_id
+        datetime create_time
+        datetime update_time
+        varchar_255_ processed_note
+        varchar_255_ operator_name
+    }
+    tb_pt_daily_log {
+        int id
+        int mt4_account
+        decimal_38_4_ equity
+        date date
+        tinyint_1_ is_performing_day
+        tinyint has_traded
+        datetime create_time
+        datetime update_time
+        varchar_400_ log_detail
+    }
+    tb_pt_fee_setting {
+        int id
+        int type
+        decimal_38_4_ init_balance
+        decimal_38_4_ fee
+        varchar_10_ currency
+        datetime create_time
+        datetime update_time
+        tinyint_1_ is_del
+        varchar_1000_ country_codes
+    }
+    tb_pt_history {
+        int id
+        int session_id
+        int user_id
+        datetime create_time
+        int type
+        text vars
+        varchar_1024_ event
+    }
+    tb_pt_payment {
+        int id
+        int session_id
+        int user_id
+        varchar_255_ real_name
+        int payment_type
+        int payment_channel
+        varchar_255_ payment_channel_name
+        decimal_38_4_ orig_price
+        varchar_255_ promo_code
+        decimal_38_4_ payment_amount
+        varchar_10_ currency
+        decimal_38_4_ third_party_rate
+        decimal_38_4_ usd_rate
+        decimal_38_4_ order_amount
+        varchar_10_ order_currency
+        decimal_38_4_ received_order_amount
+        decimal_38_4_ received_payment_amount
+        decimal_38_4_ received_payment_amount_usd
+        int status
+        tinyint_1_ refunded
+        varchar_6_ card_begin_six_digits
+        varchar_4_ card_last_four_digits
+        varchar_255_ card_holder_name
+        varchar_2_ expiry_month
+        varchar_4_ expiry_year
+        tinyint_1_ is_payout
+        datetime create_time
+        datetime update_time
+        varchar_255_ processed_note
+        int operator_id
+        varchar_255_ operator_name
+        tinyint_1_ first_time_fee
+        varchar_50_ cpa_id
+        int account_owner_id
+        varchar_200_ account_owner_name
+        int sales_id
+        varchar_200_ sales_name
+        text attach_variables
+    }
+    tb_pt_payout {
+        int id
+        int session_id
+        int account_id
+        tinyint payout_type
+        varchar_32_ order_number
+        varchar_10_ third_payment_code
+        text third_attach_variable
+        text third_mandatory
+        varchar_64_ wallet_address
+        smallint payment_type
+        smallint payment_channel
+        varchar_128_ payment_account_name
+        varchar_256_ payment_account_number
+        varchar_2000_ payment_notes
+        decimal_40_8_ init_amount
+        varchar_10_ currency
+        decimal_40_6_ rate
+        decimal_40_8_ fee
+        decimal_40_8_ actual_amount
+        decimal_40_6_ usd_rate
+        decimal_40_8_ usd_actual_amount
+        tinyint status
+        datetime create_time
+        datetime update_time
+        int operator_id
+        varchar_255_ operator_name
+        int risk_id
+        varchar_255_ risk_name
+        bit_1_ is_del
+        varchar_50_ cpa_id
+        int account_owner_id
+        varchar_200_ account_owner_name
+        int sales_id
+        varchar_200_ sales_name
+        varchar_10_ currency_number
+        varchar_10_ order_currency
+        varchar_1000_ additional_info
+    }
+    tb_pt_process_note {
+        int id
+        int payout_id
+        varchar_32_ status_form
+        varchar_32_ status_to
+        varchar_32_ update_user
+        varchar_255_ note
+        datetime create_time
+        datetime update_time
+        bit_1_ is_del
+        varchar_255_ note_to_client
+    }
+    tb_pt_promo {
+        int id
+        varchar_20_ promo_code
+        varchar_50_ promo_name
+        varchar_255_ promo_desc
+        int promo_stock
+        int promo_usage
+        int promo_type
+        int off_percentage
+        decimal_38_4_ off_amount
+        tinyint_1_ is_del
+        tinyint_1_ is_compensate
+        datetime create_time
+        datetime update_time
+        datetime start_time
+        datetime_3_ end_time
+        tinyint re_use
+        int multiple_count
+        tinyint status
+        varchar_50_ operator_name
+        mediumtext condition
+    }
+    tb_pt_promo_fee_mapping {
+        int id
+        int promo_code_id
+        int fee_setting_id
+    }
+    tb_pt_promo_log {
+        int id
+        int promo_id
+        varchar_50_ type
+        mediumtext from
+        mediumtext to
+        varchar_255_ processed_note
+        int operator_id
+        varchar_50_ operator_name
+        datetime create_time
+    }
+    tb_pt_promo_temp {
+        int id
+        varchar_50_ promo_code
+        varchar_50_ promo_name
+        varchar_255_ promo_desc
+        int promo_stock
+        int promo_type
+        int off_percentage
+        decimal_38_4_ off_amount
+        datetime start_time
+        datetime_3_ end_time
+        int re_use
+        int multiple_count
+        mediumtext condition
+    }
+    tb_pt_session {
+        int id
+        varchar_255_ session_number
+        int user_id
+        varchar_10_ currency
+        decimal_38_4_ initial_balance
+        int stage_id
+        int fee_setting_id
+        int status
+        datetime create_time
+        datetime update_time
+        varchar_255_ update_user
+        int pt_client_id
+        tinyint_1_ is_compensate
+        tinyint_1_ is_instant
+    }
+    tb_pt_stage_setting {
+        int id
+        int type
+        int stage
+        int max_duration
+        int min_trading_day
+        decimal_38_4_ max_daily_loss
+        decimal_38_4_ max_total_loss
+        decimal_38_4_ profit_target
+        decimal_38_4_ min_equity_increase
+        datetime create_time
+        datetime update_time
+        tinyint_1_ is_demo
+        tinyint_1_ is_del
+    }
+    tb_pt_fee_setting ||--o{ tb_pt_promo_fee_mapping : "has"
+    tb_pt_fee_setting ||--o{ tb_pt_session : "has"
+    tb_pt_session ||--o{ tb_pt_payment : "has"
+    tb_pt_session ||--o{ tb_pt_payout : "has"
+    tb_pt_account ||--o{ tb_pt_payout : "has"
+    tb_pt_payout ||--o{ tb_pt_process_note : "has"
+    tb_pt_promo ||--o{ tb_pt_promo_log : "has"
+    tb_pt_session ||--o{ tb_pt_account : "has"
+    tb_pt_promo ||--o{ tb_pt_compensation : "has"
+    tb_pt_session ||--o{ tb_pt_history : "has"
+
+    %% Cross-category references:
+    %% tb_marketing_dashboard_user (external) --> tb_pt_session
+    %% tb_marketing_dashboard_user (external) --> tb_pt_payment
+    %% tb_cpa_allot_cr_cpa (external) --> tb_pt_payment
+    %% tb_sales (external) --> tb_pt_payment
+    %% old_tb_wallet_projection_account (external) --> tb_pt_payout
+    %% tb_card_trade_card_risk (external) --> tb_pt_payout
+    %% tb_cpa_allot_cr_cpa (external) --> tb_pt_payout
+    %% tb_sales (external) --> tb_pt_payout
+    %% tb_marketing_dashboard_user (external) --> tb_pt_account
+    %% tb_marketing_dashboard_user (external) --> tb_pt_compensation
+    %% tb_marketing_dashboard_user (external) --> tb_pt_history

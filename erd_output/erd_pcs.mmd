@@ -1,0 +1,20 @@
+%% Category: pcs (3 tables)
+erDiagram
+    tb_pcs_country_limit {
+        int id
+        int country_id
+        tinyint_1_ is_positive
+    }
+    tb_pcs_function_prop {
+        int id
+        int function_code
+        varchar_255_ value
+    }
+    tb_pcs_user_whitelist {
+        int id
+        int user_id
+    }
+
+    %% Cross-category references:
+    %% tb_marketing_dashboard_user (external) --> tb_pcs_user_whitelist
+    %% tb_country (external) --> tb_pcs_country_limit

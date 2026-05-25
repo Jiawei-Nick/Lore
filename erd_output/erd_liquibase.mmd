@@ -1,0 +1,24 @@
+%% Category: liquibase (2 tables)
+erDiagram
+    databasechangelog {
+        varchar_255_ ID
+        varchar_255_ AUTHOR
+        varchar_255_ FILENAME
+        datetime DATEEXECUTED
+        int ORDEREXECUTED
+        varchar_10_ EXECTYPE
+        varchar_35_ MD5SUM
+        varchar_255_ DESCRIPTION
+        varchar_255_ COMMENTS
+        varchar_255_ TAG
+        varchar_20_ LIQUIBASE
+        varchar_255_ CONTEXTS
+        varchar_255_ LABELS
+        varchar_10_ DEPLOYMENT_ID
+    }
+    databasechangeloglock {
+        int ID
+        bit_1_ LOCKED
+        datetime LOCKGRANTED
+        varchar_255_ LOCKEDBY
+    }

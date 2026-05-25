@@ -1,0 +1,60 @@
+%% Category: component (4 tables)
+erDiagram
+    tb_component {
+        bigint id
+        varchar_255_ component_name
+        tinyint_1_ component_type
+        tinyint_1_ sub_component_type
+        int sub_indicator_type
+        varchar_255_ config
+        varchar_512_ data_config
+        int refresh_interval
+        bigint create_user
+        datetime create_time
+        bigint update_user
+        datetime update_time
+        tinyint_1_ is_del
+    }
+    tb_component_filter_condition {
+        bigint id
+        bigint component_id
+        bigint tag_id
+        tinyint_1_ filter_type
+        varchar_255_ filter_values
+        int sort
+        bigint create_user
+        datetime create_time
+        bigint update_user
+        datetime update_time
+        tinyint_1_ is_del
+    }
+    tb_component_group_tag_relation {
+        bigint id
+        bigint component_id
+        bigint tag_id
+        bigint create_user
+        datetime create_time
+        bigint update_user
+        datetime update_time
+        tinyint_1_ is_del
+    }
+    tb_component_indicator_dim_relation {
+        bigint id
+        bigint component_id
+        bigint indicator_id
+        int sub_indicator_type
+        varchar_16_ unit
+        int decimal_places
+        bigint create_user
+        datetime create_time
+        bigint update_user
+        datetime update_time
+        tinyint_1_ is_del
+    }
+    tb_component ||--o{ tb_component_filter_condition : "has"
+    tb_component ||--o{ tb_component_indicator_dim_relation : "has"
+    tb_component ||--o{ tb_component_group_tag_relation : "has"
+
+    %% Cross-category references:
+    %% tb_group_tag (external) --> tb_component_filter_condition
+    %% tb_group_tag (external) --> tb_component_group_tag_relation

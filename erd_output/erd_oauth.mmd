@@ -1,0 +1,27 @@
+%% Category: oauth (2 tables)
+erDiagram
+    oauth_client_details {
+        bigint_unsigned id
+        varchar_100_ client_id
+        varchar_100_ resource_ids
+        varchar_200_ client_secret
+        varchar_20_ scope
+        varchar_200_ authorized_grant_types
+        varchar_100_ web_server_redirect_uri
+        varchar_250_ authorities
+        int access_token_validity
+        int refresh_token_validity
+        varchar_4096_ additional_information
+        varchar_20_ autoapprove
+    }
+    oauth_exception_log {
+        int id
+        int status
+        varchar_255_ exception
+        varchar_1024_ message
+        varchar_255_ path
+        varchar_2048_ stack_trace
+        datetime create_time
+        varchar_255_ remark
+        int ignore_ex
+    }

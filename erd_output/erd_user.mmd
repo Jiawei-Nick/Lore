@@ -1,0 +1,1246 @@
+%% Category: user (81 tables)
+erDiagram
+    tb_user_active_statistics {
+        int id
+        int user_id
+        date month
+        datetime month_first_deposit_time
+        datetime month_last_deposit_time
+        datetime month_first_open_trade_time
+        datetime month_last_open_trade_time
+        datetime month_first_close_trade_time
+        datetime month_last_close_trade_time
+        datetime last_hold_trade_time
+        tinyint_1_ is_del
+        datetime create_time
+        datetime update_time
+    }
+    tb_user_all {
+        int id
+        varchar_200_ real_name
+        int account_type
+        varchar_255_ email
+        varchar_1000_ phone_num
+        tinyint status
+        datetime create_time
+        datetime update_time
+        bit_1_ is_del
+        varchar_20_ language
+        int website_user_type
+        varchar_20_ country_code
+        varchar_50_ regulator
+    }
+    tb_user_bak_20250901 {
+        int id
+        varchar_50_ first_name
+        varchar_50_ last_name
+        varchar_50_ nick_name
+        varchar_200_ user_name
+        varchar_200_ real_name
+        int account_type
+        varchar_255_ email
+        date birthday
+        int tel_num
+        varchar_128_ password
+        tinyint_1_ password_changed
+        varchar_128_ home_num
+        varchar_255_ phone_num
+        tinyint status
+        datetime last_login_time
+        varchar_48_ last_login_ip
+        tinyint ip_change_warn
+        int login_num
+        varchar_48_ update_ip
+        datetime update_time
+        datetime create_time
+        varchar_48_ create_ip
+        varchar_10_ regist_area
+        tinyint is_del
+        varchar_20_ firstLanguage
+        varchar_20_ second_language
+        int source_channel_id
+        int website_user_type
+        varchar_32_ title
+        varchar_20_ salesforce_id
+        varchar_30_ auth_type
+        tinyint auth_status
+        varchar_128_ salt
+        varchar_255_ comment
+        varchar_20_ province_code
+        varchar_20_ country_code
+        tinyint_1_ is_appraisal
+        varchar_20_ city_code
+        varchar_50_ operator
+        varchar_255_ email_sub
+        int user_activation
+        varchar_2_ kaizen_member
+        varchar_255_ middle_name
+        varchar_50_ plat_form
+        varchar_255_ tag_custom
+        varchar_255_ tag_system
+        tinyint_1_ leads_register_status
+        datetime last_contact_time
+        int unprocess_task_amount
+        int interest_degree
+        varchar_200_ phone_last_eight
+        int is_conflict
+        int authentication_status
+        datetime authentication_time
+        tinyint is_two_fa_user
+        varchar_50_ two_fa_key
+        datetime ftd
+        varchar_255_ hubspot_email
+        int lead_type
+        varchar_50_ inx_tel_num
+        int user_classification
+        varchar_300_ link_info_id
+        json multi_factor_auth_switch
+        datetime app_device_change_date
+        datetime email_last_change_time
+        datetime two_fa_last_change_time
+        varchar_40_ new_two_fa_key
+        json authentication
+        int mark_user_type
+        varchar_50_ ftd_order_number
+        varchar_255_ contact_number
+        int wallet_status
+        varchar_255_ campaign_source
+        varchar_50_ registration_type
+        varchar_50_ registration_platform
+        varchar_255_ track
+        int wftd_status
+        varchar_100_ user_nick
+    }
+    tb_user_config_operate_log {
+        int id
+        varchar_255_ regulator
+        varchar_255_ module_type
+        text old_value
+        text new_value
+        varchar_255_ operate_type
+        text operate_req_data
+        text operate_resp_data
+        varchar_255_ operation_object
+        varchar_255_ operate_source
+        varchar_255_ operation_details
+        varchar_255_ operate_user
+        varchar_255_ operate_user_name
+        datetime operate_time
+        text remark
+        varchar_255_ event_id
+        varchar_255_ operate_ip
+        int is_del
+    }
+    tb_user_config_operate_log_back {
+        int id
+        varchar_255_ regulator
+        varchar_255_ module_type
+        text old_value
+        text new_value
+        varchar_255_ operate_type
+        text operate_req_data
+        text operate_resp_data
+        varchar_255_ operation_object
+        varchar_255_ operate_source
+        varchar_255_ operation_details
+        varchar_255_ operate_user
+        varchar_255_ operate_user_name
+        datetime operate_time
+        varchar_255_ remark
+        varchar_255_ event_id
+        varchar_255_ operate_ip
+        int is_del
+    }
+    tb_user_copy_active_statistics {
+        int id
+        int user_id
+        date month
+        datetime month_first_open_trade_time
+        datetime month_last_open_trade_time
+        datetime month_first_close_trade_time
+        datetime month_last_close_trade_time
+        datetime last_hold_trade_time
+        tinyint_1_ is_del
+        datetime create_time
+        datetime update_time
+    }
+    tb_user_copy_trade_statistics {
+        int user_id
+        datetime first_trade_time
+        varchar_32_ first_trade_symbol
+        datetime last_trade_time
+        varchar_32_ last_trade_symbol
+        datetime create_time
+        datetime update_time
+    }
+    tb_user_coupon {
+        bigint id
+        bigint coupon_id
+        varchar_40_ user_id
+        varchar_255_ refdata_id
+        varchar_50_ ref_source
+        tinyint use_status
+        varchar_50_ use_accountid
+        datetime receive_time
+        datetime use_time
+        datetime start_time
+        datetime expire_time
+        varchar_10_ use_tradelimit
+        varchar_10000_ limittrade_product
+        varchar_4_ agree_rule
+        tinyint is_remind
+        datetime create_time
+        datetime update_time
+        varchar_255_ remark
+        int unlock_priority
+        varchar_255_ request_id
+    }
+    tb_user_coupon_archive {
+        bigint id
+        bigint coupon_id
+        varchar_40_ user_id
+        varchar_255_ refdata_id
+        varchar_50_ ref_source
+        tinyint use_status
+        varchar_50_ use_accountid
+        datetime receive_time
+        datetime use_time
+        datetime start_time
+        datetime expire_time
+        varchar_10_ use_tradelimit
+        varchar_10000_ limittrade_product
+        varchar_4_ agree_rule
+        tinyint is_remind
+        datetime create_time
+        datetime update_time
+        varchar_255_ remark
+        varchar_255_ request_id
+    }
+    tb_user_coupon_exchange {
+        bigint id
+        bigint coupon_id
+        bigint user_coupon_id
+        varchar_100_ redeem_code
+        datetime create_time
+        datetime update_time
+    }
+    tb_user_coupon_exchange_archive {
+        bigint id
+        bigint coupon_id
+        bigint user_coupon_id
+        varchar_100_ redeem_code
+        datetime create_time
+        datetime update_time
+    }
+    tb_user_coupon_statistic {
+        bigint id
+        bigint user_coupon_id
+        varchar_40_ currency
+        decimal_30_2_ amount
+        decimal_30_2_ amount_usd
+        datetime create_time
+        datetime update_time
+    }
+    tb_user_coupon_trade_record {
+        bigint id
+        varchar_40_ user_id
+        varchar_32_ symbol
+        bigint_unsigned ticket
+        int login
+        decimal_38_4_ volume
+        decimal_38_4_ lots
+        decimal_38_4_ remaining_lots
+        int server_id
+        tinyint account_type
+        datetime open_time
+        datetime close_time
+        datetime create_time
+        datetime update_time
+        decimal_38_4_ notional_volume
+    }
+    tb_user_coupon_trade_record_archive {
+        bigint id
+        varchar_40_ user_id
+        varchar_10_ symbol
+        bigint_unsigned ticket
+        int login
+        decimal_38_4_ volume
+        decimal_38_4_ lots
+        decimal_38_4_ remaining_lots
+        int server_id
+        tinyint account_type
+        datetime open_time
+        datetime close_time
+        datetime create_time
+        datetime update_time
+    }
+    tb_user_coupon_trade_record_transaction {
+        bigint id
+        varchar_40_ user_id
+        bigint user_coupon_id
+        bigint user_coupon_trade_record_id
+        decimal_38_4_ consumed_lots
+        datetime consumed_time
+        int is_del
+        datetime create_time
+        datetime update_time
+    }
+    tb_user_data_global {
+        int id
+        int user_id
+        int user_type
+        tinyint context
+        tinyint data_type
+        varchar_100_ data_key
+        text data_value
+    }
+    tb_user_dimension_change_history {
+        bigint id
+        int account
+        int user_id
+        varchar_32_ change_type_code
+        varchar_64_ change_field
+        varchar_512_ old_value
+        varchar_512_ new_value
+        datetime change_time
+        datetime create_time
+        tinyint_1_ is_del
+    }
+    tb_user_flag_type {
+        int id
+        varchar_50_ name
+        varchar_50_ name_trans
+        varchar_100_ icon
+        varchar_100_ style
+        bit_1_ is_del
+    }
+    tb_user_function_security {
+        bigint id
+        int user_id
+        varchar_50_ from_function_code
+        varchar_50_ limit_function_code
+        json limit_rule_content
+        datetime limit_time
+        int rule_id
+        datetime operator_time
+        datetime create_time
+    }
+    tb_user_indicator_daily_summary {
+        bigint id
+        bigint indicator_id
+        int indicator_type
+        bigint user_id
+        bigint sales_id
+        bigint ib_id
+        bigint cpa_id
+        date summary_date
+        decimal_38_8_ summary_value
+        bigint create_user
+        datetime create_time
+        bigint update_user
+        datetime update_time
+        tinyint_1_ is_del
+    }
+    tb_user_indicator_monthly_summary {
+        bigint id
+        bigint indicator_id
+        int indicator_type
+        bigint user_id
+        bigint sales_id
+        bigint ib_id
+        bigint cpa_id
+        varchar_7_ summary_month
+        decimal_38_8_ summary_value
+        bigint create_user
+        datetime create_time
+        bigint update_user
+        datetime update_time
+        tinyint_1_ is_del
+    }
+    tb_user_inner {
+        int user_id
+        varchar_30_ user_name
+        varchar_30_ last_name
+        varchar_30_ nick_name
+        varchar_30_ first_name
+        varchar_30_ real_name
+        int org_id
+        int role_id
+        char_25_ last_login_time
+        int login_num
+        tinyint status
+        varchar_128_ create_user
+        datetime create_time
+        varchar_48_ create_ip
+        varchar_128_ update_user
+        datetime update_time
+        int user_type
+        varchar_48_ update_ip
+        tinyint is_del
+        int parent_id
+        varchar_30_ parent_name
+        int_1__unsigned_zerofill commission_type
+        varchar_1000_ email
+        varchar_1000_ phone_num
+        varchar_50_ operator
+        varchar_50_ plat_form
+        varchar_100_ new_guidance
+        varchar_50_ account_type_list
+        varchar_300_ regulators
+        varchar_10_ default_regulator
+        tinyint_1_ test_group_visible
+        varchar_50_ partner_id
+        tinyint_1_ cr_sales_level
+        date cr_sales_ftd
+        tinyint_1_ cr_manager_level
+        tinyint is_two_fa_user
+        varchar_40_ two_fa_key
+        varchar_40_ new_two_fa_key
+        tinyint_1_ cc_sales_level
+        tinyint_1_ cc_manager_level
+        date cc_sales_ftd
+        varchar_20_ pt_partner_number
+        varchar_100_ tb_user_inner
+        varchar_256_ licenses
+    }
+    tb_user_inner_prod {
+        int user_id
+        varchar_30_ user_name
+        varchar_30_ last_name
+        varchar_30_ nick_name
+        varchar_30_ first_name
+        varchar_30_ real_name
+        int org_id
+        int role_id
+        char_25_ last_login_time
+        int login_num
+        tinyint status
+        varchar_128_ create_user
+        datetime create_time
+        varchar_48_ create_ip
+        varchar_128_ update_user
+        datetime update_time
+        int user_type
+        varchar_48_ update_ip
+        tinyint is_del
+        int parent_id
+        varchar_30_ parent_name
+        int_1__unsigned_zerofill commission_type
+        varchar_1000_ email
+        varchar_1000_ phone_num
+        varchar_50_ operator
+        varchar_50_ plat_form
+        varchar_100_ new_guidance
+        varchar_50_ account_type_list
+        varchar_300_ regulators
+        varchar_10_ default_regulator
+        tinyint_1_ test_group_visible
+        varchar_50_ partner_id
+        tinyint_1_ cr_sales_level
+        date cr_sales_ftd
+        tinyint_1_ cr_manager_level
+        tinyint is_two_fa_user
+        varchar_40_ two_fa_key
+        varchar_40_ new_two_fa_key
+        tinyint_1_ cc_sales_level
+        tinyint_1_ cc_manager_level
+        date cc_sales_ftd
+        varchar_20_ pt_partner_number
+        varchar_100_ tb_user_inner
+    }
+    tb_user_ip_city_change_info {
+        bigint id
+        int user_id
+        varchar_255_ original_ip
+        varchar_255_ original_city
+        varchar_255_ new_ip
+        varchar_255_ new_city
+        tinyint_1_ safe_validate
+        datetime create_time
+        datetime validate_time
+    }
+    tb_user_kyc_config {
+        int id
+        varchar_100_ kyc_config_code
+        varchar_100_ version
+        int type
+        varchar_100_ name
+        int create_by
+        datetime create_time
+        int update_by
+        datetime update_time
+        int is_del
+    }
+    tb_user_kyc_config_back_2025_5_17 {
+        int id
+        varchar_100_ kyc_config_code
+        varchar_100_ version
+        int type
+        varchar_100_ name
+        int create_by
+        datetime create_time
+        int update_by
+        datetime update_time
+        int is_del
+    }
+    tb_user_kyc_config_back_2025_5_18 {
+        int id
+        varchar_100_ kyc_config_code
+        varchar_100_ version
+        int type
+        varchar_100_ name
+        int create_by
+        datetime create_time
+        int update_by
+        datetime update_time
+        int is_del
+    }
+    tb_user_kyc_config_country {
+        int id
+        varchar_100_ version
+        int kyc_config_id
+        int country_id
+        int create_by
+        datetime create_time
+        int update_by
+        datetime update_time
+        int is_del
+    }
+    tb_user_kyc_config_country_back_2025_5_17 {
+        int id
+        varchar_100_ version
+        int kyc_config_id
+        int country_id
+        int create_by
+        datetime create_time
+        int update_by
+        datetime update_time
+        int is_del
+    }
+    tb_user_kyc_config_country_back_2025_5_18 {
+        int id
+        varchar_100_ version
+        int kyc_config_id
+        int country_id
+        int create_by
+        datetime create_time
+        int update_by
+        datetime update_time
+        int is_del
+    }
+    tb_user_kyc_level_function {
+        int id
+        varchar_100_ version
+        int kyc_level_setting_id
+        int function_module_code
+        varchar_100_ function_module_type
+        int status
+        int create_by
+        datetime create_time
+        int update_by
+        datetime update_time
+        int is_del
+    }
+    tb_user_kyc_level_function_back_2025_5_17 {
+        int id
+        varchar_100_ version
+        int kyc_level_setting_id
+        int function_module_code
+        varchar_100_ function_module_type
+        int status
+        int create_by
+        datetime create_time
+        int update_by
+        datetime update_time
+        int is_del
+    }
+    tb_user_kyc_level_function_back_2025_5_18 {
+        int id
+        varchar_100_ version
+        int kyc_level_setting_id
+        int function_module_code
+        varchar_100_ function_module_type
+        int status
+        int create_by
+        datetime create_time
+        int update_by
+        datetime update_time
+        int is_del
+    }
+    tb_user_kyc_level_setting {
+        int id
+        varchar_100_ version
+        int kyc_config_id
+        int level
+        int type
+        varchar_255_ name
+        varchar_255_ describe
+        varchar_255_ guided_document
+        int create_by
+        datetime create_time
+        int update_by
+        datetime update_time
+        int is_del
+    }
+    tb_user_kyc_level_setting_back_2025_5_17 {
+        int id
+        varchar_100_ version
+        int kyc_config_id
+        int level
+        int type
+        varchar_255_ name
+        varchar_255_ describe
+        varchar_255_ guided_document
+        int create_by
+        datetime create_time
+        int update_by
+        datetime update_time
+        int is_del
+    }
+    tb_user_kyc_level_setting_back_2025_5_18 {
+        int id
+        varchar_100_ version
+        int kyc_config_id
+        int level
+        int type
+        varchar_255_ name
+        varchar_255_ describe
+        varchar_255_ guided_document
+        int create_by
+        datetime create_time
+        int update_by
+        datetime update_time
+        int is_del
+    }
+    tb_user_kyc_otp_config {
+        int id
+        varchar_255_ otp_type
+        int is_del
+        int create_by
+        datetime create_time
+        int update_by
+        datetime update_time
+    }
+    tb_user_kyc_otp_config_back {
+        int id
+        varchar_255_ otp_type
+        int is_del
+        varchar_255_ create_by
+        datetime create_time
+        varchar_255_ update_by
+        datetime update_time
+    }
+    tb_user_kyc_otp_config_country {
+        int id
+        int kyc_otp_config_id
+        int country_id
+        int is_del
+        int create_by
+        datetime create_time
+        int update_by
+        datetime update_time
+    }
+    tb_user_kyc_otp_config_country_back {
+        int id
+        int kyc_otp_config_id
+        int country_id
+        int is_del
+        varchar_255_ create_by
+        datetime create_time
+        varchar_255_ update_by
+        datetime update_time
+    }
+    tb_user_kyc_otp_config_details {
+        int id
+        int kyc_otp_config_sub_id
+        varchar_255_ otp_type
+        int country_id
+        varchar_255_ channel_type
+        varchar_255_ platform_type
+        int is_del
+        int create_by
+        datetime create_time
+        int update_by
+        datetime update_time
+    }
+    tb_user_kyc_otp_config_sub {
+        int id
+        int is_del
+        int create_by
+        datetime create_time
+        int update_by
+        datetime update_time
+    }
+    tb_user_kyc_release {
+        int id
+        int status
+        varchar_100_ version
+        varchar_100_ pre_version
+        int create_by
+        datetime create_time
+        int update_by
+        datetime update_time
+        int is_del
+    }
+    tb_user_kyc_release_back_2025_5_17 {
+        int id
+        int status
+        varchar_100_ version
+        varchar_100_ pre_version
+        int create_by
+        datetime create_time
+        int update_by
+        datetime update_time
+        int is_del
+    }
+    tb_user_kyc_release_back_2025_5_18 {
+        int id
+        int status
+        varchar_100_ version
+        varchar_100_ pre_version
+        int create_by
+        datetime create_time
+        int update_by
+        datetime update_time
+        int is_del
+    }
+    tb_user_lark_chat {
+        int id
+        int sales_user_id
+        varchar_50_ open_id
+        varchar_50_ chat_id
+        int chat_type
+        int is_del
+        datetime update_time
+        datetime create_time
+    }
+    tb_user_lark_info {
+        int id
+        int sales_user_id
+        varchar_50_ open_id
+        varchar_50_ union_id
+        varchar_200_ user_id
+        varchar_255_ email
+        int is_bind
+        int is_del
+        datetime update_time
+        datetime create_time
+    }
+    tb_user_live_information_binding {
+        bigint id
+        bigint user_id
+        varchar_1000_ device_id
+        int device_type
+        tinyint touch_id_bind
+        tinyint face_id_bind
+        varchar_1000_ encrypt_key
+        tinyint is_del
+        datetime_3_ create_time
+        datetime_3_ update_time
+    }
+    tb_user_log {
+        int id
+        int user_id
+        int account
+        int log_type
+        int type
+        varchar_255_ description
+        datetime create_time
+        datetime update_time
+    }
+    tb_user_log_bak {
+        int id
+        int user_id
+        int account
+        int log_type
+        int type
+        varchar_255_ description
+        datetime create_time
+        datetime update_time
+    }
+    tb_user_log_bak_1224 {
+        int id
+        int user_id
+        int account
+        int log_type
+        int type
+        varchar_255_ description
+        datetime create_time
+        datetime update_time
+    }
+    tb_user_login {
+        int user_id
+        varchar_255_ email
+        varchar_128_ mobile
+        varchar_128_ email_password
+        varchar_128_ email_salt
+        varchar_128_ mobile_password
+        varchar_128_ mobile_salt
+        int regulator_id
+        tinyint_1_ user_type
+        tinyint_1_ is_del
+        int client_status
+        int pro_client_status
+        datetime create_time
+        datetime update_time
+        int update_by
+        varchar_128_ phone_code
+        varchar_10_ regulator
+        tinyint_1_ face_status
+        tinyint_1_ no_force_reset_password
+        varchar_255_ event_salt
+        varchar_255_ email_event_id
+        varchar_255_ mobile_event_id
+        int brand
+    }
+    tb_user_login_info {
+        int id
+        int user_id
+        timestamp login_datetime
+        varchar_32_ browser_name
+        varchar_32_ browser_version
+        varchar_32_ os_name
+        varchar_32_ os_version
+        varchar_128_ ip_address
+        varchar_1000_ ua_string
+        tinyint_1_ is_del
+        timestamp create_datetime
+        timestamp update_datetime
+        varchar_400_ cookie
+        tinyint_1_ is_from_app
+        varchar_100_ login_ip_city
+        varchar_100_ login_ip_country
+        varchar_2000_ ip_geo_json
+        varchar_100_ device_id
+        varchar_50_ login_platform
+        varchar_50_ login_type
+    }
+    tb_user_login_star {
+        int user_id
+        varchar_255_ email
+        varchar_128_ mobile
+        varchar_128_ email_password
+        varchar_128_ email_salt
+        varchar_128_ mobile_password
+        varchar_128_ mobile_salt
+        tinyint_1_ user_type
+        tinyint_1_ is_del
+        int client_status
+        int pro_client_status
+        datetime create_time
+        datetime update_time
+        int update_by
+        varchar_128_ phone_code
+        varchar_10_ regulator
+        tinyint_1_ face_status
+        tinyint_1_ no_force_reset_password
+        int nid
+    }
+    tb_user_message {
+        int id
+        int user_id
+        int client_id
+        varchar_255_ subject
+        varchar_20480_ content
+        tinyint_1_ is_read
+        int status
+        int type
+        datetime create_time
+        datetime last_update_time
+    }
+    tb_user_message_push_management {
+        int id
+        int user_id
+        tinyint_1_ hide_message
+        datetime create_time
+        datetime update_time
+    }
+    tb_user_message_push_type_relation {
+        int id
+        int message_push_id
+        tinyint message_push_parent_type
+        tinyint message_push_sub_type
+        datetime create_time
+        datetime update_time
+    }
+    tb_user_password {
+        int id
+        int user_id
+        varchar_128_ password
+        varchar_50_ create_ip
+        datetime create_time
+        datetime update_time
+        varchar_500_ extends1
+        varchar_500_ extends2
+        varchar_500_ extends3
+    }
+    tb_user_personalized_settings {
+        int id
+        int user_id
+        varchar_200_ data_key
+        text data_value
+        tinyint_1_ is_del
+        datetime_3_ create_time
+        int create_user
+        datetime_3_ update_time
+        int update_user
+    }
+    tb_user_preference {
+        int id
+        int user_id
+        varchar_255_ category
+        varchar_20480_ data
+        datetime created
+        datetime updated
+    }
+    tb_user_sign_agreement_record {
+        bigint id
+        int user_id
+        varchar_100_ agreement_code
+        int sign_status
+        datetime create_time
+        varchar_255_ create_user
+        datetime update_time
+        varchar_255_ update_user
+        varchar_50_ regulator
+    }
+    tb_user_sign_agreement_record_0816 {
+        bigint id
+        int user_id
+        varchar_100_ agreement_code
+        int sign_status
+        datetime create_time
+        varchar_255_ create_user
+        datetime update_time
+        varchar_255_ update_user
+        varchar_50_ regulator
+    }
+    tb_user_sticky_note {
+        bigint id
+        int user_id
+        int type
+        varchar_1500_ note
+        tinyint_1_ is_del
+        datetime create_time
+        datetime update_time
+    }
+    tb_user_sticky_note_log {
+        bigint id
+        int user_id
+        int type
+        varchar_1500_ note
+        int operator_id
+        datetime create_time
+    }
+    tb_user_tags_global {
+        int_unsigned id
+        int user_id
+        int user_type
+        int tag_id
+    }
+    tb_user_tags_type_global {
+        int id
+        varchar_255_ label
+        int user_type
+        tinyint_1_ is_del
+    }
+    tb_user_tier {
+        bigint id
+        int tier_id
+        int sales_id
+        int user_id
+        tinyint tier_number
+        tinyint match_reason
+        tinyint is_history
+        date calculation_time
+        int create_user
+        datetime create_time
+        int update_user
+        datetime update_time
+        tinyint is_del
+    }
+    tb_user_tier_history {
+        bigint id
+        int tier_id
+        int sales_id
+        int user_id
+        tinyint tier_number
+        tinyint match_reason
+        tinyint is_history
+        date calculation_time
+        int create_user
+        datetime create_time
+        int update_user
+        datetime update_time
+        tinyint is_del
+    }
+    tb_user_trade {
+        bigint id
+        int user_id
+        int account_no
+        int database_id
+        bigint ticket
+        varchar_32_ symbol
+        decimal_34_4_ volume
+        decimal_34_4_ actual_pl
+        decimal_34_4_ notional_value
+        decimal_34_4_ commission_charged
+        decimal_34_4_ spread_charged
+        decimal_34_4_ swap_charged
+        datetime close_time
+        datetime create_time
+        datetime update_time
+    }
+    tb_user_trade_active_status {
+        bigint id
+        int user_id
+        datetime trans_time
+        tinyint_1_ active_status
+        tinyint_1_ is_del
+        datetime create_time
+        datetime update_time
+    }
+    tb_user_trade_balance_value {
+        bigint id
+        int user_id
+        tinyint user_type
+        date calculation_time
+        decimal_38_8_ balance
+        int create_user
+        datetime create_time
+        tinyint is_del
+    }
+    tb_user_trade_close_pl {
+        bigint id
+        int user_id
+        decimal_34_4_ close_pl
+        datetime create_time
+        datetime update_time
+        datetime latest_exe_time
+        int data_type
+        tinyint is_del
+        tinyint is_success
+    }
+    tb_user_trade_daily_statistics {
+        int user_id
+        int trade_type
+        int total_trade_count
+        decimal_34_4_ total_trade_volume
+        decimal_34_4_ total_actual_pl
+        decimal_34_4_ total_notional_value
+        decimal_34_4_ total_commission_charged
+        decimal_34_4_ total_spread_charged
+        decimal_34_4_ total_swap_charged
+        date close_time
+        datetime create_time
+        datetime update_time
+        decimal_34_4_ total_notional_value_double
+    }
+    tb_user_trade_data_value_day {
+        bigint id
+        int user_id
+        tinyint user_type
+        date calculation_time
+        decimal_38_8_ rebate
+        decimal_38_8_ gross_deposit
+        decimal_38_8_ net_deposit
+        decimal_38_8_ withdraw
+        decimal_38_8_ total_volume
+        int create_user
+        datetime create_time
+        tinyint is_del
+    }
+    tb_user_trade_other {
+        bigint id
+        int user_id
+        int trade_type
+        int account_no
+        int master_account_no
+        int database_id
+        bigint ticket
+        varchar_32_ symbol
+        decimal_34_4_ volume
+        decimal_34_4_ actual_pl
+        decimal_34_4_ notional_value
+        decimal_34_4_ commission_charged
+        decimal_34_4_ spread_charged
+        decimal_34_4_ swap_charged
+        datetime close_time
+        datetime create_time
+        datetime update_time
+    }
+    tb_user_trade_run_status {
+        int id
+        datetime end_time
+        int status
+        int commission_status_id
+        tinyint_1_ is_del
+        varchar_500_ extends1
+        varchar_500_ extends2
+        varchar_500_ extends3
+    }
+    tb_user_trade_statistics {
+        int user_id
+        datetime first_trade_time
+        varchar_32_ first_trade_symbol
+        datetime last_trade_time
+        varchar_32_ last_trade_symbol
+        int total_trade_count
+        decimal_34_4_ total_trade_volume
+        decimal_34_4_ total_actual_pl
+        decimal_34_4_ total_notional_value
+        decimal_34_4_ total_commission_charged
+        decimal_34_4_ total_spread_charged
+        decimal_34_4_ total_swap_charged
+        varchar_32_ most_volume_symbol
+        datetime create_time
+        datetime update_time
+    }
+    tb_user_trade_statistics_ftt_open {
+        int user_id
+        bigint ticket
+        bigint login
+        varchar_32_ symbol
+        datetime open_time
+        double open_price
+        bigint volume
+        int server
+        datetime create_time
+        datetime update_time
+    }
+    tb_user_trade_status {
+        bigint id
+        int user_id
+        datetime trans_time
+        tinyint_1_ trans_flag
+        tinyint_1_ is_del
+        datetime create_time
+        datetime update_time
+    }
+    tb_user_trade_symbol_daily_statistics {
+        int user_id
+        varchar_32_ symbol
+        decimal_34_4_ lots
+        date close_time
+        int trade_type
+        datetime create_time
+        datetime update_time
+    }
+    tb_user_view_filter {
+        bigint id
+        int user_id
+        varchar_100_ filter_name
+        varchar_50_ filter_source
+        tinyint_1_ is_default
+        mediumtext filter_data
+        int filter_index
+        varchar_300_ description
+        tinyint_1_ is_del
+        datetime_3_ create_time
+        int create_user
+        datetime_3_ update_time
+        int update_user
+    }
+    tb_user_tier ||--o{ tb_user_tier_history : "has"
+    tb_user_coupon ||--o{ tb_user_coupon_archive : "has"
+    tb_user_kyc_config ||--o{ tb_user_kyc_config_country_back_2025_5_18 : "has"
+    tb_user_kyc_otp_config_country ||--o{ tb_user_kyc_config_country_back_2025_5_18 : "has"
+    tb_user_kyc_otp_config ||--o{ tb_user_kyc_otp_config_country : "has"
+    tb_user_kyc_config_country ||--o{ tb_user_kyc_otp_config_country : "has"
+    tb_user_kyc_level_setting ||--o{ tb_user_kyc_level_function : "has"
+    tb_user_kyc_config ||--o{ tb_user_kyc_level_setting_back_2025_5_18 : "has"
+    tb_user_trade_statistics_ftt_open ||--o{ tb_user_lark_info : "has"
+    tb_user_kyc_otp_config_sub ||--o{ tb_user_kyc_otp_config_details : "has"
+    tb_user_kyc_otp_config_country ||--o{ tb_user_kyc_otp_config_details : "has"
+    tb_user_kyc_config ||--o{ tb_user_kyc_level_setting_back_2025_5_17 : "has"
+    tb_user_kyc_config ||--o{ tb_user_kyc_config_country : "has"
+    tb_user_kyc_otp_config_country ||--o{ tb_user_kyc_config_country : "has"
+    tb_user_kyc_config ||--o{ tb_user_kyc_config_country_back_2025_5_17 : "has"
+    tb_user_kyc_otp_config_country ||--o{ tb_user_kyc_config_country_back_2025_5_17 : "has"
+    tb_user_coupon ||--o{ tb_user_coupon_exchange_archive : "has"
+    tb_user_coupon ||--o{ tb_user_coupon_exchange_archive : "has"
+    tb_user_kyc_level_setting ||--o{ tb_user_kyc_level_function_back_2025_5_18 : "has"
+    tb_user_kyc_otp_config ||--o{ tb_user_kyc_otp_config_country_back : "has"
+    tb_user_kyc_otp_config_country ||--o{ tb_user_kyc_otp_config_country_back : "has"
+    tb_user_coupon ||--o{ tb_user_coupon_trade_record_transaction : "has"
+    tb_user_coupon_trade_record ||--o{ tb_user_coupon_trade_record_transaction : "has"
+    tb_user_coupon ||--o{ tb_user_coupon_statistic : "has"
+    tb_user_kyc_config ||--o{ tb_user_kyc_level_setting : "has"
+    tb_user_trade_statistics_ftt_open ||--o{ tb_user_lark_chat : "has"
+    tb_user_coupon ||--o{ tb_user_coupon_exchange : "has"
+    tb_user_coupon ||--o{ tb_user_coupon_exchange : "has"
+    tb_user_kyc_level_setting ||--o{ tb_user_kyc_level_function_back_2025_5_17 : "has"
+
+    %% Cross-category references:
+    %% tb_marketing_dashboard_user (external) --> tb_user_personalized_settings
+    %% tb_marketing_dashboard_user (external) --> tb_user_coupon_trade_record
+    %% tb_mail_server (external) --> tb_user_coupon_trade_record
+    %% tb_marketing_dashboard_user (external) --> tb_user_log
+    %% tb_marketing_dashboard_user (external) --> tb_user_live_information_binding
+    %% tb_marketing_dashboard_user (external) --> tb_user_trade
+    %% tb_marketing_dashboard_user (external) --> tb_user_indicator_daily_summary
+    %% tb_sales (external) --> tb_user_indicator_daily_summary
+    %% tb_cpa_allot_cr_cpa (external) --> tb_user_indicator_daily_summary
+    %% tb_sales (external) --> tb_user_tier_history
+    %% tb_marketing_dashboard_user (external) --> tb_user_tier_history
+    %% tb_marketing_dashboard_user (external) --> tb_user_ip_city_change_info
+    %% tb_marketing_dashboard_user (external) --> tb_user_trade_data_value_day
+    %% tb_marketing_dashboard_user (external) --> tb_user_log_bak
+    %% tb_coupon (external) --> tb_user_coupon_archive
+    %% tb_marketing_dashboard_user (external) --> tb_user_coupon_archive
+    %% tb_marketing_dashboard_user (external) --> tb_user_trade_balance_value
+    %% tb_marketing_dashboard_user (external) --> tb_user_inner
+    %% tb_commission_package_org (external) --> tb_user_inner
+    %% tb_role (external) --> tb_user_inner
+    %% tb_country (external) --> tb_user_kyc_config_country_back_2025_5_18
+    %% tb_marketing_dashboard_user (external) --> tb_user_dimension_change_history
+    %% tb_marketing_dashboard_user (external) --> tb_user_password
+    %% tb_country (external) --> tb_user_kyc_otp_config_country
+    %% tb_marketing_dashboard_user (external) --> tb_user_active_statistics
+    %% tb_marketing_dashboard_user (external) --> tb_user_data_global
+    %% tb_marketing_dashboard_user (external) --> tb_user_login
+    %% tb_marketing_dashboard_user (external) --> tb_user_trade_status
+    %% tb_marketing_dashboard_user (external) --> tb_user_copy_trade_statistics
+    %% tb_marketing_dashboard_user (external) --> tb_user_inner_prod
+    %% tb_commission_package_org (external) --> tb_user_inner_prod
+    %% tb_role (external) --> tb_user_inner_prod
+    %% tb_marketing_dashboard_user (external) --> tb_user_lark_info
+    %% tb_country (external) --> tb_user_kyc_otp_config_details
+    %% tb_marketing_dashboard_user (external) --> tb_user_function_security
+    %% tb_function_security_rule (external) --> tb_user_function_security
+    %% tb_marketing_dashboard_user (external) --> tb_user_trade_statistics_ftt_open
+    %% tb_marketing_dashboard_user (external) --> tb_user_message_push_management
+    %% tb_country (external) --> tb_user_kyc_config_country
+    %% tb_coupon (external) --> tb_user_coupon
+    %% tb_marketing_dashboard_user (external) --> tb_user_coupon
+    %% tb_country (external) --> tb_user_kyc_config_country_back_2025_5_17
+    %% tb_marketing_dashboard_user (external) --> tb_user_trade_close_pl
+    %% tb_marketing_dashboard_user (external) --> tb_user_trade_other
+    %% tb_coupon (external) --> tb_user_coupon_exchange_archive
+    %% tb_marketing_dashboard_user (external) --> tb_user_coupon_trade_record_archive
+    %% tb_mail_server (external) --> tb_user_coupon_trade_record_archive
+    %% tb_marketing_dashboard_user (external) --> tb_user_trade_symbol_daily_statistics
+    %% tb_country (external) --> tb_user_kyc_otp_config_country_back
+    %% tb_marketing_dashboard_user (external) --> tb_user_coupon_trade_record_transaction
+    %% tb_marketing_dashboard_user (external) --> tb_user_preference
+    %% tb_sales (external) --> tb_user_tier
+    %% tb_marketing_dashboard_user (external) --> tb_user_tier
+    %% tb_marketing_dashboard_user (external) --> tb_user_trade_daily_statistics
+    %% tb_marketing_dashboard_user (external) --> tb_user_login_info
+    %% tb_marketing_dashboard_user (external) --> tb_user_indicator_monthly_summary
+    %% tb_sales (external) --> tb_user_indicator_monthly_summary
+    %% tb_cpa_allot_cr_cpa (external) --> tb_user_indicator_monthly_summary
+    %% tb_marketing_dashboard_user (external) --> tb_user_sticky_note
+    %% tb_marketing_dashboard_user (external) --> tb_user_trade_statistics
+    %% tb_marketing_dashboard_user (external) --> tb_user_sign_agreement_record
+    %% tb_marketing_dashboard_user (external) --> tb_user_copy_active_statistics
+    %% tb_marketing_dashboard_user (external) --> tb_user_view_filter
+    %% tb_coupon (external) --> tb_user_coupon_exchange
+    %% tb_marketing_dashboard_user (external) --> tb_user_tags_global
+    %% tb_group_tag (external) --> tb_user_tags_global
+    %% tb_marketing_dashboard_user (external) --> tb_user_sticky_note_log
+    %% tb_marketing_dashboard_user (external) --> tb_user_login_star
+    %% tb_marketing_dashboard_user (external) --> tb_user_trade_active_status
+    %% tb_marketing_dashboard_user (external) --> tb_user_sign_agreement_record_0816
+    %% tb_marketing_dashboard_user (external) --> tb_user_log_bak_1224
+    %% tb_marketing_dashboard_user (external) --> tb_user_message

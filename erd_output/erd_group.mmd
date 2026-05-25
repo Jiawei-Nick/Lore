@@ -1,0 +1,67 @@
+%% Category: group (4 tables)
+erDiagram
+    tb_group_detail {
+        int id
+        varchar_255_ group_name
+        varchar_2048_ group_desc
+        int template_id
+        int call_template_id
+        int message_item_id
+        varchar_255_ template_name
+        int operate_id
+        varchar_255_ operate_name
+        int operate_type
+        tinyint_1_ is_del
+        datetime create_time
+        datetime update_time
+        varchar_255_ extra_1
+        varchar_255_ extra_2
+    }
+    tb_group_sales_detail {
+        int id
+        int sales_id
+        varchar_255_ sales_name
+        int group_id
+        int operate_id
+        varchar_255_ operate_name
+        int operate_type
+        tinyint_1_ is_del
+        datetime create_time
+        datetime update_time
+        varchar_255_ extra_1
+        varchar_255_ extra_2
+    }
+    tb_group_tag {
+        bigint id
+        varchar_255_ tag_name_en
+        varchar_255_ tag_name_cn
+        varchar_128_ tag_code
+        int tag_dimension
+        int tag_type
+        varchar_255_ tag_desc
+        tinyint_1_ is_system_group_tag
+        tinyint_1_ status
+        bigint create_user
+        datetime create_time
+        bigint update_user
+        datetime update_time
+        tinyint_1_ is_del
+    }
+    tb_group_team_leader_detail {
+        int id
+        int sales_id
+        varchar_255_ sales_name
+        int group_id
+        int create_user
+        datetime create_time
+        int update_user
+        datetime update_time
+        tinyint is_del
+    }
+
+    %% Cross-category references:
+    %% tb_campaign_condition_template (external) --> tb_group_detail
+    %% tb_sales (external) --> tb_group_sales_detail
+    %% tb_salary_rule_hybrid_group (external) --> tb_group_sales_detail
+    %% tb_sales (external) --> tb_group_team_leader_detail
+    %% tb_salary_rule_hybrid_group (external) --> tb_group_team_leader_detail

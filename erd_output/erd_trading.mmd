@@ -1,0 +1,43 @@
+%% Category: trading (3 tables)
+erDiagram
+    tb_trading_group {
+        int id
+        varchar_128_ group_name
+        text trading_category
+        tinyint status
+        varchar_64_ update_user
+        datetime update_date
+    }
+    tb_trading_group_symbol {
+        int id
+        int trading_group_id
+        varchar_100_ symbol
+        int pip_setting_id
+        int is_del
+        int user_id
+        datetime operation_time
+        datetime update_time
+    }
+    tb_trading_promotion {
+        int id
+        varchar_255_ email
+        varchar_200_ name
+        int account
+        int datasource_id
+        varchar_200_ register_name
+        varchar_20_ country_code
+        int user_id
+        bigint trading
+        bigint trading_first
+        bigint trading_second
+        bigint trading_third
+        datetime create_time
+        datetime cron_time
+        bigint trading_zero
+        int if_cancel
+    }
+    tb_trading_group ||--o{ tb_trading_group_symbol : "has"
+
+    %% Cross-category references:
+    %% tb_marketing_dashboard_user (external) --> tb_trading_promotion
+    %% tb_marketing_dashboard_user (external) --> tb_trading_group_symbol

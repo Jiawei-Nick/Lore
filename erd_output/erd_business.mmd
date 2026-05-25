@@ -1,0 +1,38 @@
+%% Category: business (3 tables)
+erDiagram
+    tb_business_file {
+        bigint file_id
+        bigint business_id
+        varchar_64_ business_file_type
+        varchar_255_ file_name
+        varchar_32_ file_suffix
+        bigint file_size
+        varchar_2048_ file_path
+        varchar_2048_ file_url
+        varchar_32_ storage_type
+        varchar_64_ md5
+        varchar_64_ file_uid
+        varchar_500_ file_content_type
+        bigint create_user_id
+        datetime create_time
+        bigint update_user_id
+        datetime update_time
+        tinyint_1_ is_del
+        varchar_1024_ remark
+    }
+    tb_business_file_rel {
+        bigint id
+        bigint file_id
+        bigint business_id
+        varchar_64_ business_file_type
+        bigint create_user_id
+        datetime create_time
+    }
+    tb_business_group_rel {
+        int business_id
+        int work_group_id
+        int business_type
+        datetime create_time
+        int create_user
+    }
+    tb_business_file ||--o{ tb_business_file_rel : "has"

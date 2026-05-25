@@ -1,0 +1,16 @@
+%% Category: filter (1 tables)
+erDiagram
+    tb_filter_group_tag_relation {
+        bigint id
+        bigint filter_id
+        bigint tag_id
+        bigint create_user
+        datetime create_time
+        bigint update_user
+        datetime update_time
+        tinyint_1_ is_del
+    }
+
+    %% Cross-category references:
+    %% tb_user_view_filter (external) --> tb_filter_group_tag_relation
+    %% tb_group_tag (external) --> tb_filter_group_tag_relation

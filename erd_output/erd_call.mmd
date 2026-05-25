@@ -1,0 +1,18 @@
+%% Category: call (1 tables)
+erDiagram
+    tb_call_files {
+        int id
+        int user_id
+        varchar_256_ call_id
+        varchar_256_ file_name
+        varchar_256_ file_type
+        varchar_1024_ file_path
+        bigint file_size
+        int category
+        datetime upload_date
+        int is_del
+        char_32_ md5
+    }
+
+    %% Cross-category references:
+    %% tb_marketing_dashboard_user (external) --> tb_call_files

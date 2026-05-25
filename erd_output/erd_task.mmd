@@ -1,0 +1,53 @@
+%% Category: task (4 tables)
+erDiagram
+    tb_task {
+        int id
+        int agent_id
+        int user_id
+        int type
+        int priority
+        int status
+        varchar_1000_ subject
+        varchar_100_ regulator
+        datetime create_time
+        datetime due_time
+        datetime complete_time
+        tinyint_1_ is_del
+    }
+    tb_task_20240419 {
+        int id
+        int agent_id
+        int user_id
+        int type
+        int priority
+        int status
+        varchar_255_ subject
+        varchar_100_ regulator
+        datetime create_time
+        datetime due_time
+        datetime complete_time
+        tinyint_1_ is_del
+    }
+    tb_task_rule {
+        int id
+        int priority
+        varchar_255_ subject
+        int power_switch
+        int user_type
+    }
+    tb_task_status {
+        int id
+        int biz_code
+        varchar_255_ scene_id
+        int status
+        int last_offset
+        datetime create_time
+        datetime update_time
+        datetime exec_time
+        varchar_2048_ comment
+        tinyint is_notify
+    }
+
+    %% Cross-category references:
+    %% tb_marketing_dashboard_user (external) --> tb_task
+    %% tb_marketing_dashboard_user (external) --> tb_task_20240419

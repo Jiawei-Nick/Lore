@@ -1,0 +1,19 @@
+%% Category: test (1 tables)
+erDiagram
+    tb_test_account_change_group_log {
+        int id
+        int user_id
+        varchar_255_ name
+        int account
+        tinyint status
+        varchar_255_ from_group
+        varchar_255_ to_group
+        varchar_255_ server_name
+        varchar_255_ fail_reason
+        varchar_30_ regulator
+        datetime create_time
+        datetime update_time
+    }
+
+    %% Cross-category references:
+    %% tb_marketing_dashboard_user (external) --> tb_test_account_change_group_log

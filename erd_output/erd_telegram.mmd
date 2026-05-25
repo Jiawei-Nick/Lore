@@ -1,0 +1,14 @@
+%% Category: telegram (1 tables)
+erDiagram
+    tb_telegram_user_info {
+        int id
+        varchar_16_ telegram_id
+        int user_id
+        datetime create_time
+        datetime update_time
+        tinyint enabled
+        varchar_255_ telegram_name
+    }
+
+    %% Cross-category references:
+    %% tb_marketing_dashboard_user (external) --> tb_telegram_user_info

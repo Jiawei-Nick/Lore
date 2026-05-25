@@ -1,0 +1,18 @@
+%% Category: id3 (1 tables)
+erDiagram
+    tb_id3_profile_setting {
+        int id
+        int country_id
+        varchar_255_ profile_id
+        varchar_255_ profile_name
+        varchar_255_ profile_description
+        int id3_type
+        int is_del
+        datetime create_time
+        datetime update_time
+        varchar_255_ operator
+        varchar_255_ comments
+    }
+
+    %% Cross-category references:
+    %% tb_country (external) --> tb_id3_profile_setting

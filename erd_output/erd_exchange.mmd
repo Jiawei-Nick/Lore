@@ -1,0 +1,20 @@
+%% Category: exchange (2 tables)
+erDiagram
+    tb_exchange_rate {
+        bigint_unsigned id
+        date date
+        varchar_32_ symbol
+        decimal_38_10_ price
+        datetime price_time
+        datetime create_time
+        datetime update_time
+    }
+    tb_exchange_rate_limit {
+        int id
+        int currency_change_type_code
+        varchar_20_ min_rule
+        varchar_20_ max_rule
+        varchar_20_ min_alert
+        varchar_20_ max_alert
+        tinyint_1_ is_del
+    }

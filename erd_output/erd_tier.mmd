@@ -1,0 +1,60 @@
+%% Category: tier (4 tables)
+erDiagram
+    tb_tier_criterion_condition_relation {
+        int id
+        int tier_id
+        tinyint tier_criterion_condition_number
+        tinyint tier_criterion_condition_key
+        tinyint tier_criterion_condition_value
+        int create_user
+        datetime create_time
+        int update_user
+        datetime update_time
+        tinyint is_del
+        tinyint tier_criterion_condition_time
+    }
+    tb_tier_criterion_relation {
+        int id
+        int tier_id
+        tinyint tier_criterion_time
+        tinyint tier_criterion_number
+        tinyint tier_criterion_key
+        tinyint tier_criterion_relation
+        decimal_30_8_ tier_criterion_value
+        int create_user
+        datetime create_time
+        int update_user
+        datetime update_time
+        tinyint is_del
+        varchar_50_ tier_criterion_name
+    }
+    tb_tier_group_relation {
+        int id
+        int tier_id
+        int group_id
+        int create_user
+        datetime create_time
+        int update_user
+        datetime update_time
+        tinyint is_del
+    }
+    tb_tier_management {
+        int id
+        varchar_255_ tier_name
+        tinyint tier_number
+        int version_id
+        tinyint status
+        int version
+        int create_user
+        datetime create_time
+        int update_user
+        datetime update_time
+        tinyint is_del
+    }
+
+    %% Cross-category references:
+    %% tb_user_tier (external) --> tb_tier_criterion_relation
+    %% tb_deposit_version (external) --> tb_tier_management
+    %% tb_user_tier (external) --> tb_tier_group_relation
+    %% tb_salary_rule_hybrid_group (external) --> tb_tier_group_relation
+    %% tb_user_tier (external) --> tb_tier_criterion_condition_relation

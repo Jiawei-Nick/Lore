@@ -1,0 +1,32 @@
+%% Category: agreement (2 tables)
+erDiagram
+    tb_agreement_template {
+        int_unsigned id
+        int file_id
+        varchar_256_ file_name
+        varchar_2048_ file_url
+        varchar_256_ template_name
+        varchar_32_ repository
+        tinyint enable
+        json markup
+        varchar_256_ update_by
+        varchar_256_ create_by
+        tinyint is_del
+        datetime date_created
+        datetime date_updated
+    }
+    tb_agreement_template_size {
+        int id
+        int user_id
+        int template_id
+        int window_size
+        int version
+        datetime create_time
+        datetime update_time
+    }
+    tb_agreement_template ||--o{ tb_agreement_template_size : "has"
+
+    %% Cross-category references:
+    %% tb_marketing_dashboard_user (external) --> tb_agreement_template_size
+    %% tb_campaign_condition_template (external) --> tb_agreement_template_size
+    %% tb_business_file (external) --> tb_agreement_template

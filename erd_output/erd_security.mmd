@@ -1,0 +1,14 @@
+%% Category: security (1 tables)
+erDiagram
+    tb_security_config_operator_log {
+        bigint id
+        json from_content
+        json to_content
+        int config_id
+        int operator_id
+        varchar_20_ operator_module
+        datetime create_time
+    }
+
+    %% Cross-category references:
+    %% old_tb_wallet_account_config (external) --> tb_security_config_operator_log

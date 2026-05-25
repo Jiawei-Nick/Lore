@@ -1,0 +1,39 @@
+%% Category: multifactor (3 tables)
+erDiagram
+    tb_multifactor_auth_config {
+        int id
+        varchar_100_ rule_name
+        varchar_50_ mandatory
+        varchar_50_ function_code
+        json auth_method
+        json payment_channel
+        json platform
+        datetime update_time
+        int update_user_id
+        varchar_200_ update_user_name
+        text note
+        tinyint_1_ status
+        tinyint_1_ is_del
+        json platform_auth_methods
+    }
+    tb_multifactor_auth_config_record {
+        int id
+        int config_id
+        text remark
+        text description
+        datetime update_time
+        int update_user_id
+        varchar_100_ update_user_name
+    }
+    tb_multifactor_auth_i18n {
+        int id
+        int config_id
+        varchar_50_ language
+        text content
+    }
+    tb_multifactor_auth_config ||--o{ tb_multifactor_auth_config_record : "has"
+    tb_multifactor_auth_config ||--o{ tb_multifactor_auth_i18n : "has"
+
+    %% Cross-category references:
+    %% old_tb_wallet_account_config (external) --> tb_multifactor_auth_config_record
+    %% old_tb_wallet_account_config (external) --> tb_multifactor_auth_i18n

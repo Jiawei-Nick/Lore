@@ -1,0 +1,38 @@
+%% Category: phone (2 tables)
+erDiagram
+    tb_phone_call_log {
+        int id
+        varchar_20_ service
+        varchar_10_ regulator
+        varchar_100_ session_id
+        int caller_user_id
+        int callee_user_id
+        varchar_100_ caller_number
+        varchar_100_ callee_number
+        datetime create_time
+        datetime accept_time
+        datetime end_time
+        varchar_64_ last_status
+        varchar_64_ recording_session_id
+        varchar_255_ recording_id
+        varchar_64_ status_detail
+        text rc_call_log
+        varchar_64_ direction
+        int file_id
+        int sync_try_num
+        int user_type
+    }
+    tb_phone_call_log_user {
+        int id
+        int phone_call_log_id
+        int user_id
+        datetime create_time
+        datetime update_time
+        int user_type
+    }
+    tb_phone_call_log ||--o{ tb_phone_call_log_user : "has"
+
+    %% Cross-category references:
+    %% tb_marketing_dashboard_user (external) --> tb_phone_call_log_user
+    %% tb_pt_session (external) --> tb_phone_call_log
+    %% tb_business_file (external) --> tb_phone_call_log

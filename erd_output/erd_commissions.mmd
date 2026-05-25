@@ -1,0 +1,18 @@
+%% Category: commissions (1 tables)
+erDiagram
+    tb_commissions_cpa {
+        int commission_id
+        int affiliate_id
+        varchar_500_ trader_id
+        varchar_500_ afp
+        varchar_500_ tracking_code
+        varchar_500_ commission_type
+        varchar_500_ commission
+        varchar_500_ created
+        datetime create_time
+        datetime update_time
+    }
+
+    %% Cross-category references:
+    %% tb_cc_commission (external) --> tb_commissions_cpa
+    %% tb_cpa_sync_affiliate (external) --> tb_commissions_cpa

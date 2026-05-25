@@ -1,0 +1,15 @@
+%% Category: ring (1 tables)
+erDiagram
+    tb_ring_central_call_event_log {
+        int id
+        varchar_100_ session_id
+        datetime event_time
+        int sequence
+        varchar_1_ direction
+        varchar_32_ status_code
+        varchar_255_ reason
+        varchar_255_ recording_id
+    }
+
+    %% Cross-category references:
+    %% tb_pt_session (external) --> tb_ring_central_call_event_log

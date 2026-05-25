@@ -1,0 +1,21 @@
+%% Category: withdraw (2 tables)
+erDiagram
+    tb_withdraw_country_config {
+        int id
+        int country_id
+        datetime create_time
+        int create_by
+        datetime update_time
+        int update_by
+        tinyint_1_ is_del
+    }
+    tb_withdraw_type {
+        int id
+        varchar_100_ cnanme
+        varchar_100_ enname
+        int amount_limit
+        varchar_1_ enabled
+    }
+
+    %% Cross-category references:
+    %% tb_country (external) --> tb_withdraw_country_config

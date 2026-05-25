@@ -1,0 +1,36 @@
+%% Category: safety (3 tables)
+erDiagram
+    tb_safety_reject_log {
+        int id
+        varchar_150_ request_ip
+        varchar_255_ email
+        int user_id
+        int hit_rule
+        datetime create_time
+    }
+    tb_safety_rule {
+        int id
+        varchar_50_ name
+        tinyint_1_ type
+        text white_list
+        text black_list
+        tinyint_1_ status
+        int operator
+        datetime create_time
+        datetime update_time
+        tinyint_1_ is_del
+    }
+    tb_safety_rule_details {
+        int id
+        int org_id
+        int role_id
+        int user_id
+        int safety_rule_id
+    }
+    tb_safety_rule ||--o{ tb_safety_rule_details : "has"
+
+    %% Cross-category references:
+    %% tb_marketing_dashboard_user (external) --> tb_safety_reject_log
+    %% tb_commission_package_org (external) --> tb_safety_rule_details
+    %% tb_role (external) --> tb_safety_rule_details
+    %% tb_marketing_dashboard_user (external) --> tb_safety_rule_details

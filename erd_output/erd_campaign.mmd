@@ -1,0 +1,64 @@
+%% Category: campaign (5 tables)
+erDiagram
+    tb_campaign_action_template {
+        int id
+        text name
+        varchar_500_ content
+    }
+    tb_campaign_betting_quotes {
+        int id
+        varchar_50_ symbol
+        bigint price_time
+        varchar_50_ price
+        datetime create_time
+        bigint received_timestamp
+        bigint msg_offset
+    }
+    tb_campaign_condition_template {
+        int id
+        text name
+        varchar_500_ content
+    }
+    tb_campaign_retry {
+        int id
+        int campaign_id
+        varchar_50_ action
+        text request_body
+        varchar_10_ regulator
+        varchar_5_ status
+        varchar_20_ type
+        int campaign_type
+        text files
+        datetime create_time
+        datetime update_time
+    }
+    tb_campaign_trading_contest_global_summary {
+        int user_id
+        int participant_id
+        int campaign_id
+        smallint campaign_type
+        int mt4_account
+        int country_code
+        varchar_200_ real_name
+        varchar_10_ currency
+        decimal_40_2_ total_profit
+        decimal_40_2_ total_withdraw
+        decimal_40_2_ total_deposit
+        decimal_38_4_ total_notional_volume
+        decimal_38_4_ total_trade_lots
+        smallint source
+        int rank
+        tinyint_1_ is_del
+        datetime process_time
+        datetime create_time
+        datetime update_time
+        tinyint_1_ traded
+        decimal_40_8_ total_percentage
+        decimal_40_8_ total_transfer_in
+        text parameters
+        varchar_100_ campaign_tier_code
+        varchar_50_ regulator
+    }
+
+    %% Cross-category references:
+    %% tb_marketing_dashboard_user (external) --> tb_campaign_trading_contest_global_summary

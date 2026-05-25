@@ -1,0 +1,64 @@
+%% Category: client (5 tables)
+erDiagram
+    tb_client_email_attachment {
+        bigint id
+        varchar_2048_ content_id
+        bigint record_id
+        varchar_255_ external_id
+        varchar_255_ attachment_external_id
+        varchar_255_ name
+        bigint size
+        varchar_128_ content_type
+        varchar_512_ url
+        datetime create_time
+        datetime update_time
+    }
+    tb_client_email_recipient {
+        bigint id
+        bigint record_id
+        varchar_255_ external_id
+        varchar_255_ recipient
+        int recipient_type
+        datetime create_time
+        datetime update_time
+    }
+    tb_client_email_record {
+        bigint id
+        int sales_id
+        varchar_255_ external_id
+        int client_id
+        varchar_255_ sender
+        varchar_255_ theme
+        longtext content
+        int has_attachments
+        int source
+        datetime send_time
+        datetime create_time
+        datetime update_time
+        int user_type
+    }
+    tb_client_email_record_test {
+        bigint id
+        varchar_255_ theme
+    }
+    tb_client_ticket_record {
+        bigint id
+        int client_id
+        tinyint client_type
+        bigint ticket_id
+        varchar_255_ subject
+        tinyint ticket_status
+        varchar_255_ requester_name
+        varchar_255_ requester_email
+        varchar_255_ service_item_name
+        datetime ticket_last_modify_time
+        datetime create_time
+        datetime update_time
+    }
+    tb_client_email_record ||--o{ tb_client_email_recipient : "has"
+    tb_client_email_record ||--o{ tb_client_email_attachment : "has"
+
+    %% Cross-category references:
+    %% tb_sales (external) --> tb_client_email_record
+    %% tb_card_purchase_channel_reconciliation_record (external) --> tb_client_email_recipient
+    %% tb_card_purchase_channel_reconciliation_record (external) --> tb_client_email_attachment

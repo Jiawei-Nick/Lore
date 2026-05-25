@@ -1,0 +1,37 @@
+%% Category: lark (3 tables)
+erDiagram
+    tb_lark_message_item_management {
+        int id
+        varchar_255_ name
+        varchar_2048_ desc
+        datetime create_time
+        datetime update_time
+        int operate_id
+        varchar_255_ operate_name
+        tinyint is_del
+    }
+    tb_lark_message_item_push_type_relation {
+        int id
+        int message_item_id
+        tinyint message_push_parent_type
+        tinyint message_push_sub_type
+        datetime create_time
+        datetime update_time
+        int create_user
+        int update_user
+        tinyint is_del
+    }
+    tb_lark_message_user_push_type_relation {
+        int id
+        int user_id
+        tinyint message_push_parent_type
+        tinyint message_push_sub_type
+        datetime create_time
+        datetime update_time
+        int create_user
+        int update_user
+        tinyint is_del
+    }
+
+    %% Cross-category references:
+    %% tb_marketing_dashboard_user (external) --> tb_lark_message_user_push_type_relation

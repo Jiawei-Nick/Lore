@@ -1,0 +1,167 @@
+%% Category: sys (13 tables)
+erDiagram
+    tb_sys_config {
+        bigint id
+        varchar_100_ config_key
+        text config_value
+        varchar_50_ config_group
+        varchar_255_ description
+        tinyint status
+        int sort
+        datetime create_time
+        datetime update_time
+        int create_user
+        int update_user
+    }
+    tb_sys_menu {
+        int menuid
+        varchar_64_ menuname
+        varchar_32_ menucode
+        text menuUri
+        varchar_32_ parentMenu
+        int menulevel
+        varchar_8_ menuorder
+        tinyint_1_ is_del
+        varchar_1_ no_display
+        varchar_100_ regulator_limit
+    }
+    tb_sys_menu_20240327 {
+        int menuid
+        varchar_64_ menuname
+        varchar_32_ menucode
+        text menuUri
+        varchar_32_ parentMenu
+        int menulevel
+        varchar_8_ menuorder
+        tinyint_1_ is_del
+        varchar_1_ no_display
+        varchar_100_ regulator_limit
+    }
+    tb_sys_menu_bak {
+        int menuid
+        varchar_64_ menuname
+        varchar_32_ menucode
+        text menuUri
+        varchar_32_ parentMenu
+        int menulevel
+        varchar_8_ menuorder
+        tinyint_1_ is_del
+        varchar_1_ no_display
+        varchar_100_ regulator_limit
+    }
+    tb_sys_menu_copy1_copy1 {
+        int menuid
+        varchar_64_ menuname
+        varchar_32_ menucode
+        text menuUri
+        varchar_32_ parentMenu
+        int menulevel
+        varchar_8_ menuorder
+        tinyint_1_ is_del
+        varchar_1_ no_display
+        varchar_100_ regulator_limit
+    }
+    tb_sys_organization {
+        int id
+        int parent_id
+        varchar_128_ parent_ids
+        varchar_128_ org_name
+        int sort
+        varchar_255_ address
+        varchar_30_ master
+        varchar_1000_ phone
+        varchar_20_ fax
+        varchar_1000_ email
+        tinyint_1_ is_del
+        varchar_255_ remarks
+        varchar_32_ org_type
+        varchar_50_ operator
+    }
+    tb_sys_permission {
+        int id
+        varchar_64_ permission_exp
+        int menu_id
+        int permission_type
+        varchar_64_ permission_desc
+    }
+    tb_sys_permission_bak {
+        int id
+        varchar_64_ permission_exp
+        int menu_id
+        int permission_type
+        varchar_64_ permission_desc
+    }
+    tb_sys_permission_copy1_copy1 {
+        int id
+        varchar_32_ permission_exp
+        int menu_id
+        int permission_type
+        varchar_64_ permission_desc
+    }
+    tb_sys_role_permission {
+        int id
+        int role_id
+        int permission_id
+        varchar_64_ create_user
+        datetime create_time
+        varchar_48_ create_ip
+        varchar_64_ update_user
+        datetime update_time
+        varchar_48_ update_ip
+        tinyint_1_ is_del
+    }
+    tb_sys_role_permission_bak {
+        int id
+        int role_id
+        int permission_id
+        varchar_64_ create_user
+        datetime create_time
+        varchar_48_ create_ip
+        varchar_64_ update_user
+        datetime update_time
+        varchar_48_ update_ip
+        tinyint_1_ is_del
+    }
+    tb_sys_role_permission_copy1 {
+        int id
+        int role_id
+        int permission_id
+        varchar_64_ create_user
+        datetime create_time
+        varchar_32_ create_ip
+        varchar_64_ update_user
+        datetime update_time
+        varchar_32_ update_ip
+        tinyint_1_ is_del
+    }
+    tb_sys_user_role {
+        int id
+        int user_id
+        int role_id
+        varchar_50_ create_user
+        datetime create_time
+        varchar_48_ create_ip
+        varchar_50_ update_user
+        datetime update_time
+        varchar_48_ update_ip
+        tinyint_1_ is_del
+    }
+    tb_sys_user_role ||--o{ tb_sys_role_permission : "has"
+    tb_sys_permission ||--o{ tb_sys_role_permission : "has"
+    tb_sys_menu ||--o{ tb_sys_permission_bak : "has"
+    tb_sys_user_role ||--o{ tb_sys_role_permission_bak : "has"
+    tb_sys_permission ||--o{ tb_sys_role_permission_bak : "has"
+    tb_sys_menu ||--o{ tb_sys_permission_copy1_copy1 : "has"
+    tb_sys_menu ||--o{ tb_sys_permission : "has"
+    tb_sys_user_role ||--o{ tb_sys_role_permission_copy1 : "has"
+    tb_sys_permission ||--o{ tb_sys_role_permission_copy1 : "has"
+
+    %% Cross-category references:
+    %% tb_marketing_dashboard_user (external) --> tb_sys_user_role
+    %% tb_role (external) --> tb_sys_user_role
+    %% tb_role (external) --> tb_sys_role_permission
+    %% tb_admin_role_permission (external) --> tb_sys_role_permission
+    %% tb_role (external) --> tb_sys_role_permission_bak
+    %% tb_admin_role_permission (external) --> tb_sys_role_permission_bak
+    %% tb_role (external) --> tb_sys_role_permission_copy1
+    %% tb_admin_role_permission (external) --> tb_sys_role_permission_copy1

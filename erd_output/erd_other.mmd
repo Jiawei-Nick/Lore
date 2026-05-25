@@ -1,0 +1,41 @@
+%% Category: other (7 tables)
+erDiagram
+    export_result {
+        text leadsource
+        text ib_user_name
+        int rebate_account
+        int user_id
+        text user_name
+        int tradeAccount
+    }
+    personstest {
+        int PersonID
+    }
+    qianyimingdan {
+        int login
+    }
+    test_user {
+        int id
+        varchar_255_ NAME
+    }
+    undo_log {
+        bigint id
+        bigint branch_id
+        varchar_100_ xid
+        varchar_128_ context
+        longblob rollback_info
+        int log_status
+        datetime log_created
+        datetime log_modified
+    }
+    users {
+    }
+    users1 {
+        int id
+        varchar_100_ name
+        json userId
+    }
+    test_user ||--o{ export_result : "has"
+
+    %% Cross-category references:
+    %% tb_marketing_dashboard_user (external) --> export_result
