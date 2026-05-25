@@ -45,10 +45,11 @@ def _resolve(d: dict, key: str, *, required: bool = True) -> str:
 
 @dataclass
 class LoreConfig:
-    # AWS auth — use ONE of: key pair (IAM) OR session_token alone (STS/SSO)
-    aws_access_key_id: str      # IAM: required. STS/SSO: optional
-    aws_secret_access_key: str  # IAM: required. STS/SSO: optional
-    aws_session_token: str      # STS/SSO: required. IAM: leave blank
+    # AWS auth — use ONE of: key pair (IAM), session_token (STS/SSO), OR bearer_token (Bedrock)
+    aws_access_key_id: str      # IAM: required. Others: optional
+    aws_secret_access_key: str  # IAM: required. Others: optional
+    aws_session_token: str      # STS/SSO: required. Others: optional
+    aws_bearer_token: str       # Bedrock bearer token: required. Others: optional
     aws_region: str
     lark_app_id: str
     lark_app_secret: str
@@ -62,21 +63,26 @@ class LoreConfig:
         access_key_id = _resolve(raw, "aws.access_key_id", required=False)
         secret_access_key = _resolve(raw, "aws.secret_access_key", required=False)
         session_token = _resolve(raw, "aws.session_token", required=False)
+        bearer_token = _resolve(raw, "aws.bearer_token", required=False)
 
-        # Accept either a key pair (IAM) or a session token alone (STS/SSO).
+        # Accept either: key pair (IAM), session token (STS/SSO), or bearer token (Bedrock).
         has_key_pair = bool(access_key_id and secret_access_key)
         has_session_token = bool(session_token)
-        if not has_key_pair and not has_session_token:
+        has_bearer_token = bool(bearer_token)
+
+        if not has_key_pair and not has_session_token and not has_bearer_token:
             raise ValueError(
-                "AWS credentials missing. Set either:\n"
+                "AWS credentials missing. Set one of:\n"
                 "  AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY  (IAM long-term key pair)\n"
-                "  AWS_SESSION_TOKEN                           (STS/SSO temporary token)"
+                "  AWS_SESSION_TOKEN                           (STS/SSO temporary token)\n"
+                "  AWS_BEARER_TOKEN_BEDROCK                    (Bedrock bearer token)"
             )
 
         return cls(
             aws_access_key_id=access_key_id,
             aws_secret_access_key=secret_access_key,
             aws_session_token=session_token,
+            aws_bearer_token=bearer_token,
             aws_region=_resolve(raw, "aws.region", required=False) or "ap-southeast-1",
             lark_app_id=_resolve(raw, "lark.app_id"),
             lark_app_secret=_resolve(raw, "lark.app_secret"),

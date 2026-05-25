@@ -42,22 +42,31 @@ class ClaudeAnalyzer:
         aws_access_key_id: str = "",
         aws_secret_access_key: str = "",
         aws_session_token: str = "",
+        aws_bearer_token: str = "",
     ) -> None:
         self._aws_region = aws_region
         self._aws_access_key_id = aws_access_key_id
         self._aws_secret_access_key = aws_secret_access_key
         self._aws_session_token = aws_session_token
+        self._aws_bearer_token = aws_bearer_token
         # Build client once — reused across run() calls
         self._client = self._build_client()
 
     def _build_client(self) -> AnthropicBedrock:
         kwargs: dict = {
-            "aws_access_key": self._aws_access_key_id,
-            "aws_secret_key": self._aws_secret_access_key,
             "aws_region": self._aws_region,
         }
-        if self._aws_session_token:
-            kwargs["aws_session_token"] = self._aws_session_token
+        # Bearer token takes precedence (if provided)
+        if self._aws_bearer_token:
+            kwargs["default_headers"] = {
+                "Authorization": f"Bearer {self._aws_bearer_token}"
+            }
+        else:
+            # Fall back to key pair or session token
+            kwargs["aws_access_key"] = self._aws_access_key_id
+            kwargs["aws_secret_key"] = self._aws_secret_access_key
+            if self._aws_session_token:
+                kwargs["aws_session_token"] = self._aws_session_token
         return AnthropicBedrock(**kwargs)
 
     def _select_model(self, migrations: list[Migration]) -> str:

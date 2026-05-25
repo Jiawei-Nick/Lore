@@ -4,6 +4,8 @@ aws:
   secret_access_key: ${AWS_SECRET_ACCESS_KEY}
   # Option B: Temporary STS/SSO token (leave blank if using Option A)
   session_token: ${AWS_SESSION_TOKEN}
+  # Option C: Bedrock bearer token (leave blank if using Option A or B)
+  bearer_token: ${AWS_BEARER_TOKEN_BEDROCK}
   region: ${AWS_REGION}
 
 lark:
