@@ -103,7 +103,7 @@ lark:
   app_secret: ${LARK_APP_SECRET}
   folder_token: ${LARK_FOLDER_TOKEN}
   parent_doc_id: ${LARK_PARENT_DOC_ID}
-  base_url: ${LARK_BASE_URL}           # tenant hostname e.g. pj4w2l1pwuq.sg.larksuite.com
+  base_url: ${LARK_BASE_URL}           # tenant hostname, defaults to open.larksuite.com
   erd_image_folder: ${LARK_ERD_IMAGE_FOLDER}
   erd_code_folder: ${LARK_ERD_CODE_FOLDER}
 

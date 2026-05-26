@@ -57,7 +57,7 @@ class LoreConfig:
     lark_parent_doc_id: str
     lark_erd_image_folder: str  # Optional: folder for image-rendered ERDs
     lark_erd_code_folder: str   # Optional: folder for code-based ERDs
-    lark_base_url: str          # Tenant-specific base URL e.g. pj4w2l1pwuq.sg.larksuite.com
+    lark_base_url: str          # Tenant-specific base URL, defaults to open.larksuite.com
     default_path: str
     default_branch: str
 

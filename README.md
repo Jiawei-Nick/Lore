@@ -24,8 +24,7 @@ export LARK_APP_SECRET="your-secret"
 export LARK_FOLDER_TOKEN="your-folder-token"
 export LARK_PARENT_DOC_ID="your-doc-id"
 
-# Tenant base URL — from your workspace URL (e.g. https://pj4w2l1pwuq.sg.larksuite.com/...)
-# Defaults to open.larksuite.com if not set
+# Tenant base URL — hostname from your Lark workspace URL, defaults to open.larksuite.com
 export LARK_BASE_URL="your-tenant.sg.larksuite.com"
 
 # Optional: ERD folder organization (get tokens from `lore setup-erd-folders`)
@@ -38,7 +37,7 @@ export LARK_ERD_CODE_FOLDER="your-code-folder-token"
 - `LARK_APP_ID` & `LARK_APP_SECRET` - https://open.feishu.cn/app
 - `LARK_FOLDER_TOKEN` - From Lark Drive folder URL: `https://xxx.larksuite.com/drive/folder/[FOLDER_TOKEN]`
 - `LARK_PARENT_DOC_ID` - From Lark Doc URL: `https://xxx.larksuite.com/docx/[DOC_ID]`
-- `LARK_BASE_URL` - Your tenant hostname from any Lark URL e.g. `pj4w2l1pwuq.sg.larksuite.com`
+- `LARK_BASE_URL` - Hostname from your Lark workspace URL e.g. `your-tenant.sg.larksuite.com`
 - `LARK_ERD_*_FOLDER` - Run `lore setup-erd-folders` to create and get tokens
 
 ## Usage
