@@ -55,11 +55,14 @@ def _infer_fk_relationships(tables: dict, table_subset: set[str]) -> list[tuple[
                 parent_base = col_name[:-3]  # strip _id (e.g., "user" from "user_id")
 
                 # Try multiple naming patterns to find parent table
+                parts = table_name.split("_")
                 candidates = [
                     parent_base,  # exact: user_id → user
                     f"tb_{parent_base}",  # prefixed: user_id → tb_user
-                    f"tb_{table_name.split('_')[1]}_{parent_base}",  # same category: package_id in tb_commission_* → tb_commission_package
                 ]
+                if len(parts) >= 2:
+                    # same category: package_id in tb_commission_* → tb_commission_package
+                    candidates.append(f"tb_{parts[1]}_{parent_base}")
 
                 # Also check if any table name ends with the parent_base
                 for potential_parent in table_subset:

@@ -29,42 +29,12 @@ def _make_pipeline_result():
     return ctx
 
 
-def test_analyze_posts_overview_erd_to_parent_page():
-    """After pipeline, overview ERD must be posted to parent page."""
-    with patch("lore.cli.load_config", return_value=_make_cfg()), \
-         patch("lore.cli.SchemaStore") as mock_store_cls, \
-         patch("lore.cli.Pipeline") as mock_pipeline_cls, \
-         patch("lore.cli.LarkDocOutput") as mock_lark_cls, \
-         patch("lore.cli.generate_category_overview", return_value="erDiagram\n overview") as mock_overview, \
-         patch("lore.cli.generate_mermaid_erd", return_value="erDiagram\n focused"):
-
-        mock_store = MagicMock()
-        mock_store.tables = {"user": {"columns": {}}}
-        mock_store_cls.return_value = mock_store
-
-        mock_pipeline = MagicMock()
-        mock_pipeline.run.return_value = _make_pipeline_result()
-        mock_pipeline_cls.return_value = mock_pipeline
-
-        mock_lark = MagicMock()
-        mock_lark_cls.return_value = mock_lark
-
-        result = runner.invoke(app, ["analyze", "--branch", "feat/test"])
-        assert result.exit_code == 0, result.output
-
-        mock_overview.assert_called_once_with(mock_store.tables)
-        mock_lark.update_erd_page.assert_called_once_with(
-            "erDiagram\n overview", page_token="parent_doc_123"
-        )
-
-
 def test_analyze_appends_focused_erd_to_sub_page():
     """After pipeline, focused ERD must be appended to the analysis sub-page."""
     with patch("lore.cli.load_config", return_value=_make_cfg()), \
          patch("lore.cli.SchemaStore") as mock_store_cls, \
          patch("lore.cli.Pipeline") as mock_pipeline_cls, \
          patch("lore.cli.LarkDocOutput") as mock_lark_cls, \
-         patch("lore.cli.generate_category_overview", return_value="erDiagram"), \
          patch("lore.cli.generate_mermaid_erd", return_value="erDiagram\n focused") as mock_focused:
 
         mock_store = MagicMock()
@@ -95,7 +65,7 @@ def test_analyze_skips_erds_when_no_migrations():
          patch("lore.cli.SchemaStore") as mock_store_cls, \
          patch("lore.cli.Pipeline") as mock_pipeline_cls, \
          patch("lore.cli.LarkDocOutput") as mock_lark_cls, \
-         patch("lore.cli.generate_category_overview") as mock_overview:
+         patch("lore.cli.generate_mermaid_erd") as mock_erd:
 
         mock_store = MagicMock()
         mock_store_cls.return_value = mock_store
@@ -110,4 +80,4 @@ def test_analyze_skips_erds_when_no_migrations():
 
         result = runner.invoke(app, ["analyze", "--branch", "feat/test"])
         assert result.exit_code == 0
-        mock_overview.assert_not_called()
+        mock_erd.assert_not_called()

@@ -284,14 +284,6 @@ def analyze(
         typer.echo("No DB migration changes detected in this diff.")
         return
 
-    # Overview ERD → parent page (uses store.tables which is now updated by pipeline)
-    overview_erd = generate_category_overview(store.tables)
-    try:
-        lark_output.update_erd_page(overview_erd, page_token=cfg.lark_parent_doc_id)
-        typer.echo("Overview ERD updated on parent page.")
-    except RuntimeError as e:
-        typer.echo(f"[WARN] Overview ERD update failed: {e}")
-
     # Focused ERD → sub-page (generated AFTER pipeline so schema store is updated)
     modified_tables = {change.table for migration in result.migrations for change in migration.changes}
     focused_erd = generate_mermaid_erd(store.tables, modified_tables=modified_tables)

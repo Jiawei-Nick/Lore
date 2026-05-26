@@ -4,7 +4,6 @@ from lore.erd_categorized import (
     _infer_fk_relationships,
     _infer_cross_category_relationships,
     _generate_erd_for_category,
-    generate_category_overview,
 )
 
 
@@ -141,30 +140,3 @@ def test_generate_erd_for_category():
     # user_profile.user_id references user (same category), not cross-category
 
 
-def test_generate_category_overview():
-    """Test category overview ERD generation."""
-    tables = {
-        "tb_wallet_account": {"columns": {"id": {}, "user_id": {}}},
-        "tb_wallet_transaction": {"columns": {"id": {}, "account_id": {}}},
-        "tb_user_profile": {"columns": {"id": {}, "name": {}}},
-        "tb_card_info": {"columns": {"id": {}, "user_id": {}}},
-    }
-
-    overview = generate_category_overview(tables)
-
-    # Check header
-    assert "%% Schema Overview" in overview
-    assert "erDiagram" in overview
-
-    # Check category domains are created
-    assert "wallet_domain {" in overview
-    assert "user_domain {" in overview
-    assert "card_domain {" in overview
-
-    # Check table counts are shown
-    assert "2 tables" in overview  # wallet has 2 tables
-
-    # Check cross-category relationships
-    # wallet references user, card references user
-    assert "user_domain ||--o{ wallet_domain" in overview or "wallet_domain" in overview
-    assert "user_domain ||--o{ card_domain" in overview or "card_domain" in overview
