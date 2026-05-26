@@ -1,0 +1,198 @@
+%% Category: commission (18 tables)
+erDiagram
+    tb_commission_code {
+        int id
+        int user_id
+        varchar_50_ commission_code
+        datetime create_time
+        datetime update_time
+        varchar_128_ update_user
+        tinyint is_del
+        varchar_200_ extends1
+    }
+    tb_commission_package {
+        int id
+        varchar_255_ name
+        varchar_255_ account_type
+        varchar_255_ summary
+        tinyint use_type
+        datetime create_time
+        datetime update_time
+        tinyint is_del
+        tinyint state
+    }
+    tb_commission_package_currency_rate {
+        int id
+        decimal_30_4_ rate
+        varchar_4_ currency
+        datetime create_time
+        datetime update_time
+        int update_uid
+        varchar_255_ update_user
+    }
+    tb_commission_package_detail {
+        int id
+        int package_id
+        varchar_255_ account_type
+        json commission_types
+        int ladder_index
+        datetime create_time
+        datetime update_time
+        tinyint is_del
+    }
+    tb_commission_package_detail_data {
+        int id
+        int commission_package_detail_id
+        int product_id
+        varchar_255_ commission_type
+        int product_index
+        int level_index
+        decimal_30_4_ value
+        datetime create_time
+        datetime update_time
+        tinyint is_del
+    }
+    tb_commission_package_group_currency {
+        int id
+        varchar_255_ ib_group
+        int server_id
+        varchar_4_ currency
+        datetime create_time
+        datetime update_time
+    }
+    tb_commission_package_groups {
+        int id
+        int package_id
+        varchar_255_ group
+        tinyint use_for_supplements
+        datetime create_time
+        datetime update_time
+        tinyint is_del
+    }
+    tb_commission_package_operate_log {
+        int id
+        int package_id
+        tinyint opt_type
+        int task_id
+        int opt_id
+        varchar_255_ opt_name
+        datetime create_time
+        json old_value
+        json new_value
+    }
+    tb_commission_package_org {
+        int id
+        int relation_id
+        tinyint use_for_pip
+        int org_id
+        datetime create_time
+        datetime update_time
+        tinyint is_del
+    }
+    tb_commission_package_products {
+        int id
+        int product_id
+        int package_id
+        int use_for
+        datetime create_time
+        datetime update_time
+        tinyint is_del
+    }
+    tb_commission_package_required_config {
+        int id
+        varchar_255_ account_type
+        json org_ids
+        tinyint_1_ is_required
+        int sort
+        datetime create_time
+        varchar_255_ create_user
+        datetime update_time
+        varchar_255_ update_user
+    }
+    tb_commission_package_supplements {
+        int id
+        int package_id
+        tinyint condition_type
+        tinyint rebate_type
+        decimal_30_4_ pip_point
+        tinyint state
+        varchar_255_ commission_type
+        decimal_30_4_ additional_commission
+        datetime create_time
+        datetime update_time
+        tinyint is_del
+    }
+    tb_commission_pipsum {
+        int mt4_account
+        decimal_38_6_ pip_commission_currency
+        date last_date
+        decimal_38_6_ prev_pip_commission_currency
+        date prev_last_date
+    }
+    tb_commission_rate_spread_config {
+        bigint id
+        varchar_64_ rate_spread_type
+        decimal_38_6_ spread
+        bigint create_by
+        bigint update_by
+        datetime create_time
+        datetime update_time
+    }
+    tb_commission_rate_spread_config_history {
+        bigint id
+        varchar_512_ from_config
+        varchar_512_ to_config
+        bigint create_by
+        bigint update_by
+        datetime create_time
+        datetime update_time
+    }
+    tb_commission_server_account_config {
+        int id
+        varchar_5000_ server
+        varchar_500_ account_type
+        int org_id
+        datetime create_time
+        datetime update_time
+        varchar_20_ category_name
+        varchar_20_ regular
+        varchar_50_ operator
+    }
+    tb_commission_server_groups_config {
+        int id
+        varchar_5000_ server
+        varchar_5000_ group_ids
+        varchar_20_ fg_test
+        varchar_20_ regular
+        datetime create_time
+        datetime update_time
+    }
+    tb_commission_template_rule {
+        int id
+        int user_id
+        varchar_255_ trading_group
+        int rebate_type
+        varchar_255_ product_group
+        int choose_ib_type
+        datetime operation_time
+        varchar_255_ mission_name
+        varchar_50_ operator
+        int status
+        varchar_255_ mission_data_id
+    }
+    tb_commission_package ||--o{ tb_commission_package_supplements : "has"
+    tb_commission_package ||--o{ tb_commission_package_products : "has"
+    tb_commission_package_org ||--o{ tb_commission_server_account_config : "has"
+    tb_commission_package ||--o{ tb_commission_package_detail : "has"
+    tb_commission_package ||--o{ tb_commission_package_groups : "has"
+    tb_commission_package ||--o{ tb_commission_package_operate_log : "has"
+    tb_commission_package_detail ||--o{ tb_commission_package_detail_data : "has"
+
+    %% Cross-category references:
+    %% tb_component_indicator_dim_relation (external) --> tb_commission_package_org
+    %% tb_card_product (external) --> tb_commission_package_products
+    %% tb_mail_server (external) --> tb_commission_package_group_currency
+    %% tb_marketing_dashboard_user (external) --> tb_commission_template_rule
+    %% tb_task (external) --> tb_commission_package_operate_log
+    %% tb_marketing_dashboard_user (external) --> tb_commission_code
+    %% tb_card_product (external) --> tb_commission_package_detail_data

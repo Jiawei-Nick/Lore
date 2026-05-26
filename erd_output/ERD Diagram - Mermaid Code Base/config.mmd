@@ -1,0 +1,89 @@
+%% Category: config (8 tables)
+erDiagram
+    tb_config_meta {
+        int id
+        varchar_48_ m_name
+        varchar_48_ m_key
+        varchar_48_ m_content
+        int config_type_id
+        int data_type
+        tinyint_unsigned is_del
+    }
+    tb_config_module {
+        int id
+        int parent_id
+        varchar_20_ system
+        varchar_255_ name
+        varchar_255_ locale_prop
+        bit_1_ is_del
+    }
+    tb_config_permission {
+        int id
+        int module_id
+        varchar_255_ expression
+        varchar_255_ name
+        varchar_255_ locale_prop
+        bit_1_ is_del
+    }
+    tb_config_prop {
+        int id
+        varchar_200_ p_key
+        text p_value
+        varchar_200_ p_content
+        int p_order
+        int p_editable
+        int config_meta_id
+        int config_type_id
+        varchar_200_ create_user
+        tinyint is_del
+    }
+    tb_config_prop_bak {
+        int id
+        varchar_200_ p_key
+        text p_value
+        varchar_200_ p_content
+        int p_order
+        int p_editable
+        int config_meta_id
+        int config_type_id
+        varchar_200_ create_user
+        tinyint is_del
+    }
+    tb_config_prop_copy1 {
+        int id
+        varchar_200_ p_key
+        text p_value
+        varchar_200_ p_content
+        int p_order
+        int p_editable
+        int config_meta_id
+        int config_type_id
+        varchar_200_ create_user
+        tinyint is_del
+    }
+    tb_config_select_option {
+        int id
+        varchar_50_ context
+        varchar_50_ value
+        varchar_255_ label
+        varchar_255_ label_trans
+    }
+    tb_config_type {
+        int id
+        varchar_255_ t_key
+        varchar_255_ t_name
+        varchar_255_ t_remark
+        int data_type
+        tinyint is_del
+    }
+    tb_config_type ||--o{ tb_config_meta : "has"
+    tb_config_meta ||--o{ tb_config_prop_bak : "has"
+    tb_config_type ||--o{ tb_config_prop_bak : "has"
+    tb_config_meta ||--o{ tb_config_prop : "has"
+    tb_config_type ||--o{ tb_config_prop : "has"
+    tb_config_meta ||--o{ tb_config_prop_copy1 : "has"
+    tb_config_type ||--o{ tb_config_prop_copy1 : "has"
+    tb_config_module ||--o{ tb_config_permission : "has"
+
+    %% Cross-category references:
+    %% tb_admin_role_module (external) --> tb_config_permission

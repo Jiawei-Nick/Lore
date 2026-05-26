@@ -1,0 +1,72 @@
+%% Category: dashboard (5 tables)
+erDiagram
+    tb_dashboard {
+        bigint id
+        varchar_255_ dashboard_name
+        varchar_255_ dashboard_desc
+        varchar_255_ cover_img
+        tinyint_1_ share_scope
+        int sort
+        bigint create_user
+        datetime create_time
+        bigint update_user
+        datetime update_time
+        tinyint_1_ is_del
+    }
+    tb_dashboard_component_rel {
+        bigint id
+        bigint dashboard_id
+        bigint component_id
+        varchar_512_ position
+        tinyint_1_ data_sort
+        int data_limit
+        int sort
+        tinyint_1_ is_visible
+        bigint create_user
+        datetime create_time
+        bigint update_user
+        datetime update_time
+        tinyint_1_ is_del
+    }
+    tb_dashboard_filter {
+        bigint id
+        bigint dashboard_id
+        varchar_255_ filter_name
+        int sort
+        bigint create_user
+        datetime create_time
+        bigint update_user
+        datetime update_time
+        tinyint_1_ is_del
+    }
+    tb_dashboard_role_relation {
+        bigint id
+        bigint dashboard_id
+        bigint role_id
+        varchar_16_ permission
+        bigint create_user
+        datetime create_time
+        bigint update_user
+        datetime update_time
+        tinyint_1_ is_del
+    }
+    tb_dashboard_team_relation {
+        bigint id
+        bigint dashboard_id
+        bigint group_id
+        varchar_16_ permission
+        bigint create_user
+        datetime create_time
+        bigint update_user
+        datetime update_time
+        tinyint_1_ is_del
+    }
+    tb_dashboard ||--o{ tb_dashboard_filter : "has"
+    tb_dashboard ||--o{ tb_dashboard_team_relation : "has"
+    tb_dashboard ||--o{ tb_dashboard_role_relation : "has"
+    tb_dashboard ||--o{ tb_dashboard_component_rel : "has"
+
+    %% Cross-category references:
+    %% tb_card_risk_group (external) --> tb_dashboard_team_relation
+    %% tb_role (external) --> tb_dashboard_role_relation
+    %% tb_component (external) --> tb_dashboard_component_rel

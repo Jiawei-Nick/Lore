@@ -1,0 +1,24 @@
+%% Category: sync (2 tables)
+erDiagram
+    tb_sync_leads_record {
+        int id
+        bigint login
+        varchar_256_ name
+        datetime registration
+        varchar_32_ phone
+        varchar_64_ email
+        varchar_64_ group
+        varchar_32_ lead_campaign
+        varchar_32_ lead_source
+        datetime sync_start_time
+        datetime sync_end_time
+        int repeat
+        varchar_10_ regulator
+    }
+    tb_sync_salesnote_record {
+        int id
+        bigint max_login
+        datetime sync_start_time
+        datetime sync_end_time
+        int sync_num
+    }

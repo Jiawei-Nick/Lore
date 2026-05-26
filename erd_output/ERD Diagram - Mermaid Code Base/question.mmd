@@ -1,0 +1,43 @@
+%% Category: question (3 tables)
+erDiagram
+    tb_question {
+        int id
+        varchar_128_ category
+        int type
+        varchar_200_ p_key
+        datetime create_time
+        datetime update_time
+        int update_by
+        tinyint is_del
+        int priority
+    }
+    tb_question_answer {
+        int id
+        int user_id
+        int question_id
+        int option_id
+        varchar_255_ comment
+        datetime create_time
+        datetime update_time
+        int update_by
+        tinyint is_del
+    }
+    tb_question_option {
+        int id
+        int question_id
+        varchar_200_ p_key
+        datetime create_time
+        datetime update_time
+        int update_by
+        tinyint is_del
+        int priority
+    }
+    tb_question ||--o{ tb_question_option : "has"
+    tb_question ||--o{ tb_question_answer : "has"
+    tb_question_option ||--o{ tb_question_answer : "has"
+
+    %% Cross-category references:
+    %% tb_survey_question (external) --> tb_question_option
+    %% tb_marketing_dashboard_user (external) --> tb_question_answer
+    %% tb_survey_question (external) --> tb_question_answer
+    %% tb_config_select_option (external) --> tb_question_answer

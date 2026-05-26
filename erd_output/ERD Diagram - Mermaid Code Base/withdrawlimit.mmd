@@ -1,0 +1,54 @@
+%% Category: withdrawlimit (3 tables)
+erDiagram
+    tb_withdrawlimit {
+        bigint id
+        varchar_100_ user_id
+        varchar_50_ mt4_account_id
+        bigint refdata_id
+        decimal_16_8_ limit_money
+        tinyint limit_opt
+        float_6_2_ limitrade_vol
+        float_6_2_ unlock_tradevol
+        varchar_255_ limit_product
+        datetime limit_stime
+        datetime limit_etime
+        datetime create_time
+        varchar_30_ update_note
+        float_6_2_ lot_require
+    }
+    tb_withdrawlimit_trade_record {
+        bigint id
+        varchar_40_ user_id
+        varchar_32_ symbol
+        bigint_unsigned ticket
+        int login
+        decimal_38_4_ volume
+        decimal_38_4_ lots
+        decimal_38_4_ remaining_lots
+        int server_id
+        tinyint account_type
+        datetime open_time
+        datetime close_time
+        datetime create_time
+        datetime update_time
+    }
+    tb_withdrawlimit_unfreeze_log {
+        bigint id
+        bigint limit_id
+        varchar_20_ status
+        tinyint_1_ enable
+        varchar_50_ mt4_account_id
+        varchar_100_ applicant_uid
+        datetime applicant_time
+        varchar_100_ approve_uid
+        datetime approve_time
+        datetime create_time
+        datetime update_time
+    }
+    tb_withdrawlimit ||--o{ tb_withdrawlimit_unfreeze_log : "has"
+
+    %% Cross-category references:
+    %% tb_marketing_dashboard_user (external) --> tb_withdrawlimit_trade_record
+    %% tb_mail_server (external) --> tb_withdrawlimit_trade_record
+    %% tb_marketing_dashboard_user (external) --> tb_withdrawlimit
+    %% tb_card_payment_limit (external) --> tb_withdrawlimit_unfreeze_log

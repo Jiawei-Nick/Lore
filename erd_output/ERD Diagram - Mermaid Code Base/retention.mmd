@@ -1,0 +1,12 @@
+%% Category: retention (1 tables)
+erDiagram
+    tb_retention_collect {
+        bigint id
+        int sales_id
+        int collect_data
+        int collect_type
+        tinyint is_collect
+    }
+
+    %% Cross-category references:
+    %% tb_sales (external) --> tb_retention_collect

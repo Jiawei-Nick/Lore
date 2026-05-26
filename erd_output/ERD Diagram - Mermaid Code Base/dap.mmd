@@ -1,0 +1,211 @@
+%% Category: dap (8 tables)
+erDiagram
+    tb_dap_manual_edit_history {
+        int id
+        varchar_64_ edit_reference_id
+        int edit_type
+        int edit_status
+        int previous_status
+        varchar_100_ edit_content
+        varchar_100_ previous_content
+        varchar_1024_ edit_notes
+        varchar_32_ editor
+        datetime edit_time
+        int is_del
+    }
+    tb_dap_payment_risk_audit {
+        int id
+        int user_id
+        int transaction_type
+        int transaction_id
+        int status
+        varchar_64_ risk_order_no
+        tinyint_1_ is_manual_reviewed
+        varchar_64_ rejection_code
+        varchar_1024_ rejection_reason
+        json rejection_reason_params
+        datetime create_time
+        datetime update_time
+        datetime accepted_time
+        varchar_150_ operate_name
+        datetime last_submission_time
+        int submission_attempt_count
+    }
+    tb_dap_payment_withdraw {
+        int id
+        int user_id
+        int mt4_account
+        bigint cpa_account
+        varchar_150_ account_name
+        bigint sale_id
+        varchar_150_ sale_name
+        tinyint mt4_account_type
+        varchar_10_ currency
+        tinyint status
+        int withdraw_type
+        varchar_100_ skrill_email
+        varchar_255_ bitwallet_email
+        varchar_64_ crypto_wallet_address
+        decimal_40_8_ withdraw_amount
+        decimal_40_8_ fee
+        tinyint_1_ is_fee_waived
+        decimal_40_8_ reversed_amount
+        decimal_40_8_ actual_amount
+        varchar_500_ change_reason
+        decimal_40_8_ payment_amount
+        varchar_300_ processed_notes
+        text internal_notes
+        varchar_2000_ application_notes
+        int credit_card_id
+        varchar_100_ card_number
+        varchar_100_ card_expiry
+        int withdraw_account_id
+        varchar_150_ operate_name
+        int country_id
+        tinyint_1_ is_del
+        datetime create_time
+        datetime accepted_time
+        datetime update_time
+        datetime reversed_time
+        varchar_128_ extend1
+        varchar_128_ extend2
+        varchar_128_ extend3
+        text cps_attach_variable
+        varchar_150_ order_number
+        varchar_600_ cps_mandatory_field
+        tinyint_1_ is_remember_info
+        int user_payment_info_id
+        varchar_100_ upi_vpa
+        varchar_200_ upi_account_name
+        varchar_100_ upi_email
+        varchar_20_ upi_phone_no
+        varchar_200_ upi_address
+        varchar_255_ perfectmoney_email
+        tinyint_1_ processed_by_op
+        decimal_40_8_ to_currency_amount
+        decimal_40_6_ to_rate
+        int user_sales_id
+        int account_sales_id
+        decimal_40_8_ deduct_credit
+        varchar_255_ address_remark
+        tinyint address_type
+        int reversed_type
+        varchar_255_ ebuy_email
+        varchar_150_ internal_notes_operator
+        tinyint_1_ checking_status
+        varchar_10_ order_currency
+        varchar_10_ payment_method_code
+        tinyint_1_ is_trade
+        decimal_40_6_ rate
+        tinyint_1_ is_non_app
+        decimal_40_6_ to_usd_rate
+        json raw
+        int withdraw_channel
+        varchar_10_ currency_number
+        varchar_64_ ip_address
+        varchar_50_ fingerprint
+        tinyint_1_ crypto_fee_received
+        varchar_16_ regulator
+        varchar_128_ cpa_ccount_name
+        varchar_128_ cpa_account_name
+        varchar_100_ user_email
+        int user_country
+    }
+    tb_dap_payment_withdraw_account {
+        int id
+        int country_id
+        int withdraw_id
+        int user_id
+        varchar_150_ bank_name
+        varchar_150_ bsb_code
+        varchar_150_ bank_account_name
+        varchar_150_ swift_code
+        varchar_100_ bank_card
+        varchar_100_ sort_code
+        varchar_300_ bank_address
+        varchar_150_ bank_branch_name
+        tinyint_1_ is_default_withdraw
+        varchar_150_ withdraw_account_name
+        varchar_300_ account_holder_address
+        tinyint_1_ is_del
+        datetime create_time
+        datetime update_time
+        varchar_128_ bankCity
+        varchar_128_ bankProvince
+        varchar_128_ extend3
+        varchar_100_ ifsc_code
+        varchar_8_ bank_branch_code
+        varchar_128_ pix_key
+        varchar_20_ pix_key_type
+        varchar_20_ document_type
+        varchar_128_ document_details
+        varchar_150_ financial_institution_number
+        varchar_50_ fingerprint
+    }
+    tb_dap_payment_withdraw_checking_result {
+        int id
+        int payment_withdraw_id
+        int checking_type
+        tinyint_1_ result
+        varchar_255_ action_note
+        int operator_id
+        datetime action_note_update_time
+        tinyint_1_ display_only
+    }
+    tb_dap_payment_withdraw_details {
+        int id
+        int withdraw_id
+        mediumint withdraw_detail_type
+        decimal_40_8_ withdraw_detail_amount
+        tinyint status
+        tinyint_1_ is_del
+        int credit_card_id
+        int sort
+        datetime create_time
+        datetime update_time
+        int create_user
+        int update_user
+        varchar_128_ extends1
+        varchar_128_ extends2
+        varchar_128_ extends3
+        varchar_100_ ticket_id
+        varchar_50_ fingerprint
+    }
+    tb_dap_statistics_withdraw_metadata {
+        int id
+        int withdrawal_id
+        decimal_40_8_ balance
+        decimal_40_8_ credit
+        decimal_40_8_ equity
+        decimal_40_8_ margin
+        decimal_40_8_ total_withdraw
+        decimal_40_8_ total_deposit
+        decimal_40_8_ total_net_deposit
+        decimal_38_6_ rate
+        datetime audit_time
+    }
+    tb_dap_user_payment_info {
+        int id
+        int user_id
+        int type
+        tinyint sub_type
+        text info
+        tinyint_1_ is_del
+        datetime create_time
+        datetime update_time
+    }
+    tb_dap_payment_withdraw ||--o{ tb_dap_payment_withdraw_checking_result : "has"
+    tb_dap_payment_withdraw_account ||--o{ tb_dap_payment_withdraw : "has"
+    tb_dap_user_payment_info ||--o{ tb_dap_payment_withdraw : "has"
+    tb_dap_payment_withdraw ||--o{ tb_dap_payment_withdraw_details : "has"
+    tb_dap_payment_withdraw ||--o{ tb_dap_payment_withdraw_account : "has"
+
+    %% Cross-category references:
+    %% tb_marketing_dashboard_user (external) --> tb_dap_payment_risk_audit
+    %% tb_user_coupon_trade_record_transaction (external) --> tb_dap_payment_risk_audit
+    %% tb_marketing_dashboard_user (external) --> tb_dap_user_payment_info
+    %% tb_marketing_dashboard_user (external) --> tb_dap_payment_withdraw
+    %% tb_cr_sale (external) --> tb_dap_payment_withdraw
+    %% tb_country (external) --> tb_dap_payment_withdraw
+    %% tb_country (external) --> tb_dap_payment_withdraw_account
+    %% tb_marketing_dashboard_user (external) --> tb_dap_payment_withdraw_account

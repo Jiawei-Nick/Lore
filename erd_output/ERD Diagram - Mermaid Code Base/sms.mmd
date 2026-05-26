@@ -1,0 +1,18 @@
+%% Category: sms (1 tables)
+erDiagram
+    tb_sms_history {
+        int id
+        int user_id
+        varchar_10_ country_phone_code
+        varchar_128_ mobile_number
+        varchar_500_ body
+        int status
+        varchar_50_ message_id
+        varchar_20_ provider
+        timestamp gateway_sent_time
+        timestamp delivered_time
+    }
+
+    %% Cross-category references:
+    %% tb_marketing_dashboard_user (external) --> tb_sms_history
+    %% tb_user_message (external) --> tb_sms_history

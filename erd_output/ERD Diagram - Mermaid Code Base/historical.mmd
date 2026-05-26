@@ -1,0 +1,11 @@
+%% Category: historical (1 tables)
+erDiagram
+    tb_historical_task {
+        int id
+        int task_id
+        text historical_data
+        datetime modified_date
+    }
+
+    %% Cross-category references:
+    %% tb_task (external) --> tb_historical_task

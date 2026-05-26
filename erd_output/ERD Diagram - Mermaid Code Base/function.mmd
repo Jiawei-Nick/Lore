@@ -1,0 +1,31 @@
+%% Category: function (2 tables)
+erDiagram
+    tb_function_security_record {
+        bigint id
+        int user_id
+        varchar_255_ ip_address
+        varchar_50_ limit_function_code
+        int rule_id
+        tinyint_1_ is_refresh_user_security
+        datetime current_limit_time
+        datetime new_limit_time
+        datetime create_time
+    }
+    tb_function_security_rule {
+        int id
+        varchar_50_ function_code
+        varchar_20_ user_identity_type
+        json rule_content
+        tinyint_1_ security_switch
+        int create_by
+        int update_by
+        datetime create_time
+        datetime update_time
+        tinyint_1_ is_del
+        varchar_500_ description
+    }
+    tb_function_security_rule ||--o{ tb_function_security_record : "has"
+
+    %% Cross-category references:
+    %% tb_marketing_dashboard_user (external) --> tb_function_security_record
+    %% tb_match_group_rule (external) --> tb_function_security_record

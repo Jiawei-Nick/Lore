@@ -1,0 +1,22 @@
+%% Category: transfer (1 tables)
+erDiagram
+    tb_transfer_owner_report {
+        bigint id
+        int modify_id
+        int user_id
+        varchar_255_ user_name
+        int sale_id
+        varchar_255_ agent_name
+        int affid
+        tinyint agent_type
+        int agent_id
+        tinyint transfer_type
+        int website_user_type
+        datetime transfer_time
+        datetime create_time
+        int change_type
+    }
+
+    %% Cross-category references:
+    %% tb_marketing_dashboard_user (external) --> tb_transfer_owner_report
+    %% tb_cr_sale (external) --> tb_transfer_owner_report

@@ -1,0 +1,81 @@
+%% Category: coupon (5 tables)
+erDiagram
+    tb_coupon {
+        bigint id
+        varchar_50_ name
+        varchar_150_ adjust_note
+        tinyint type
+        decimal_4_2_ discount
+        datetime start_time
+        datetime expire_time
+        tinyint state
+        smallint expire_days
+        varchar_500_ info_url
+        varchar_40_ receive_way
+        int receive_times
+        int total_receive_times
+        int receive_num
+        int use_num
+        tinyint withdraw_limit
+        decimal_8_2_ tradelimit_val
+        varchar_50_ charge_code
+        tinyint aim_user
+        varchar_1500_ coup_des
+        datetime create_time
+        datetime update_time
+        varchar_5000_ countries
+        tinyint charge_type
+        varchar_50_ coupon_product
+        decimal_10_2_ coupon_unlock_volume
+        varchar_300_ coupon_event_remark
+        varchar_30_ create_by
+        varchar_30_ update_by
+        int coupon_activity_id
+        varchar_255_ coupon_account_type
+        tinyint ftd_status
+        int stock_expire_days
+        int banner_img
+    }
+    tb_coupon_amount {
+        bigint id
+        bigint coupon_id
+        decimal_12_2_ amount
+        varchar_40_ currency
+        datetime create_time
+        datetime update_time
+    }
+    tb_coupon_condition {
+        bigint id
+        bigint coupon_id
+        varchar_10000_ currency
+        varchar_50_ condition
+        varchar_50_ val
+        tinyint operator
+        datetime create_time
+        datetime update_time
+        varchar_30_ pay_type_val
+    }
+    tb_coupon_paytype {
+        int id
+        varchar_30_ pay_val
+        varchar_5000_ pay_act_val
+        varchar_50_ name
+        timestamp create_time
+    }
+    tb_coupon_paytype_web {
+        int id
+        int channel_id
+        varchar_255_ text
+        varchar_255_ mt4_remark
+        bit_1_ enabled
+        int type_id
+    }
+    tb_coupon_paytype ||--o{ tb_coupon_paytype_web : "has"
+    tb_coupon ||--o{ tb_coupon_amount : "has"
+    tb_coupon ||--o{ tb_coupon_condition : "has"
+
+    %% Cross-category references:
+    %% tb_card_channel (external) --> tb_coupon_paytype_web
+    %% tb_participant_status_type (external) --> tb_coupon_paytype_web
+    %% tb_user_coupon (external) --> tb_coupon_amount
+    %% tb_user_coupon (external) --> tb_coupon_condition

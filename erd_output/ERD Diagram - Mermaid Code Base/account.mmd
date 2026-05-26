@@ -1,0 +1,230 @@
+%% Category: account (11 tables)
+erDiagram
+    tb_account_adjustment_log {
+        bigint id
+        datetime from_date
+        datetime to_date
+        datetime create_time
+    }
+    tb_account_change_whitelist {
+        int id
+        int account
+        int type
+        int datasource_id
+        varchar_255_ regulator
+        datetime create_time
+        int is_del
+    }
+    tb_account_indicator_daily_summary {
+        bigint id
+        bigint indicator_id
+        int indicator_type
+        bigint account_id
+        bigint user_id
+        bigint sales_id
+        bigint ib_id
+        bigint cpa_id
+        bigint rebate_account
+        date summary_date
+        decimal_38_8_ summary_value
+        bigint create_user
+        datetime create_time
+        bigint update_user
+        datetime update_time
+        tinyint_1_ is_del
+    }
+    tb_account_indicator_monthly_summary {
+        bigint id
+        bigint indicator_id
+        int indicator_type
+        bigint account_id
+        bigint user_id
+        bigint sales_id
+        bigint ib_id
+        bigint cpa_id
+        bigint rebate_account
+        varchar_7_ summary_month
+        decimal_38_8_ summary_value
+        bigint create_user
+        datetime create_time
+        bigint update_user
+        datetime update_time
+        tinyint_1_ is_del
+    }
+    tb_account_info {
+        int mt_account
+        int user_id
+        decimal_40_2_ balance
+        varchar_10_ currency
+        decimal_40_6_ to_usd_rate
+        datetime update_time
+        tinyint_unsigned is_del
+    }
+    tb_account_mt4_vjp {
+        int uid
+        varchar_255_ LOGIN
+        varchar_255_ GROUP
+        varchar_255_ ENABLE
+        varchar_255_ ENABLE_CHANGE_PASS
+        varchar_255_ ENABLE_READONLY
+        varchar_255_ ENABLE_OTP
+        varchar_255_ PASSWORD_PHONE
+        varchar_255_ NAME
+        varchar_255_ COUNTRY
+        varchar_255_ CITY
+        varchar_255_ STATE
+        varchar_255_ ZIPCODE
+        varchar_255_ ADDRESS
+        varchar_255_ LEAD_SOURCE
+        varchar_255_ PHONE
+        varchar_255_ EMAIL
+        varchar_255_ COMMENT
+        varchar_255_ ID
+        varchar_255_ STATUS
+        varchar_255_ REGDATE
+        varchar_255_ LASTDATE
+        varchar_255_ LEVERAGE
+        varchar_255_ AGENT_ACCOUNT
+        varchar_255_ TIMESTAMP
+        varchar_255_ BALANCE
+        varchar_255_ PREVMONTHBALANCE
+        varchar_255_ PREVBALANCE
+        varchar_255_ CREDIT
+        varchar_255_ INTERESTRATE
+        varchar_255_ TAXES
+        varchar_255_ SEND_REPORTS
+        varchar_255_ MQID
+        varchar_255_ USER_COLOR
+        varchar_255_ EQUITY
+        varchar_255_ MARGIN
+        varchar_255_ MARGIN_LEVEL
+        varchar_255_ MARGIN_FREE
+        varchar_255_ CURRENCY
+        varchar_255_ API_DATA
+        varchar_255_ MODIFY_TIME
+        int datasource_id
+        int is_repeat
+        int is_execute
+        int is_test
+        varchar_255_ password
+        text process_note
+        tinyint_1_ migrate_batch
+    }
+    tb_account_mt4_vjp_250930 {
+        int uid
+        varchar_255_ LOGIN
+        varchar_255_ GROUP
+        varchar_255_ ENABLE
+        varchar_255_ ENABLE_CHANGE_PASS
+        varchar_255_ ENABLE_READONLY
+        varchar_255_ ENABLE_OTP
+        varchar_255_ PASSWORD_PHONE
+        varchar_255_ NAME
+        varchar_255_ COUNTRY
+        varchar_255_ CITY
+        varchar_255_ STATE
+        varchar_255_ ZIPCODE
+        varchar_255_ ADDRESS
+        varchar_255_ LEAD_SOURCE
+        varchar_255_ PHONE
+        varchar_255_ EMAIL
+        varchar_255_ COMMENT
+        varchar_255_ ID
+        varchar_255_ STATUS
+        varchar_255_ REGDATE
+        varchar_255_ LASTDATE
+        varchar_255_ LEVERAGE
+        varchar_255_ AGENT_ACCOUNT
+        varchar_255_ TIMESTAMP
+        varchar_255_ BALANCE
+        varchar_255_ PREVMONTHBALANCE
+        varchar_255_ PREVBALANCE
+        varchar_255_ CREDIT
+        varchar_255_ INTERESTRATE
+        varchar_255_ TAXES
+        varchar_255_ SEND_REPORTS
+        varchar_255_ MQID
+        varchar_255_ USER_COLOR
+        varchar_255_ EQUITY
+        varchar_255_ MARGIN
+        varchar_255_ MARGIN_LEVEL
+        varchar_255_ MARGIN_FREE
+        varchar_255_ CURRENCY
+        varchar_255_ API_DATA
+        varchar_255_ MODIFY_TIME
+        int datasource_id
+        int is_repeat
+        int is_execute
+        int is_test
+        varchar_255_ password
+        text process_note
+        tinyint_1_ migrate_batch
+    }
+    tb_account_trade_status {
+        bigint id
+        int user_id
+        int server
+        int login
+        datetime trans_time
+        tinyint_1_ trans_flag
+        tinyint_1_ is_del
+        datetime create_time
+        datetime update_time
+    }
+    tb_account_type {
+        int id
+        varchar_100_ description
+    }
+    tb_account_type_mapping {
+        int id
+        int type
+        varchar_50_ name
+        datetime create_time
+        datetime update_time
+        tinyint_1_ is_del
+    }
+    tb_account_user_dimension_current {
+        bigint id
+        int user_id
+        varchar_250_ user_name
+        int account
+        int operation_type
+        int regulate
+        varchar_64_ country
+        varchar_100_ country_name
+        varchar_64_ region
+        varchar_32_ language
+        int sales_id
+        varchar_250_ sales_name
+        int role_id
+        varchar_128_ role_name
+        int workgroup_id
+        varchar_255_ workgroup_name
+        int user_type
+        int client_type
+        int account_type
+        int ib_user_id
+        int cpa_user_id
+        int ib_account
+        int cpa_account
+        varchar_16_ vip_tier
+        datetime latest_change_time
+        datetime create_time
+        datetime update_time
+        tinyint_1_ is_del
+    }
+
+    %% Cross-category references:
+    %% tb_pt_account (external) --> tb_account_indicator_daily_summary
+    %% tb_marketing_dashboard_user (external) --> tb_account_indicator_daily_summary
+    %% tb_sales (external) --> tb_account_indicator_daily_summary
+    %% tb_cpa_allot_cr_cpa (external) --> tb_account_indicator_daily_summary
+    %% tb_pt_account (external) --> tb_account_indicator_monthly_summary
+    %% tb_marketing_dashboard_user (external) --> tb_account_indicator_monthly_summary
+    %% tb_sales (external) --> tb_account_indicator_monthly_summary
+    %% tb_cpa_allot_cr_cpa (external) --> tb_account_indicator_monthly_summary
+    %% tb_marketing_dashboard_user (external) --> tb_account_user_dimension_current
+    %% tb_sales (external) --> tb_account_user_dimension_current
+    %% tb_role (external) --> tb_account_user_dimension_current
+    %% tb_marketing_dashboard_user (external) --> tb_account_trade_status
+    %% tb_marketing_dashboard_user (external) --> tb_account_info

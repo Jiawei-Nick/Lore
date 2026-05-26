@@ -1,0 +1,77 @@
+%% Category: dc (5 tables)
+erDiagram
+    tb_dc {
+        int id
+        text name
+        varchar_30_ location
+        varchar_255_ host
+        int data_source_id
+        tinyint_1_ is_del
+        tinyint_1_ exclusive_dc
+        datetime create_time
+        datetime update_time
+        datetime check_time
+        varchar_100_ operator
+        int speed
+        tinyint_1_ in_use
+        bigint average_response_time
+        datetime auto_update_time
+        int operator_id
+    }
+    tb_dc_20230522 {
+        int id
+        text name
+        varchar_30_ location
+        varchar_255_ host
+        int data_source_id
+        tinyint_1_ is_del
+        tinyint_1_ exclusive_dc
+        datetime create_time
+        datetime update_time
+        datetime check_time
+        varchar_100_ operator
+        int speed
+        tinyint_1_ in_use
+        bigint average_response_time
+        datetime auto_update_time
+        int operator_id
+    }
+    tb_dc_copy1 {
+        int id
+        text name
+        varchar_30_ location
+        varchar_30_ host
+        int data_source_id
+        tinyint_1_ is_del
+        tinyint_1_ exclusive_dc
+        datetime create_time
+        datetime update_time
+        datetime check_time
+        varchar_100_ operator
+        int speed
+    }
+    tb_dc_event_log {
+        int id
+        varchar_255_ host
+        tinyint_1_ io_exception
+        tinyint_1_ dc_error
+        text token
+        text url
+        datetime create_time
+        tinyint_1_ dc_using_status
+        varchar_255_ data_source_id
+    }
+    tb_dc_health_checker_record {
+        int id
+        tinyint dc_id
+        datetime query_initiate_time
+        datetime query_result_return_time
+        int execution_time
+    }
+    tb_dc ||--o{ tb_dc_health_checker_record : "has"
+
+    %% Cross-category references:
+    %% tb_data_source (external) --> tb_dc
+    %% tb_data_source (external) --> tb_dc_event_log
+    %% tb_data_source (external) --> tb_dc_copy1
+    %% tb_data_source (external) --> tb_dc_20230522

@@ -1,0 +1,12 @@
+%% Category: sensors (1 tables)
+erDiagram
+    tb_sensors_event_record {
+        int id
+        varchar_255_ business_id
+        varchar_255_ regulator
+        varchar_255_ event_name
+        json record
+        datetime create_time
+        datetime update_time
+        tinyint is_del
+    }

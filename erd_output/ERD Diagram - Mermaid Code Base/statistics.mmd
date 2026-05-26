@@ -1,0 +1,41 @@
+%% Category: statistics (2 tables)
+erDiagram
+    tb_statistics_display_data {
+        int id
+        varchar_255_ display_data
+        int display_data_type
+        tinyint partnership_type
+        varchar_2048_ display_data_desc
+        int operate_id
+        varchar_255_ operate_name
+        int operate_type
+        int attribution_way
+        int template_id
+        tinyint_1_ is_del
+        datetime create_time
+        datetime update_time
+        varchar_255_ extra_1
+        varchar_255_ extra_2
+        int is_indicator
+    }
+    tb_statistics_template {
+        int id
+        varchar_255_ template_name
+        varchar_2048_ template_desc
+        int operate_id
+        varchar_255_ operate_name
+        int operate_type
+        tinyint_1_ is_default_template
+        int template_type
+        tinyint partnership_template_type
+        tinyint_1_ is_del
+        datetime create_time
+        datetime update_time
+        varchar_255_ extra_1
+        varchar_255_ extra_2
+        int calculate_time
+    }
+    tb_statistics_template ||--o{ tb_statistics_display_data : "has"
+
+    %% Cross-category references:
+    %% tb_sales_email_template (external) --> tb_statistics_display_data

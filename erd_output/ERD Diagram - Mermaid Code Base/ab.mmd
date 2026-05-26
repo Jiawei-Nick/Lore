@@ -1,0 +1,73 @@
+%% Category: ab (4 tables)
+erDiagram
+    tb_ab_testing_detail {
+        int_unsigned id
+        int template_id
+        varchar_256_ template_name
+        varchar_64_ display_page
+        int user_id
+        varchar_256_ user_name
+        datetime clicked_time
+        varchar_64_ country
+        varchar_64_ campaign_id
+        varchar_128_ campaign_name
+        varchar_16_ campaign_status
+        varchar_16_ event_status
+        tinyint is_del
+        datetime date_created
+        datetime date_updated
+    }
+    tb_ab_testing_info {
+        int_unsigned id
+        int template_id
+        varchar_256_ template_name
+        varchar_64_ display_page
+        int total_impression
+        int total_hits
+        int default_clicked
+        int un_clicked
+        int manual_opt_out
+        int manual_opt_in
+        tinyint is_del
+        datetime date_created
+        datetime date_updated
+    }
+    tb_ab_testing_template {
+        int_unsigned id
+        varchar_256_ template_name
+        varchar_512_ display_pages
+        varchar_64_ rules
+        datetime start_time
+        datetime end_time
+        varchar_2048_ countries
+        varchar_64_ target_audience_type
+        varchar_128_ campaign_id
+        varchar_128_ campaign_name
+        varchar_2048_ processed_notes
+        varchar_128_ operator
+        int operator_id
+        varchar_128_ update_by
+        int update_by_id
+        tinyint campaign_complete
+        tinyint is_del
+        datetime date_created
+        datetime date_updated
+    }
+    tb_ab_testing_template_i18n {
+        int_unsigned id
+        int template_id
+        varchar_32_ language
+        varchar_512_ content_setting
+        tinyint is_del
+        datetime date_created
+        datetime date_updated
+    }
+    tb_ab_testing_template ||--o{ tb_ab_testing_template_i18n : "has"
+    tb_ab_testing_template ||--o{ tb_ab_testing_detail : "has"
+    tb_ab_testing_template ||--o{ tb_ab_testing_info : "has"
+
+    %% Cross-category references:
+    %% tb_sales_email_template (external) --> tb_ab_testing_template_i18n
+    %% tb_sales_email_template (external) --> tb_ab_testing_detail
+    %% tb_marketing_dashboard_user (external) --> tb_ab_testing_detail
+    %% tb_sales_email_template (external) --> tb_ab_testing_info

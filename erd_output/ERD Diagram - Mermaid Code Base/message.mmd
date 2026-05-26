@@ -1,0 +1,50 @@
+%% Category: message (4 tables)
+erDiagram
+    tb_message_push_group_relation {
+        int id
+        int message_push_id
+        int group_id
+        int create_user
+        datetime create_time
+        int update_user
+        datetime update_time
+        tinyint is_del
+    }
+    tb_message_push_management {
+        int id
+        varchar_255_ message_push_name
+        tinyint is_default
+        int version_id
+        tinyint status
+        int version
+        int create_user
+        datetime create_time
+        int update_user
+        datetime update_time
+        tinyint is_del
+    }
+    tb_message_push_type_relation {
+        int id
+        int message_push_id
+        tinyint message_push_parent_type
+        tinyint message_push_sub_type
+        int create_user
+        datetime create_time
+        int update_user
+        datetime update_time
+        tinyint is_del
+    }
+    tb_message_template {
+        int id
+        varchar_255_ subject
+        varchar_20480_ content
+        datetime create_time
+        datetime last_update_time
+        int message_type
+        varchar_255_ associated_user
+        int is_read
+    }
+
+    %% Cross-category references:
+    %% tb_card_risk_group (external) --> tb_message_push_group_relation
+    %% tb_deposit_version (external) --> tb_message_push_management

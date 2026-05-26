@@ -1,0 +1,42 @@
+%% Category: follow (3 tables)
+erDiagram
+    tb_follow_up {
+        int id
+        int user_id
+        int task_id
+        int follow_up_method_id
+        text notes
+        datetime follow_up_time
+        int operator_id
+        int sales_status
+        int user_type
+    }
+    tb_follow_up_method {
+        int id
+        int type
+        varchar_100_ phone_session_id
+        int user_type
+        int record_method
+        varchar_32_ automatic_server
+        varchar_512_ call_log_session_id
+        varchar_512_ call_log_record_id
+    }
+    tb_follow_up_test {
+        int id
+        int user_id
+        int task_id
+        int follow_up_method_id
+        text notes
+        datetime follow_up_time
+        int operator_id
+        int sales_status
+        int user_type
+    }
+    tb_follow_up_method ||--o{ tb_follow_up : "has"
+    tb_follow_up_method ||--o{ tb_follow_up_test : "has"
+
+    %% Cross-category references:
+    %% tb_marketing_dashboard_user (external) --> tb_follow_up
+    %% tb_task (external) --> tb_follow_up
+    %% tb_marketing_dashboard_user (external) --> tb_follow_up_test
+    %% tb_task (external) --> tb_follow_up_test

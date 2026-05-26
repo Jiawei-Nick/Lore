@@ -1,0 +1,295 @@
+%% Category: sales (21 tables)
+erDiagram
+    tb_sales {
+        bigint sales_id
+        int brand
+        varchar_32_ name
+        tinyint is_del
+        datetime create_time
+        int create_user
+        datetime update_time
+        int update_user
+    }
+    tb_sales_configs {
+        bigint id
+        bigint user_id
+        varchar_100_ config_key
+        text config_value
+        varchar_50_ config_type
+        tinyint_1_ is_default
+        tinyint_1_ is_del
+        datetime create_time
+        datetime update_time
+        int create_user
+        int update_user
+    }
+    tb_sales_data_statistics_global {
+        int id
+        int user_id
+        int user_type
+        int sales_id
+        int operate_type
+        decimal_10_2_ deposit_amount
+        decimal_10_2_ withdraw_amount
+        varchar_50_ currency
+        int duration
+        datetime create_time
+        varchar_512_ operate_data
+        varchar_255_ extra
+        int id_type
+        int auto_id
+        tinyint_1_ is_del
+        varchar_255_ extra_2
+    }
+    tb_sales_email_authorization_record {
+        bigint id
+        int sales_id
+        varchar_255_ email
+        int status
+        datetime authorization_time
+        datetime create_time
+        datetime update_time
+    }
+    tb_sales_email_group_rel {
+        int template_group_id
+        int work_group_id
+        datetime create_time
+        int create_user
+    }
+    tb_sales_email_group_rel2 {
+        int template_group_id
+        int work_group_id
+        datetime create_time
+        int create_user
+    }
+    tb_sales_email_remind_ignore {
+        bigint id
+        int sales_id
+        datetime create_time
+        datetime update_time
+    }
+    tb_sales_email_send_record {
+        bigint id
+        bigint send_user_id
+        varchar_100_ send_user_email
+        varchar_1024_ email_subject
+        longtext email_content
+        varchar_4082_ recipients
+        varchar_4082_ cc_recipients
+        varchar_4096_ bcc_recipients
+        int template_id
+        datetime create_time
+        tinyint is_del
+    }
+    tb_sales_email_sign {
+        int id
+        int user_id
+        longtext sign_content
+        datetime create_time
+        datetime update_time
+        tinyint is_del
+    }
+    tb_sales_email_sync_record {
+        int sales_id
+        varchar_255_ folder_name
+        datetime last_sync_date
+        datetime create_time
+        datetime update_time
+    }
+    tb_sales_email_template {
+        bigint id
+        varchar_1024_ template_name
+        varchar_500_ template_type
+        bigint group_id
+        varchar_2048_ theme
+        longtext content
+        varchar_2048_ description
+        tinyint is_enable
+        int data_sort
+        bigint create_user_id
+        datetime create_time
+        bigint update_user_id
+        datetime update_time
+        tinyint is_del
+    }
+    tb_sales_email_template_group {
+        bigint id
+        varchar_1024_ group_name
+        varchar_2048_ description
+        tinyint group_type
+        bigint create_user_id
+        datetime create_time
+        bigint update_user_id
+        datetime update_time
+        tinyint is_del
+    }
+    tb_sales_email_template_group_sales_relation {
+        bigint id
+        bigint template_group_id
+        bigint sales_id
+        bigint create_user
+        datetime create_time
+        bigint update_user
+        datetime update_time
+        tinyint_1_ is_del
+    }
+    tb_sales_indicator_rerun_data {
+        int id
+        int sales_id
+        varchar_64_ sales_name
+        varchar_10_ regulator
+        datetime create_time
+        datetime update_time
+        tinyint_1_ task_type
+        tinyint_1_ is_del
+    }
+    tb_sales_kpi_rerun_data {
+        int id
+        int sales_id
+        varchar_64_ sales_name
+        varchar_10_ regulator
+        datetime create_time
+        datetime update_time
+        tinyint_1_ is_one_month_ago
+        tinyint_1_ is_two_month_ago
+        tinyint_1_ is_del
+    }
+    tb_sales_log_global {
+        int id
+        datetime interview_date
+        varchar_10_ is_emergency
+        int user_id
+        int user_type
+        int sale_id
+        varchar_128_ creator
+        datetime create_date
+        varchar_128_ updater
+        datetime update_time
+        int interview_type
+        datetime next_interview_date
+        int is_last
+        varchar_11_ interest
+        varchar_1500_ comment
+        int next_interview_type
+        varchar_11_ next_interest
+        varchar_500_ next_comment
+        varchar_2_ salestype
+        varchar_2_ status
+        varchar_500_ comment2
+        varchar_500_ comment3
+        varchar_30_ ib_rating
+    }
+    tb_sales_org_role {
+        bigint id
+        int brand
+        bigint sales_id
+        bigint role_id
+        bigint org_id
+        tinyint is_del
+        datetime create_time
+        int create_user
+        datetime update_time
+        int update_user
+    }
+    tb_sales_ticket_sync_fail_record {
+        bigint id
+        bigint ticket_id
+        varchar_20_ source
+        text fail_info
+        tinyint_1_ retry_success
+        datetime_3_ retry_success_time
+        datetime create_time
+    }
+    tb_sales_ticket_sync_record {
+        int sales_id
+        datetime last_sync_date
+        datetime create_time
+        datetime update_time
+    }
+    tb_sales_whatsapp_bind_record {
+        int id
+        int sale_id
+        int user_id
+        varchar_100_ user_phone_num
+        varchar_300_ sale_email
+        datetime create_time
+        datetime update_time
+        bigint nx_customer_id
+        tinyint is_virtual_seating
+        tinyint user_type
+    }
+    tb_sales_whatsapp_message_record {
+        bigint id
+        int channel
+        tinyint sync_type
+        int user_id
+        int user_type
+        int sale_id
+        varchar_128_ user_channel_id
+        varchar_64_ from_user
+        varchar_64_ to_user
+        varchar_64_ customer_id
+        varchar_128_ customer_name
+        varchar_64_ saas_conversation_id
+        varchar_64_ agent_id
+        varchar_128_ agent_name
+        varchar_128_ agent_account
+        int chat_type
+        varchar_64_ message_type
+        text content
+        varchar_128_ message_id
+        varchar_32_ status
+        varchar_64_ tenant_id
+        bigint business_file_id
+        varchar_255_ filename
+        text media_link
+        varchar_128_ mime_type
+        json template
+        varchar_64_ user_emoji
+        varchar_64_ context
+        text remark
+        datetime created_at
+        datetime updated_at
+        datetime sync_time
+    }
+    tb_sales ||--o{ tb_sales_data_statistics_global : "has"
+    tb_sales_email_template_group ||--o{ tb_sales_email_group_rel2 : "has"
+    tb_sales_email_template ||--o{ tb_sales_email_send_record : "has"
+    tb_sales_email_template_group ||--o{ tb_sales_email_template_group_sales_relation : "has"
+    tb_sales ||--o{ tb_sales_email_template_group_sales_relation : "has"
+    tb_sales_email_template_group ||--o{ tb_sales_email_template : "has"
+    tb_sales ||--o{ tb_sales_email_sync_record : "has"
+    tb_sales ||--o{ tb_sales_kpi_rerun_data : "has"
+    tb_sales ||--o{ tb_sales_indicator_rerun_data : "has"
+    tb_sales ||--o{ tb_sales_ticket_sync_record : "has"
+    tb_sales ||--o{ tb_sales_email_remind_ignore : "has"
+    tb_sales_email_template_group ||--o{ tb_sales_email_group_rel : "has"
+    tb_sales ||--o{ tb_sales_org_role : "has"
+    tb_sales ||--o{ tb_sales_email_authorization_record : "has"
+
+    %% Cross-category references:
+    %% tb_salary_activity_sales (external) --> tb_sales
+    %% tb_marketing_dashboard_user (external) --> tb_sales_email_sign
+    %% tb_marketing_dashboard_user (external) --> tb_sales_data_statistics_global
+    %% tb_salary_activity_sales (external) --> tb_sales_data_statistics_global
+    %% tb_salary_rule_group_template (external) --> tb_sales_email_send_record
+    %% tb_salary_activity_sales (external) --> tb_sales_email_template_group_sales_relation
+    %% tb_card_risk_group (external) --> tb_sales_email_template
+    %% tb_salary_activity_sales (external) --> tb_sales_email_sync_record
+    %% tb_salary_activity_sales (external) --> tb_sales_kpi_rerun_data
+    %% tb_marketing_dashboard_user (external) --> tb_sales_whatsapp_message_record
+    %% tb_cr_sale (external) --> tb_sales_whatsapp_message_record
+    %% tb_user_message (external) --> tb_sales_whatsapp_message_record
+    %% tb_business_file (external) --> tb_sales_whatsapp_message_record
+    %% tb_salary_activity_sales (external) --> tb_sales_indicator_rerun_data
+    %% tb_salary_activity_sales (external) --> tb_sales_ticket_sync_record
+    %% tb_salary_activity_sales (external) --> tb_sales_email_remind_ignore
+    %% tb_marketing_dashboard_user (external) --> tb_sales_log_global
+    %% tb_cr_sale (external) --> tb_sales_log_global
+    %% tb_marketing_dashboard_user (external) --> tb_sales_configs
+    %% tb_salary_activity_sales (external) --> tb_sales_org_role
+    %% tb_role (external) --> tb_sales_org_role
+    %% tb_commission_package_org (external) --> tb_sales_org_role
+    %% tb_cr_sale (external) --> tb_sales_whatsapp_bind_record
+    %% tb_marketing_dashboard_user (external) --> tb_sales_whatsapp_bind_record
+    %% tb_salary_activity_sales (external) --> tb_sales_email_authorization_record

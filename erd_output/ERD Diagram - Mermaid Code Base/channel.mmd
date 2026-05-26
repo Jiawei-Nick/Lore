@@ -1,0 +1,25 @@
+%% Category: channel (2 tables)
+erDiagram
+    tb_channel_config {
+        bigint id
+        int category_code
+        int channel_number
+        varchar_255_ channel_value
+        timestamp create_time
+        timestamp update_time
+        tinyint is_del
+    }
+    tb_channel_time_statistics {
+        int id
+        date statistics_at
+        varchar_20_ channel_type
+        int type_id
+        int channel_id
+        int success_count
+        int average_success_minutes
+        datetime create_at
+    }
+
+    %% Cross-category references:
+    %% tb_participant_status_type (external) --> tb_channel_time_statistics
+    %% tb_card_channel (external) --> tb_channel_time_statistics

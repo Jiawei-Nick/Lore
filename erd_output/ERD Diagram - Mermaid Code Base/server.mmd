@@ -1,0 +1,14 @@
+%% Category: server (1 tables)
+erDiagram
+    tb_server_follow_details {
+        int id
+        int user_id
+        int account
+        varchar_255_ server
+        tinyint_1_ is_open
+        datetime create_time
+        datetime update_time
+    }
+
+    %% Cross-category references:
+    %% tb_marketing_dashboard_user (external) --> tb_server_follow_details
