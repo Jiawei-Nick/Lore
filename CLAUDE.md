@@ -33,16 +33,12 @@ cp lore-schema.example.json lore-schema.json   # copy once, then run analyze nor
 
 # Generate category-based ERDs from schema snapshot
 lore generate-erd --output-dir ./erd_output              # Save to dual folders: "ERD Diagram - Mermaid Code Base/"
-lore generate-erd --overview --output-dir ./erd_output   # Save overview to file
 
 # One-time setup: Create Lark Drive folders for ERD organization
 lore setup-erd-folders                                   # Creates "ERD Diagram" and "ERD Diagram - Mermaid Code Base"
 
 # Upload PNG and .mmd files directly to Lark Drive folders (recommended)
 lore generate-erd --upload --upload-files                # Uses LARK_ERD_IMAGE_FOLDER and LARK_ERD_CODE_FOLDER from env
-
-# Legacy: Upload to single parent document (for overview diagrams only)
-lore generate-erd --upload --overview                    # Upload overview diagram to parent doc
 ```
 
 ## Architecture

@@ -9,7 +9,7 @@ from lore.analyzer.claude import ClaudeAnalyzer
 from lore.outputs.lark_doc import LarkDocOutput
 from lore.schema_store import SchemaStore
 from lore.erd import generate_mermaid_erd
-from lore.erd_categorized import generate_categorized_erds, generate_category_overview
+from lore.erd_categorized import generate_categorized_erds
 from lore.db_introspect import introspect_database
 
 # Load environment variables from .env file
@@ -234,7 +234,6 @@ def generate_erd_command(
     schema_path: str = typer.Option(_DEFAULT_SCHEMA_PATH, help="Path to lore-schema.json"),
     output_dir: str = typer.Option(None, help="Directory to write ERD .mmd files (optional)"),
     upload: bool = typer.Option(False, "--upload", help="Upload ERDs to Lark parent document"),
-    overview: bool = typer.Option(False, "--overview", help="Generate category overview instead of detailed ERDs"),
     config: str = typer.Option("lore.yaml", help="Path to lore.yaml (required if --upload)"),
     max_categories: int = typer.Option(None, help="Max categories to upload to Lark (default: no limit, uploads all renderable categories <15KB)"),
     individual: bool = typer.Option(False, "--individual", help="Upload each category ERD individually (one at a time, not batched)"),
@@ -249,16 +248,12 @@ def generate_erd_command(
 
     Output modes:
       - Default: Save detailed ERDs to files (one .mmd file per category)
-      - --overview: Generate high-level category relationship diagram
       - --upload-files: Upload PNG and .mmd files directly to Lark Drive folders (recommended)
       - --upload --individual: Upload each category separately to parent doc (one at a time)
-      - --upload --overview: Upload overview diagram to parent doc (replaces existing)
 
     Examples:
       lore generate-erd --output-dir ./docs/erd                    # Save all categories to files
-      lore generate-erd --overview --output-dir ./docs/erd         # Save overview to file
       lore generate-erd --upload --upload-files                    # Upload files to Lark Drive folders (recommended)
-      lore generate-erd --upload --overview                        # Upload overview to parent doc
       lore generate-erd --upload --individual                      # Upload each category to parent doc
       lore generate-erd --upload --max-categories 20               # Upload only top 20 categories to parent doc
 
@@ -273,43 +268,29 @@ def generate_erd_command(
         typer.echo("No schema found. Run `lore init` first to create a schema snapshot.")
         raise typer.Exit(1)
 
-    # Generate ERD content
-    if overview:
-        overview_content = generate_category_overview(store.tables)
-        erd_content = overview_content
-        erd_type = "overview"
-    else:
-        from lore.erd_categorized import _categorize_tables, _generate_erd_for_category
-        categories = _categorize_tables(store.tables)
-        erd_map = {cat: _generate_erd_for_category(store.tables, cat, tables)
-                   for cat, tables in categories.items()}
-        erd_type = "detailed"
+    # Generate ERD content for all categories
+    from lore.erd_categorized import _categorize_tables, _generate_erd_for_category
+    categories = _categorize_tables(store.tables)
+    erd_map = {cat: _generate_erd_for_category(store.tables, cat, tables)
+               for cat, tables in categories.items()}
 
     # Output to files if requested
     if output_dir:
+        # Create subdirectory for mermaid code files
         output_path = Path(output_dir)
+        mermaid_dir = output_path / "ERD Diagram - Mermaid Code Base"
+        mermaid_dir.mkdir(parents=True, exist_ok=True)
 
-        if overview:
-            # Create subdirectory for overview
-            output_path.mkdir(parents=True, exist_ok=True)
-            overview_file = output_path / "erd_overview.mmd"
-            overview_file.write_text(overview_content)
-            typer.echo(f"[OK] Saved category overview: {overview_file}")
-        else:
-            # Create subdirectory for mermaid code files
-            mermaid_dir = output_path / "ERD Diagram - Mermaid Code Base"
-            mermaid_dir.mkdir(parents=True, exist_ok=True)
-
-            for category, content in erd_map.items():
-                file_path = mermaid_dir / f"{category}.mmd"
-                file_path.write_text(content)
-            typer.echo(f"[OK] Saved {len(erd_map)} category ERDs to {output_path}/")
-            typer.echo("")
-            typer.echo("Top categories by table count:")
-            sorted_cats = sorted(erd_map.items(), key=lambda x: x[1].count(" {"), reverse=True)[:10]
-            for category, content in sorted_cats:
-                table_count = content.count(" {")
-                typer.echo(f"  - {category:15s} ({table_count:3d} tables)")
+        for category, content in erd_map.items():
+            file_path = mermaid_dir / f"{category}.mmd"
+            file_path.write_text(content)
+        typer.echo(f"[OK] Saved {len(erd_map)} category ERDs to {output_path}/")
+        typer.echo("")
+        typer.echo("Top categories by table count:")
+        sorted_cats = sorted(erd_map.items(), key=lambda x: x[1].count(" {"), reverse=True)[:10]
+        for category, content in sorted_cats:
+            table_count = content.count(" {")
+            typer.echo(f"  - {category:15s} ({table_count:3d} tables)")
 
     # Upload to Lark if requested
     if upload:
@@ -323,11 +304,7 @@ def generate_erd_command(
             parent_doc_id=target_doc_id,
         )
 
-        if overview:
-            lark_output.update_erd_page(overview_content, page_token=target_doc_id)
-            doc_url = f"https://open.larksuite.com/docx/{target_doc_id}"
-            typer.echo(f"[OK] Uploaded category overview to Lark: {doc_url}")
-        elif upload_files:
+        if upload_files:
             # Upload PNG and .mmd files directly to Lark Drive folders
             img_folder = image_folder or cfg.lark_erd_image_folder
             cod_folder = code_folder or cfg.lark_erd_code_folder
