@@ -240,8 +240,8 @@ def generate_erd_command(
     config: str = typer.Option("lore.yaml", help="Path to lore.yaml (required if --upload)"),
     max_categories: int = typer.Option(None, help="Max categories to upload to Lark (default: no limit, uploads all renderable categories <15KB)"),
     individual: bool = typer.Option(False, "--individual", help="Upload each category ERD individually (one at a time, not batched)"),
-    separate_docs: bool = typer.Option(False, "--separate-docs", help="Create a separate Lark Doc for each category ERD in the folder"),
-    upload_files: bool = typer.Option(False, "--upload-files", help="Upload PNG and .mmd files directly to Lark Drive folders (not as documents)"),
+    separate_docs: bool = typer.Option(False, "--separate-docs", help="[DEPRECATED] Use --upload-files instead. Creates Lark Docs with embedded images (unreliable)"),
+    upload_files: bool = typer.Option(False, "--upload-files", help="Upload PNG and .mmd files directly to Lark Drive folders (recommended)"),
     folder_token: str = typer.Option(None, help="Override folder token for --separate-docs (default: use LARK_FOLDER_TOKEN from config)"),
     image_folder: str = typer.Option(None, "--image-folder", help="Folder token for image-rendered ERDs (e.g., 'ERD Diagram' folder)"),
     code_folder: str = typer.Option(None, "--code-folder", help="Folder token for code-based ERDs (e.g., 'ERD Diagram - Mermaid Code Base' folder)"),
@@ -363,6 +363,13 @@ def generate_erd_command(
             if len(uploaded_mmds) > 10:
                 typer.echo(f"  ... and {len(uploaded_mmds) - 10} more")
         elif separate_docs:
+            # DEPRECATED: Image embedding in Lark Docs is unreliable
+            typer.echo("[WARNING] --separate-docs is deprecated due to unreliable image embedding in Lark Docs")
+            typer.echo("[WARNING] Use --upload-files instead to upload files directly to Lark Drive folders")
+            typer.echo("")
+            typer.echo("Proceeding with --separate-docs (may have image upload issues)...")
+            typer.echo("")
+
             # Create separate documents for each category (BOTH PNG and code versions)
             # Use provided folder tokens or fall back to config values
             img_folder = image_folder or cfg.lark_erd_image_folder

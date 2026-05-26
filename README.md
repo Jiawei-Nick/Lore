@@ -75,10 +75,6 @@ lore generate-erd --upload --upload-files
 # Uploads:
 #   - PNG images → "ERD Diagram" folder
 #   - .mmd files → "ERD Diagram - Mermaid Code Base" folder
-
-# Alternative: Create separate Lark Docs (one document per category)
-lore generate-erd --upload --separate-docs
-# Creates documents with embedded images or code blocks
 ```
 
 **File naming:** All generated files use clean names without prefixes:

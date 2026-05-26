@@ -252,6 +252,85 @@ class LarkDocOutput(OutputPlugin):
 
         resp.raise_for_status()
 
+    def _replace_erd_blocks(self, doc_id: str, new_erd_blocks: list, headers: dict) -> None:
+        """Replace existing ERD blocks with new ones, preserving other content.
+
+        Finds blocks with heading "Entity Relationship Diagram" and replaces them.
+        """
+        # List all blocks
+        list_url = f"https://open.larksuite.com/open-apis/docx/v1/documents/{doc_id}/blocks/{doc_id}/children"
+        params = {"page_size": 500}
+
+        all_blocks = []
+        page_token = None
+
+        while True:
+            if page_token:
+                params["page_token"] = page_token
+
+            resp = httpx.get(list_url, headers=headers, params=params)
+            data = resp.json()
+
+            if data.get("code", 0) != 0:
+                _log.warning(f"Failed to list blocks: {data.get('msg')}")
+                # Fall back to append mode
+                block_url = _LARK_DOC_UPDATE_URL.format(document_id=doc_id, block_id=doc_id)
+                payload = {"children": new_erd_blocks, "index": -1}
+                httpx.post(block_url, headers=headers, json=payload)
+                return
+
+            items = data.get("data", {}).get("items", [])
+            all_blocks.extend(items)
+
+            if not data.get("data", {}).get("has_more"):
+                break
+            page_token = data.get("data", {}).get("page_token")
+
+        # Find ERD section (heading1 with text "Entity Relationship Diagram")
+        erd_start_idx = None
+        erd_block_ids = []
+
+        for idx, block in enumerate(all_blocks):
+            block_type = block.get("block_type")
+            # Check for heading1 with "Entity Relationship Diagram"
+            if block_type == 3:  # heading1
+                heading_data = block.get("heading1", {})
+                elements = heading_data.get("elements", [])
+                if elements and any("Entity Relationship Diagram" in elem.get("text_run", {}).get("content", "") for elem in elements):
+                    erd_start_idx = idx
+                    erd_block_ids.append(block["block_id"])
+                    # Collect the next block (image or code block)
+                    if idx + 1 < len(all_blocks):
+                        erd_block_ids.append(all_blocks[idx + 1]["block_id"])
+                    break
+
+        # Delete old ERD blocks
+        if erd_block_ids:
+            for block_id in erd_block_ids:
+                delete_url = f"https://open.larksuite.com/open-apis/docx/v1/documents/{doc_id}/blocks/{block_id}"
+                try:
+                    httpx.delete(delete_url, headers=headers)
+                except Exception as e:
+                    _log.debug(f"Failed to delete block {block_id}: {e}")
+
+        # Insert new ERD blocks at the same position or at end
+        block_url = _LARK_DOC_UPDATE_URL.format(document_id=doc_id, block_id=doc_id)
+        insert_index = erd_start_idx if erd_start_idx is not None else -1
+        payload = {"children": new_erd_blocks, "index": insert_index}
+
+        resp = httpx.post(block_url, headers=headers, json=payload)
+        if resp.status_code == 403:
+            raise RuntimeError(
+                f"Lark doc ERD update failed with 403 Forbidden on doc {doc_id}. "
+                "The bot needs editor access."
+            )
+        resp.raise_for_status()
+        data = resp.json()
+        if data.get("code", 0) != 0:
+            raise RuntimeError(f"Lark doc ERD update failed: {data.get('msg')}")
+
+        _log.info(f"Replaced ERD blocks in document {doc_id}")
+
     def _clear_document(self, doc_id: str) -> None:
         """Delete all blocks in a document to start fresh."""
         token = _get_tenant_token(self._app_id, self._app_secret)
@@ -386,13 +465,14 @@ class LarkDocOutput(OutputPlugin):
         _log.info(f"Uploaded {filename} to folder {folder_token}")
         return file_token
 
-    def update_erd_page(self, mermaid_erd: str, page_token: str = None, render_as_image: bool = True) -> None:
+    def update_erd_page(self, mermaid_erd: str, page_token: str = None, render_as_image: bool = True, replace_existing: bool = True) -> None:
         """Update the ERD in the parent Lark Doc.
 
         Args:
             mermaid_erd: Mermaid diagram source code
             page_token: Optional Lark Doc ID (uses parent_doc_id if not provided)
             render_as_image: If True, render to PNG and upload as image block. If False, upload as code block.
+            replace_existing: If True, replace existing ERD blocks. If False, append new blocks (default: True)
         """
         if not self._parent_doc_id and not page_token:
             _log.warning("No parent document ID provided, skipping ERD update")
@@ -433,20 +513,24 @@ class LarkDocOutput(OutputPlugin):
                 }},
             ]
 
-        # In Lark Docs (docx), the root block_id equals the document_id.
-        block_url = _LARK_DOC_UPDATE_URL.format(document_id=doc_id, block_id=doc_id)
-        payload = {"children": erd_blocks, "index": -1}
-        resp = httpx.post(block_url, headers=headers, json=payload)
-        if resp.status_code == 403:
-            raise RuntimeError(
-                f"Lark doc ERD update failed with 403 Forbidden on parent doc {doc_id}. "
-                "The bot needs editor access. Easiest fix: run `lore init-parent` to create "
-                "a fresh parent doc the bot owns, then update LARK_PARENT_DOC_ID to its id."
-            )
-        resp.raise_for_status()
-        data = resp.json()
-        if data.get("code", 0) != 0:
-            raise RuntimeError(f"Lark doc ERD update failed: {data.get('msg')}")
+        # Replace existing ERD blocks if requested
+        if replace_existing:
+            self._replace_erd_blocks(doc_id, erd_blocks, headers)
+        else:
+            # Append to end of document (old behavior)
+            block_url = _LARK_DOC_UPDATE_URL.format(document_id=doc_id, block_id=doc_id)
+            payload = {"children": erd_blocks, "index": -1}
+            resp = httpx.post(block_url, headers=headers, json=payload)
+            if resp.status_code == 403:
+                raise RuntimeError(
+                    f"Lark doc ERD update failed with 403 Forbidden on parent doc {doc_id}. "
+                    "The bot needs editor access. Easiest fix: run `lore init-parent` to create "
+                    "a fresh parent doc the bot owns, then update LARK_PARENT_DOC_ID to its id."
+                )
+            resp.raise_for_status()
+            data = resp.json()
+            if data.get("code", 0) != 0:
+                raise RuntimeError(f"Lark doc ERD update failed: {data.get('msg')}")
 
     def append_erd_to_doc(self, document_id: str | None, mermaid_erd: str) -> None:
         """Append a focused ERD section to an existing Lark Doc (e.g. an analysis sub-page).

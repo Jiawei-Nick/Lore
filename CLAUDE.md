@@ -41,12 +41,8 @@ lore setup-erd-folders                                   # Creates "ERD Diagram"
 # Upload PNG and .mmd files directly to Lark Drive folders (recommended)
 lore generate-erd --upload --upload-files                # Uses LARK_ERD_IMAGE_FOLDER and LARK_ERD_CODE_FOLDER from env
 
-# Alternative: Create separate Lark Docs (one document per category)
-lore generate-erd --upload --separate-docs               # PNG docs + code docs in separate folders
-
-# Legacy: Upload to single parent document
-lore generate-erd --upload --max-categories 5            # Upload top 5 as images to parent doc
-lore generate-erd --upload --overview                    # Upload overview diagram
+# Legacy: Upload to single parent document (for overview diagrams only)
+lore generate-erd --upload --overview                    # Upload overview diagram to parent doc
 ```
 
 ## Architecture
