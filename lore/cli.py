@@ -44,6 +44,62 @@ def init_parent(
     typer.echo("Then run: lore init --db <your-db-url>")
 
 
+@app.command("setup-erd-folders")
+def setup_erd_folders(
+    config: str = typer.Option("lore.yaml", help="Path to lore.yaml"),
+    parent_folder: str = typer.Option(None, help="Parent folder token (uses LARK_FOLDER_TOKEN from config if not provided)"),
+) -> None:
+    """Create both ERD folders: one for images, one for code.
+
+    Creates:
+      - "ERD Diagram" folder (for image-rendered ERDs)
+      - "ERD Diagram - Mermaid Code Base" folder (for code-based ERDs)
+
+    Returns the folder tokens for use with generate-erd --separate-docs.
+    """
+    cfg = load_config(config)
+    parent = parent_folder or cfg.lark_folder_token
+
+    if not parent:
+        typer.echo("[ERROR] No parent folder specified. Provide --parent-folder or set LARK_FOLDER_TOKEN in config.")
+        raise typer.Exit(1)
+
+    output = LarkDocOutput(
+        app_id=cfg.lark_app_id,
+        app_secret=cfg.lark_app_secret,
+        folder_token=parent,
+    )
+
+    # Create image folder
+    typer.echo("Creating 'ERD Diagram' folder...")
+    try:
+        image_folder_token = output.create_folder("ERD Diagram", parent)
+        typer.echo(f"[OK] Created image folder: {image_folder_token}")
+    except Exception as e:
+        typer.echo(f"[ERROR] Failed to create image folder: {e}")
+        raise typer.Exit(1)
+
+    # Create code folder
+    typer.echo("Creating 'ERD Diagram - Mermaid Code Base' folder...")
+    try:
+        code_folder_token = output.create_folder("ERD Diagram - Mermaid Code Base", parent)
+        typer.echo(f"[OK] Created code folder: {code_folder_token}")
+    except Exception as e:
+        typer.echo(f"[ERROR] Failed to create code folder: {e}")
+        raise typer.Exit(1)
+
+    typer.echo("")
+    typer.echo("=== Setup Complete ===")
+    typer.echo("")
+    typer.echo("Add these to your ~/.zshrc:")
+    typer.echo(f"  export LARK_ERD_IMAGE_FOLDER={image_folder_token}")
+    typer.echo(f"  export LARK_ERD_CODE_FOLDER={code_folder_token}")
+    typer.echo("")
+    typer.echo("Then run:")
+    typer.echo("  lore generate-erd --upload --separate-docs \\")
+    typer.echo(f"    --image-folder {image_folder_token} \\")
+    typer.echo(f"    --code-folder {code_folder_token}")
+
 @app.command("setup-erd-folder")
 def setup_erd_folder(
     config: str = typer.Option("lore.yaml", help="Path to lore.yaml"),
@@ -184,6 +240,10 @@ def generate_erd_command(
     config: str = typer.Option("lore.yaml", help="Path to lore.yaml (required if --upload)"),
     max_categories: int = typer.Option(None, help="Max categories to upload to Lark (default: no limit, uploads all renderable categories <15KB)"),
     individual: bool = typer.Option(False, "--individual", help="Upload each category ERD individually (one at a time, not batched)"),
+    separate_docs: bool = typer.Option(False, "--separate-docs", help="Create a separate Lark Doc for each category ERD in the folder"),
+    folder_token: str = typer.Option(None, help="Override folder token for --separate-docs (default: use LARK_FOLDER_TOKEN from config)"),
+    image_folder: str = typer.Option(None, "--image-folder", help="Folder token for image-rendered ERDs (e.g., 'ERD Diagram' folder)"),
+    code_folder: str = typer.Option(None, "--code-folder", help="Folder token for code-based ERDs (e.g., 'ERD Diagram - Mermaid Code Base' folder)"),
     doc_id: str = typer.Option(None, help="Override parent document ID (default: use LARK_PARENT_DOC_ID from config)"),
     as_code: bool = typer.Option(False, "--as-code", help="Upload ERDs as code blocks without attempting image rendering (faster)"),
 ) -> None:
@@ -194,12 +254,15 @@ def generate_erd_command(
       - --overview: Generate high-level category relationship diagram
       - --upload: Upload ERDs to Lark parent document (automatically renders categories <15KB as images)
       - --individual: Upload each category separately (one at a time, not batched)
+      - --separate-docs: Create a separate Lark Doc for each category in the specified folder
 
     Examples:
       lore generate-erd --output-dir ./docs/erd                    # Save all categories to files
       lore generate-erd --overview --output-dir ./docs/erd         # Save overview to file
       lore generate-erd --upload                                   # Upload all renderable categories as images (batched)
       lore generate-erd --upload --individual                      # Upload each category separately
+      lore generate-erd --upload --separate-docs                   # Create separate docs for each category
+      lore generate-erd --upload --separate-docs --image-folder <token> --code-folder <token>  # Route to different folders
       lore generate-erd --upload --max-categories 20               # Upload only top 20 renderable categories
       lore generate-erd --upload --overview                        # Upload overview diagram
 
@@ -230,15 +293,20 @@ def generate_erd_command(
     # Output to files if requested
     if output_dir:
         output_path = Path(output_dir)
-        output_path.mkdir(parents=True, exist_ok=True)
 
         if overview:
+            # Create subdirectory for overview
+            output_path.mkdir(parents=True, exist_ok=True)
             overview_file = output_path / "erd_overview.mmd"
             overview_file.write_text(overview_content)
             typer.echo(f"[OK] Saved category overview: {overview_file}")
         else:
+            # Create subdirectory for mermaid code files
+            mermaid_dir = output_path / "ERD Diagram - Mermaid Code Base"
+            mermaid_dir.mkdir(parents=True, exist_ok=True)
+
             for category, content in erd_map.items():
-                file_path = output_path / f"erd_{category}.mmd"
+                file_path = mermaid_dir / f"{category}.mmd"
                 file_path.write_text(content)
             typer.echo(f"[OK] Saved {len(erd_map)} category ERDs to {output_path}/")
             typer.echo("")
@@ -252,10 +320,11 @@ def generate_erd_command(
     if upload:
         cfg = load_config(config)
         target_doc_id = doc_id or cfg.lark_parent_doc_id
+        target_folder = folder_token or cfg.lark_folder_token
         lark_output = LarkDocOutput(
             app_id=cfg.lark_app_id,
             app_secret=cfg.lark_app_secret,
-            folder_token=cfg.lark_folder_token,
+            folder_token=target_folder,
             parent_doc_id=target_doc_id,
         )
 
@@ -263,6 +332,30 @@ def generate_erd_command(
             lark_output.update_erd_page(overview_content, page_token=target_doc_id)
             doc_url = f"https://open.larksuite.com/docx/{target_doc_id}"
             typer.echo(f"[OK] Uploaded category overview to Lark: {doc_url}")
+        elif separate_docs:
+            # Create separate documents for each category
+            render_as_image = not as_code
+            # Use provided folder tokens or fall back to config values
+            img_folder = image_folder or cfg.lark_erd_image_folder
+            cod_folder = code_folder or cfg.lark_erd_code_folder
+            created_docs = lark_output.create_category_erd_documents(
+                erd_map,
+                folder_token=target_folder,
+                render_as_image=render_as_image,
+                image_folder_token=img_folder,
+                code_folder_token=cod_folder
+            )
+            typer.echo(f"[OK] Created {len(created_docs)} category ERD documents")
+            if img_folder:
+                typer.echo(f"  Image ERDs → folder token: {img_folder}")
+            if cod_folder:
+                typer.echo(f"  Code ERDs → folder token: {cod_folder}")
+            typer.echo("")
+            typer.echo("Created documents:")
+            for category, doc_id, url in created_docs[:10]:
+                typer.echo(f"  - {category:15s} → {url}")
+            if len(created_docs) > 10:
+                typer.echo(f"  ... and {len(created_docs) - 10} more")
         elif individual:
             lark_output.upload_individual_category_erds(erd_map, page_token=target_doc_id, as_code=as_code)
             doc_url = f"https://open.larksuite.com/docx/{target_doc_id}"

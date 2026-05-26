@@ -55,6 +55,8 @@ class LoreConfig:
     lark_app_secret: str
     lark_folder_token: str
     lark_parent_doc_id: str
+    lark_erd_image_folder: str  # Optional: folder for image-rendered ERDs
+    lark_erd_code_folder: str   # Optional: folder for code-based ERDs
     default_path: str
     default_branch: str
 
@@ -88,6 +90,8 @@ class LoreConfig:
             lark_app_secret=_resolve(raw, "lark.app_secret"),
             lark_folder_token=_resolve(raw, "lark.folder_token"),
             lark_parent_doc_id=_resolve(raw, "lark.parent_doc_id", required=False),
+            lark_erd_image_folder=_resolve(raw, "lark.erd_image_folder", required=False),
+            lark_erd_code_folder=_resolve(raw, "lark.erd_code_folder", required=False),
             default_path=_resolve(raw, "repo.default_path", required=False) or "./",
             default_branch=_resolve(raw, "repo.default_branch", required=False) or "main",
         )

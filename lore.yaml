@@ -13,6 +13,9 @@ lark:
   app_secret: ${LARK_APP_SECRET}
   folder_token: ${LARK_FOLDER_TOKEN}
   parent_doc_id: ${LARK_PARENT_DOC_ID}
+  # Optional: separate folders for ERD organization
+  erd_image_folder: ${LARK_ERD_IMAGE_FOLDER}
+  erd_code_folder: ${LARK_ERD_CODE_FOLDER}
 
 repo:
   default_path: ./

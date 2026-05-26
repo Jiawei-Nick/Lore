@@ -159,6 +159,10 @@ def generate_categorized_erds(tables: dict, output_dir: str = ".") -> dict[str, 
     categories = _categorize_tables(tables)
     erd_map = {}
 
+    # Create subdirectory for mermaid code files
+    mermaid_dir = Path(output_dir) / "ERD Diagram - Mermaid Code Base"
+    mermaid_dir.mkdir(parents=True, exist_ok=True)
+
     for category, table_list in sorted(categories.items()):
         if not table_list:
             continue
@@ -166,8 +170,8 @@ def generate_categorized_erds(tables: dict, output_dir: str = ".") -> dict[str, 
         erd_content = _generate_erd_for_category(tables, category, table_list)
         erd_map[category] = erd_content
 
-        # Write to file
-        output_path = Path(output_dir) / f"erd_{category}.mmd"
+        # Write to file without "erd_" prefix
+        output_path = mermaid_dir / f"{category}.mmd"
         output_path.write_text(erd_content)
 
     return erd_map

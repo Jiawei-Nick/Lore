@@ -18,8 +18,19 @@ def _parse_statement(sql: str) -> SchemaChange | None:
     sql = sql.strip()
     if not sql:
         return None
+    # Remove leading SQL comments that can interfere with parsing
+    # Find the first SQL statement keyword and take from there
+    match = re.search(r'\b(ALTER\s+TABLE|CREATE\s+TABLE|DROP\s+TABLE|INSERT|UPDATE|DELETE)\b', sql, flags=re.IGNORECASE)
+    if match:
+        sql = sql[match.start():]
+    if not sql:
+        return None
     try:
-        statements = sqlglot.parse(sql)
+        # Try parsing with MySQL dialect first (supports MODIFY COLUMN)
+        statements = sqlglot.parse(sql, dialect='mysql')
+        if not statements or statements[0] is None:
+            # Fall back to default dialect
+            statements = sqlglot.parse(sql)
         if not statements:
             return None
         stmt = statements[0]
@@ -54,6 +65,17 @@ def _parse_statement(sql: str) -> SchemaChange | None:
                     operation=Operation.ALTER,
                     table=table_name,
                     column=action.name,
+                    raw_sql=sql,
+                )
+            elif hasattr(exp, 'ModifyColumn') and isinstance(action, exp.ModifyColumn):
+                # MySQL MODIFY COLUMN — contains a ColumnDef inside
+                col_def = action.args.get("this")
+                dtype = col_def.find(exp.DataType) if col_def else None
+                return SchemaChange(
+                    operation=Operation.ALTER,
+                    table=table_name,
+                    column=col_def.name if col_def and hasattr(col_def, "name") else None,
+                    data_type=dtype.sql() if dtype else None,
                     raw_sql=sql,
                 )
         return SchemaChange(operation=Operation.ALTER, table=table_name, raw_sql=sql)

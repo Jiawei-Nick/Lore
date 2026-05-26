@@ -49,11 +49,25 @@ class LarkDocOutput(OutputPlugin):
         if not report:
             return [{"block_type": 2, "text": {"elements": [{"text_run": {"content": "No analysis available."}}]}}]
 
-        def text(content: str, bold: bool = False) -> dict:
+        def text(content: str, bold: bool = False, color: int = None) -> dict:
             run = {"text_run": {"content": content}}
+            style = {}
             if bold:
-                run["text_run"]["text_element_style"] = {"bold": True}
+                style["bold"] = True
+            if color:
+                style["text_color"] = color
+            if style:
+                run["text_run"]["text_element_style"] = style
             return run
+
+        # Map risk levels to colors (Lark text color codes: 1-7)
+        # Based on Lark API docs: 1=red, 2=orange, 3=yellow, 4=green, 5=blue, 6=purple, 7=gray
+        risk_colors = {
+            "LOW": 4,     # green
+            "MEDIUM": 3,  # yellow
+            "HIGH": 1     # red
+        }
+        risk_color = risk_colors.get(report.risk_level.value, None)
 
         blocks = [
             {"block_type": 3, "heading1": {"elements": [text("Schema Change Report")]}},
@@ -61,7 +75,7 @@ class LarkDocOutput(OutputPlugin):
                 text(f"Branch: {context.branch}\n"),
                 text(f"Date: {run_date.isoformat()}\n"),
                 text("Risk: ", bold=True),
-                text(report.risk_level.value),
+                text(report.risk_level.value, bold=True, color=risk_color),
             ]}},
             {"block_type": 4, "heading2": {"elements": [text("Summary")]}},
             {"block_type": 2, "text": {"elements": [text(report.summary)]}},
@@ -127,6 +141,12 @@ class LarkDocOutput(OutputPlugin):
         block_url = _LARK_DOC_UPDATE_URL.format(document_id=document_id, block_id=document_id)
         content_payload = {"children": blocks, "index": 0}
         resp = httpx.post(block_url, headers=headers, json=content_payload)
+
+        # Log response for debugging
+        if resp.status_code != 200:
+            _log.error(f"Lark API error: {resp.status_code}")
+            _log.error(f"Response body: {resp.text}")
+
         resp.raise_for_status()
         data = resp.json()
         if data.get("code", 0) != 0:
@@ -276,17 +296,28 @@ class LarkDocOutput(OutputPlugin):
 
             _log.info(f"Cleared {deleted_count}/{len(all_block_ids)} blocks from document")
 
-    def _upload_image(self, image_bytes: bytes, image_type: str = "image/png", filename: str = "diagram.png") -> str:
+    def _upload_image(self, image_bytes: bytes, image_type: str = "image/png", filename: str = "diagram.png", save_locally: bool = False, local_dir: str = None) -> str:
         """Upload an image to Lark Drive and return the file_token.
 
         Args:
             image_bytes: Raw image bytes
             image_type: MIME type (image/png or image/jpeg)
             filename: Name for the uploaded file (default: diagram.png)
+            save_locally: If True, save image to local disk in addition to uploading
+            local_dir: Local directory to save images (default: "ERD Diagram")
 
         Returns:
             file_token that can be used in image blocks
         """
+        # Optionally save image locally
+        if save_locally:
+            from pathlib import Path
+            output_dir = Path(local_dir or "ERD Diagram")
+            output_dir.mkdir(parents=True, exist_ok=True)
+            output_path = output_dir / filename
+            output_path.write_bytes(image_bytes)
+            _log.info(f"Saved image locally to {output_path}")
+
         token = _get_tenant_token(self._app_id, self._app_secret)
         headers = {"Authorization": f"Bearer {token}"}
 
@@ -550,8 +581,8 @@ class LarkDocOutput(OutputPlugin):
                     from lore.mermaid_renderer import MermaidRenderer
                     renderer = MermaidRenderer(format="png")
                     image_bytes = renderer.render(erd_content)
-                    filename = f"erd_{category}.png"
-                    file_token = self._upload_image(image_bytes, image_type="image/jpeg", filename=filename)
+                    filename = f"{category}.png"
+                    file_token = self._upload_image(image_bytes, image_type="image/jpeg", filename=filename, save_locally=True)
                     blocks.append({
                         "block_type": 27,
                         "image": {"file_token": file_token}
@@ -600,3 +631,138 @@ class LarkDocOutput(OutputPlugin):
                 time.sleep(1.0)
 
         _log.info(f"Uploaded {uploaded_count} category ERDs individually (skipped {skipped_count})")
+
+    def create_category_erd_documents(
+        self,
+        erd_map: dict[str, str],
+        folder_token: str = None,
+        render_as_image: bool = True,
+        image_folder_token: str = None,
+        code_folder_token: str = None
+    ) -> list[tuple[str, str, str]]:
+        """Create a separate Lark Doc for each category ERD in the specified folder.
+
+        Args:
+            erd_map: Dict mapping category name to ERD content
+            folder_token: Default folder token (uses self._folder_token if not provided)
+            render_as_image: If True, render ERDs as images. If False, use code blocks.
+            image_folder_token: Optional separate folder for image-rendered ERDs
+            code_folder_token: Optional separate folder for code-based ERDs
+
+        Returns:
+            List of (category_name, document_id, url) tuples for created documents
+        """
+        import time
+
+        default_folder = folder_token or self._folder_token
+        if not default_folder and not image_folder_token and not code_folder_token:
+            raise ValueError("At least one folder_token must be provided")
+
+        token = _get_tenant_token(self._app_id, self._app_secret)
+        headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+        created_docs = []
+        skipped_count = 0
+
+        # Sort categories by name for consistent ordering
+        sorted_categories = sorted(erd_map.items())
+
+        for category, erd_content in sorted_categories:
+            # Skip oversized ERDs
+            if len(erd_content) > 15000:
+                _log.info(f"Skipping {category} ({len(erd_content)} chars, exceeds 15KB limit)")
+                skipped_count += 1
+                continue
+
+            # Determine if this will be rendered as image or code
+            will_render_image = render_as_image and len(erd_content) <= 5000
+
+            # Select folder based on rendering format
+            if will_render_image and image_folder_token:
+                target_folder = image_folder_token
+            elif not will_render_image and code_folder_token:
+                target_folder = code_folder_token
+            else:
+                target_folder = default_folder
+
+            if not target_folder:
+                _log.warning(f"No folder specified for {category}, skipping")
+                skipped_count += 1
+                continue
+
+            # Create document with category name as title
+            doc_title = category
+            create_payload = {
+                "folder_token": target_folder,
+                "title": doc_title,
+            }
+
+            try:
+                resp = httpx.post(_LARK_DOC_CREATE_URL, headers=headers, json=create_payload, timeout=30.0)
+                data = resp.json()
+
+                if resp.status_code != 200 or data.get("code", 0) != 0:
+                    _log.error(f"Failed to create doc for {category}: {data.get('msg')}")
+                    skipped_count += 1
+                    continue
+
+                document_id = data.get("data", {}).get("document", {}).get("document_id")
+                if not document_id:
+                    _log.error(f"Failed to get document_id for {category}")
+                    skipped_count += 1
+                    continue
+
+                # Build content blocks
+                blocks = []
+
+                if render_as_image and len(erd_content) <= 5000:
+                    try:
+                        from lore.mermaid_renderer import MermaidRenderer
+                        renderer = MermaidRenderer(format="png")
+                        image_bytes = renderer.render(erd_content)
+                        filename = f"{category}.png"
+                        file_token = self._upload_image(image_bytes, image_type="image/jpeg", filename=filename, save_locally=True)
+                        blocks.append({"block_type": 27, "image": {"file_token": file_token}})
+                        _log.info(f"Created {category} doc with image ({len(erd_content)} chars)")
+                    except Exception as e:
+                        _log.warning(f"Failed to render {category} as image: {e}. Using code block.")
+                        blocks.append({
+                            "block_type": 14,
+                            "code": {
+                                "elements": [{"text_run": {"content": erd_content}}],
+                                "style": {"language": 1},
+                            }
+                        })
+                else:
+                    blocks.append({
+                        "block_type": 14,
+                        "code": {
+                            "elements": [{"text_run": {"content": erd_content}}],
+                            "style": {"language": 1},
+                        }
+                    })
+
+                # Add content to document
+                block_url = _LARK_DOC_UPDATE_URL.format(document_id=document_id, block_id=document_id)
+                content_payload = {"children": blocks, "index": 0}
+                resp = httpx.post(block_url, headers=headers, json=content_payload, timeout=60.0)
+                data = resp.json()
+
+                if resp.status_code != 200 or data.get("code", 0) != 0:
+                    _log.error(f"Failed to add content to {category} doc: {data.get('msg')}")
+                    skipped_count += 1
+                    continue
+
+                url = f"https://open.larksuite.com/docx/{document_id}"
+                created_docs.append((category, document_id, url))
+
+                # Rate limiting
+                time.sleep(0.5)
+
+            except Exception as e:
+                _log.error(f"Failed to create doc for {category}: {e}")
+                skipped_count += 1
+                time.sleep(1.0)
+
+        _log.info(f"Created {len(created_docs)} category ERD documents (skipped {skipped_count})")
+        return created_docs
