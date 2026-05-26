@@ -52,10 +52,10 @@ def setup_erd_folders(
     """Create both ERD folders: one for images, one for code.
 
     Creates:
-      - "ERD Diagram" folder (for image-rendered ERDs)
-      - "ERD Diagram - Mermaid Code Base" folder (for code-based ERDs)
+      - "ERD Diagram" folder (for PNG image files)
+      - "ERD Diagram - Mermaid Code Base" folder (for .mmd source files)
 
-    Returns the folder tokens for use with generate-erd --separate-docs.
+    Returns the folder tokens for use with generate-erd --upload-files.
     """
     cfg = load_config(config)
     parent = parent_folder or cfg.lark_folder_token
@@ -96,9 +96,7 @@ def setup_erd_folders(
     typer.echo(f"  export LARK_ERD_CODE_FOLDER={code_folder_token}")
     typer.echo("")
     typer.echo("Then run:")
-    typer.echo("  lore generate-erd --upload --separate-docs \\")
-    typer.echo(f"    --image-folder {image_folder_token} \\")
-    typer.echo(f"    --code-folder {code_folder_token}")
+    typer.echo("  lore generate-erd --upload --upload-files")
 
 @app.command("setup-erd-folder")
 def setup_erd_folder(
@@ -240,9 +238,7 @@ def generate_erd_command(
     config: str = typer.Option("lore.yaml", help="Path to lore.yaml (required if --upload)"),
     max_categories: int = typer.Option(None, help="Max categories to upload to Lark (default: no limit, uploads all renderable categories <15KB)"),
     individual: bool = typer.Option(False, "--individual", help="Upload each category ERD individually (one at a time, not batched)"),
-    separate_docs: bool = typer.Option(False, "--separate-docs", help="[DEPRECATED] Use --upload-files instead. Creates Lark Docs with embedded images (unreliable)"),
     upload_files: bool = typer.Option(False, "--upload-files", help="Upload PNG and .mmd files directly to Lark Drive folders (recommended)"),
-    folder_token: str = typer.Option(None, help="Override folder token for --separate-docs (default: use LARK_FOLDER_TOKEN from config)"),
     image_folder: str = typer.Option(None, "--image-folder", help="Folder token for image-rendered ERDs (e.g., 'ERD Diagram' folder)"),
     code_folder: str = typer.Option(None, "--code-folder", help="Folder token for code-based ERDs (e.g., 'ERD Diagram - Mermaid Code Base' folder)"),
     doc_id: str = typer.Option(None, help="Override parent document ID (default: use LARK_PARENT_DOC_ID from config)"),
@@ -253,22 +249,19 @@ def generate_erd_command(
     Output modes:
       - Default: Save detailed ERDs to files (one .mmd file per category)
       - --overview: Generate high-level category relationship diagram
-      - --upload: Upload ERDs to Lark parent document (automatically renders categories <15KB as images)
-      - --individual: Upload each category separately (one at a time, not batched)
-      - --separate-docs: Create a separate Lark Doc for each category in the specified folder
+      - --upload-files: Upload PNG and .mmd files directly to Lark Drive folders (recommended)
+      - --upload --individual: Upload each category separately to parent doc (one at a time)
+      - --upload --overview: Upload overview diagram to parent doc (replaces existing)
 
     Examples:
       lore generate-erd --output-dir ./docs/erd                    # Save all categories to files
       lore generate-erd --overview --output-dir ./docs/erd         # Save overview to file
-      lore generate-erd --upload                                   # Upload all renderable categories as images (batched)
-      lore generate-erd --upload --individual                      # Upload each category separately
-      lore generate-erd --upload --separate-docs                   # Create separate docs for each category
-      lore generate-erd --upload --separate-docs --image-folder <token> --code-folder <token>  # Route to different folders
-      lore generate-erd --upload --max-categories 20               # Upload only top 20 renderable categories
-      lore generate-erd --upload --overview                        # Upload overview diagram
+      lore generate-erd --upload --upload-files                    # Upload files to Lark Drive folders (recommended)
+      lore generate-erd --upload --overview                        # Upload overview to parent doc
+      lore generate-erd --upload --individual                      # Upload each category to parent doc
+      lore generate-erd --upload --max-categories 20               # Upload only top 20 categories to parent doc
 
     Note: Categories >15KB are automatically skipped to avoid rendering failures.
-          Bot feature must be enabled in Lark app to upload images.
     """
     from pathlib import Path
 
@@ -362,43 +355,6 @@ def generate_erd_command(
                 typer.echo(f"  - {filename}")
             if len(uploaded_mmds) > 10:
                 typer.echo(f"  ... and {len(uploaded_mmds) - 10} more")
-        elif separate_docs:
-            # DEPRECATED: Image embedding in Lark Docs is unreliable
-            typer.echo("[WARNING] --separate-docs is deprecated due to unreliable image embedding in Lark Docs")
-            typer.echo("[WARNING] Use --upload-files instead to upload files directly to Lark Drive folders")
-            typer.echo("")
-            typer.echo("Proceeding with --separate-docs (may have image upload issues)...")
-            typer.echo("")
-
-            # Create separate documents for each category (BOTH PNG and code versions)
-            # Use provided folder tokens or fall back to config values
-            img_folder = image_folder or cfg.lark_erd_image_folder
-            cod_folder = code_folder or cfg.lark_erd_code_folder
-
-            if not img_folder or not cod_folder:
-                typer.echo("[ERROR] Both --image-folder and --code-folder are required for --separate-docs")
-                typer.echo("Run 'lore setup-erd-folders' first to create the folders.")
-                raise typer.Exit(1)
-
-            image_docs, code_docs = lark_output.create_dual_category_erd_documents(
-                erd_map,
-                image_folder_token=img_folder,
-                code_folder_token=cod_folder
-            )
-            typer.echo(f"[OK] Created {len(image_docs)} PNG docs in 'ERD Diagram' folder")
-            typer.echo(f"[OK] Created {len(code_docs)} code docs in 'ERD Diagram - Mermaid Code Base' folder")
-            typer.echo("")
-            typer.echo("Sample PNG documents:")
-            for category, doc_id, url in image_docs[:5]:
-                typer.echo(f"  - {category:15s} → {url}")
-            if len(image_docs) > 5:
-                typer.echo(f"  ... and {len(image_docs) - 5} more")
-            typer.echo("")
-            typer.echo("Sample code documents:")
-            for category, doc_id, url in code_docs[:5]:
-                typer.echo(f"  - {category:15s} → {url}")
-            if len(code_docs) > 5:
-                typer.echo(f"  ... and {len(code_docs) - 5} more")
         elif individual:
             lark_output.upload_individual_category_erds(erd_map, page_token=target_doc_id, as_code=as_code)
             doc_url = f"https://open.larksuite.com/docx/{target_doc_id}"
