@@ -59,7 +59,7 @@ def test_append_erd_to_doc_skips_if_no_doc_id():
 
 def test_build_blocks_no_erd_section():
     """_build_blocks no longer embeds ERD — verify ERD content absent."""
-    from datetime import date
+    from datetime import datetime, timezone
     from unittest.mock import MagicMock
     from lore.models import RiskLevel
     output = _make_output()
@@ -72,7 +72,7 @@ def test_build_blocks_no_erd_section():
     report.impact = []
     report.reviewer_notes = "None"
     ctx.analysis = report
-    blocks = output._build_blocks(ctx, date.today())
+    blocks = output._build_blocks(ctx, datetime.now(tz=timezone.utc))
     all_text = str(blocks)
     assert "Affected Tables" not in all_text
     assert "erDiagram" not in all_text

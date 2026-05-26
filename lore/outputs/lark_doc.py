@@ -1,5 +1,5 @@
 import logging
-from datetime import date
+from datetime import date, datetime, timezone
 import httpx
 from lore.models import PipelineContext
 from lore.outputs.base import OutputPlugin
@@ -31,11 +31,11 @@ class LarkDocOutput(OutputPlugin):
         self._parent_doc_id = parent_doc_id
         self._base_url = base_url.rstrip("/")
 
-    def _build_title(self, context: PipelineContext, run_date: date) -> str:
+    def _build_title(self, context: PipelineContext, run_dt: datetime) -> str:
         risk = context.analysis.risk_level.value if context.analysis else "UNKNOWN"
-        return f"{run_date.isoformat()} | {context.branch} | {risk}"
+        return f"{run_dt.strftime('%Y-%m-%d %H:%M %z')} | {context.branch} | {risk}"
 
-    def _build_blocks(self, context: PipelineContext, run_date: date) -> list:
+    def _build_blocks(self, context: PipelineContext, run_dt: datetime) -> list:
         """Build Lark Doc blocks. block_type: 2=text, 3=heading1, 4=heading2, 14=code."""
         report = context.analysis
         if not report:
@@ -65,7 +65,7 @@ class LarkDocOutput(OutputPlugin):
             {"block_type": 3, "heading1": {"elements": [text("Schema Change Report")]}},
             {"block_type": 2, "text": {"elements": [
                 text(f"Branch: {context.branch}\n"),
-                text(f"Date: {run_date.isoformat()}\n"),
+                text(f"Date: {run_dt.strftime('%Y-%m-%d %H:%M %z')}\n"),
                 text("Risk: ", bold=True),
                 text(report.risk_level.value, bold=True, color=risk_color),
             ]}},
@@ -94,10 +94,10 @@ class LarkDocOutput(OutputPlugin):
         return blocks
 
     def run(self, context: PipelineContext) -> PipelineContext:
-        run_date = date.today()
-        title = self._build_title(context, run_date)
+        run_dt = datetime.now(tz=timezone.utc)
+        title = self._build_title(context, run_dt)
 
-        blocks = self._build_blocks(context, run_date)
+        blocks = self._build_blocks(context, run_dt)
 
         token = _get_tenant_token(self._app_id, self._app_secret)
         headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
