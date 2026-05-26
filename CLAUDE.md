@@ -24,6 +24,17 @@ python -m pytest -k "test_parse_add_column" -v
 # CLI usage — supports both PostgreSQL and MySQL
 lore init --db postgresql://user:pass@host/dbname
 lore init --db mysql://user:pass@host:3306/dbname
+
+# Connection management — save shortcuts for easy reuse
+lore connections add prod-replica --db postgresql://user:pass@host/db --desc "Production read replica"
+lore init --use prod-replica                     # Use saved connection
+lore init                                        # Interactive menu (if connections exist)
+lore connections list                            # List all saved connections
+lore connections edit prod-replica --desc "New description"
+lore connections remove staging --yes            # Remove connection
+# Connections stored in ~/.lore/connections.yaml (passwords masked in CLI output)
+
+# Analyze migrations
 lore analyze --repo ./myapp --branch feature/add-phone
 lore analyze --repo ./myapp --branch feature/xyz --base develop
 
@@ -59,6 +70,7 @@ After the pipeline runs, `SchemaStore.apply()` + `SchemaStore.save()` update `lo
 ### Key modules
 
 - **`lore/models.py`** — all dataclasses and enums. `Operation`, `MigrationFormat`, `RiskLevel` are `str, Enum` so they JSON-serialize as plain strings. Always use enum members, never raw strings. In f-strings, always use `.value` (Python 3.14+ renders `f"{RiskLevel.LOW}"` as `"RiskLevel.LOW"`, not `"LOW"`).
+- **`lore/connections.py`** — manages database connection profiles stored in `~/.lore/connections.yaml`. Provides `ConnectionManager` class for CRUD operations (add, list, edit, remove). Passwords are masked in CLI output using `mask_password()` static method. Used by `lore init` for interactive connection selection and `lore connections` subcommands.
 - **`lore/parsers/`** — three concrete parsers (Flyway, Liquibase, raw DDL) plus `CompositeParser` which runs all three and merges results. Each parser filters its own file types internally using `detect_format`.
 - **`lore/parsers/flyway.py`** — shared `_FILE_HEADER`, `_ADDED_LINE`, `_parse_statement` helpers are imported directly by `raw_ddl.py` (intentional).
 - **`lore/analyzer/claude.py`** — model routing: `claude-haiku-4-5-20251001` for <5 non-breaking changes, `claude-sonnet-4-6` for ≥5 or any breaking change. Breaking ops: `{Operation.DROP, Operation.DROP_TABLE, Operation.ALTER}`. System prompt is sent with `cache_control: ephemeral` for prompt caching.

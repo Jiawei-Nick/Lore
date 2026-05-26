@@ -11,11 +11,14 @@ from lore.schema_store import SchemaStore
 from lore.erd import generate_mermaid_erd
 from lore.erd_categorized import generate_categorized_erds
 from lore.db_introspect import introspect_database
+from lore.connections import ConnectionManager
 
 # Load environment variables from .env file
 load_dotenv()
 
 app = typer.Typer()
+connections_app = typer.Typer(help="Manage database connection profiles")
+app.add_typer(connections_app, name="connections")
 
 _DEFAULT_SCHEMA_PATH = "lore-schema.json"
 
@@ -131,14 +134,90 @@ def setup_erd_folder(
 
 @app.command()
 def init(
-    db: str = typer.Option(..., help="Database connection URL (postgresql://... or mysql://...)"),
+    db: str = typer.Option(None, help="Database connection URL (postgresql://... or mysql://...)"),
     config: str = typer.Option("lore.yaml", help="Path to lore.yaml"),
     schema_path: str = typer.Option(_DEFAULT_SCHEMA_PATH, help="Path to write lore-schema.json"),
     schema: str = typer.Option(None, help="Schema/database name (default: 'public' for PostgreSQL, auto-detected for MySQL)"),
+    save_as: str = typer.Option(None, help="Save this connection with a shortcut name for later use"),
+    use: str = typer.Option(None, help="Use a saved connection by name"),
 ) -> None:
+    """Initialize schema snapshot from database.
+
+    Usage:
+      # Direct connection
+      lore init --db postgresql://user:pass@host/db
+
+      # Save connection for later
+      lore init --db postgresql://user:pass@host/db --save-as prod-replica
+
+      # Use saved connection
+      lore init --use prod-replica
+
+      # Interactive menu (if no --db or --use specified)
+      lore init
+    """
+    conn_manager = ConnectionManager()
+    actual_url = None
+    connection_name = None
+
+    # Determine which connection to use
+    if use:
+        # Use saved connection by name
+        conn_profile = conn_manager.get(use)
+        if not conn_profile:
+            typer.echo(f"[ERROR] Connection '{use}' not found.")
+            typer.echo("Run 'lore connections list' to see available connections.")
+            raise typer.Exit(1)
+        actual_url = conn_profile["url"]
+        connection_name = use
+        typer.echo(f"Using connection: {use}")
+        typer.echo(f"Database: {conn_manager.mask_password(actual_url)}")
+    elif db:
+        # Direct URL provided
+        actual_url = db
+        if save_as:
+            conn_manager.add(save_as, db)
+            typer.echo(f"✓ Saved connection as '{save_as}'")
+            connection_name = save_as
+    else:
+        # Interactive menu
+        connections = conn_manager.list_all()
+        if not connections:
+            typer.echo("[ERROR] No database connection specified and no saved connections found.")
+            typer.echo("")
+            typer.echo("Usage:")
+            typer.echo("  lore init --db postgresql://user:pass@host/db")
+            typer.echo("  lore init --db postgresql://user:pass@host/db --save-as prod-replica")
+            raise typer.Exit(1)
+
+        typer.echo("Select a database connection:\n")
+        conn_list = list(connections.items())
+        for idx, (name, profile) in enumerate(conn_list, start=1):
+            masked_url = conn_manager.mask_password(profile["url"])
+            desc = f" - {profile['description']}" if profile.get("description") else ""
+            typer.echo(f"  {idx}. {name} ({masked_url}){desc}")
+
+        typer.echo("")
+        selection = typer.prompt("Enter number", type=int)
+        if selection < 1 or selection > len(conn_list):
+            typer.echo("[ERROR] Invalid selection.")
+            raise typer.Exit(1)
+
+        connection_name, profile = conn_list[selection - 1]
+        actual_url = profile["url"]
+        typer.echo(f"\nUsing connection: {connection_name}")
+        typer.echo(f"Database: {conn_manager.mask_password(actual_url)}")
+
+    # Show actual command (with masked password)
+    if connection_name:
+        typer.echo(f"Command: lore init --use {connection_name}\n")
+    else:
+        typer.echo(f"Command: lore init --db {conn_manager.mask_password(actual_url)}\n")
+
+    # Proceed with schema introspection
     cfg = load_config(config)
     typer.echo("Introspecting database schema...")
-    tables = introspect_database(db, schema)
+    tables = introspect_database(actual_url, schema)
 
     store = SchemaStore(path=schema_path)
     store.tables = tables
@@ -351,3 +430,102 @@ def generate_erd_command(
         typer.echo("   Examples:")
         typer.echo("     lore generate-erd --output-dir ./docs/erd")
         typer.echo("     lore generate-erd --upload")
+
+
+# === Database Connection Management Commands ===
+
+@connections_app.command("list")
+def connections_list() -> None:
+    """List all saved database connections."""
+    conn_manager = ConnectionManager()
+    connections = conn_manager.list_all()
+
+    if not connections:
+        typer.echo("No saved connections found.")
+        typer.echo("")
+        typer.echo("Save a connection with:")
+        typer.echo("  lore init --db postgresql://user:pass@host/db --save-as prod-replica")
+        return
+
+    typer.echo(f"Saved connections ({len(connections)}):\n")
+    for name, profile in connections.items():
+        masked_url = conn_manager.mask_password(profile["url"])
+        desc = f" - {profile['description']}" if profile.get("description") else ""
+        typer.echo(f"  • {name}")
+        typer.echo(f"    {masked_url}{desc}")
+        typer.echo("")
+
+
+@connections_app.command("add")
+def connections_add(
+    name: str = typer.Argument(..., help="Connection name (e.g., prod-replica)"),
+    url: str = typer.Option(..., "--db", help="Database connection URL"),
+    description: str = typer.Option("", "--desc", help="Optional description"),
+) -> None:
+    """Add a new database connection profile."""
+    conn_manager = ConnectionManager()
+    conn_manager.add(name, url, description)
+    typer.echo(f"✓ Saved connection '{name}'")
+    typer.echo(f"  Database: {conn_manager.mask_password(url)}")
+    if description:
+        typer.echo(f"  Description: {description}")
+
+
+@connections_app.command("edit")
+def connections_edit(
+    name: str = typer.Argument(..., help="Connection name to edit"),
+    url: str = typer.Option(None, "--db", help="New database connection URL"),
+    description: str = typer.Option(None, "--desc", help="New description"),
+) -> None:
+    """Edit an existing database connection profile."""
+    conn_manager = ConnectionManager()
+    profile = conn_manager.get(name)
+
+    if not profile:
+        typer.echo(f"[ERROR] Connection '{name}' not found.")
+        typer.echo("Run 'lore connections list' to see available connections.")
+        raise typer.Exit(1)
+
+    # Update fields if provided
+    if url:
+        profile["url"] = url
+    if description is not None:
+        profile["description"] = description
+
+    conn_manager.add(name, profile["url"], profile.get("description", ""))
+    typer.echo(f"✓ Updated connection '{name}'")
+    typer.echo(f"  Database: {conn_manager.mask_password(profile['url'])}")
+    if profile.get("description"):
+        typer.echo(f"  Description: {profile['description']}")
+
+
+@connections_app.command("remove")
+def connections_remove(
+    name: str = typer.Argument(..., help="Connection name to remove"),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt"),
+) -> None:
+    """Remove a saved database connection profile."""
+    conn_manager = ConnectionManager()
+    profile = conn_manager.get(name)
+
+    if not profile:
+        typer.echo(f"[ERROR] Connection '{name}' not found.")
+        typer.echo("Run 'lore connections list' to see available connections.")
+        raise typer.Exit(1)
+
+    # Show what will be removed
+    typer.echo(f"Connection to remove: {name}")
+    typer.echo(f"  Database: {conn_manager.mask_password(profile['url'])}")
+    if profile.get("description"):
+        typer.echo(f"  Description: {profile['description']}")
+    typer.echo("")
+
+    # Confirm deletion
+    if not yes:
+        confirm = typer.confirm("Are you sure you want to remove this connection?")
+        if not confirm:
+            typer.echo("Cancelled.")
+            raise typer.Exit(0)
+
+    conn_manager.remove(name)
+    typer.echo(f"✓ Removed connection '{name}'")
