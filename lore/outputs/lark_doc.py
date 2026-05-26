@@ -3,6 +3,7 @@ from datetime import date, datetime, timezone
 import httpx
 from lore.models import PipelineContext
 from lore.outputs.base import OutputPlugin
+from lore.mermaid_renderer import MermaidRenderer
 
 _log = logging.getLogger(__name__)
 _LARK_AUTH_URL = "https://open.larksuite.com/open-apis/auth/v3/tenant_access_token/internal"
@@ -367,7 +368,7 @@ class LarkDocOutput(OutputPlugin):
 
             _log.info(f"Cleared {deleted_count}/{len(all_block_ids)} blocks from document")
 
-    def _upload_image(self, image_bytes: bytes, image_type: str = "image/png", filename: str = "diagram.png", save_locally: bool = False, local_dir: str = None) -> str:
+    def _upload_image(self, image_bytes: bytes, image_type: str = "image/png", filename: str = "diagram.png", save_locally: bool = False, local_dir: str = None, parent_type: str = "explorer", parent_node: str = None) -> str:
         """Upload an image to Lark Drive and return the file_token.
 
         Args:
@@ -396,8 +397,8 @@ class LarkDocOutput(OutputPlugin):
         # Use folder_token as parent for better compatibility
         files = {
             "file_name": (None, filename),
-            "parent_type": (None, "explorer"),
-            "parent_node": (None, self._folder_token),
+            "parent_type": (None, parent_type),
+            "parent_node": (None, parent_node if parent_node is not None else self._folder_token),
             "size": (None, str(len(image_bytes))),
             "file": (filename, image_bytes, image_type),
         }
@@ -552,6 +553,51 @@ class LarkDocOutput(OutputPlugin):
         if data.get("code", 0) != 0:
             raise RuntimeError(f"Lark doc ERD append failed: {data.get('msg')}")
         resp.raise_for_status()
+
+        if len(mermaid_erd) <= 5000:
+            try:
+                image_bytes = MermaidRenderer(format="png").render(mermaid_erd)
+                self._insert_doc_image(document_id, image_bytes, headers)
+                _log.info("ERD image block appended successfully")
+            except Exception as e:
+                _log.warning(f"ERD image render failed, skipping image block: {e}")
+
+    def _insert_doc_image(self, document_id: str, image_bytes: bytes, headers: dict) -> None:
+        """Append an image to a Lark Doc using the 3-step docx_image flow.
+
+        Step 1: Create empty image block, get its block_id.
+        Step 2: Upload bytes with parent_type=docx_image, parent_node=block_id.
+        Step 3: Patch the block with the returned file_token.
+        """
+        block_url = _LARK_DOC_UPDATE_URL.format(document_id=document_id, block_id=document_id)
+        resp = httpx.post(block_url, headers=headers, json={
+            "children": [{"block_type": 27, "image": {"token": ""}}],
+            "index": -1,
+        })
+        data = resp.json()
+        if data.get("code", 0) != 0:
+            raise RuntimeError(f"Lark image block create failed: {data.get('msg')}")
+        resp.raise_for_status()
+
+        children = data.get("data", {}).get("children", [])
+        if not children:
+            raise RuntimeError("Lark image block create returned no block_id")
+        first = children[0]
+        image_block_id = first.get("block_id") if isinstance(first, dict) else first
+
+        file_token = self._upload_image(
+            image_bytes,
+            image_type="image/jpeg",
+            filename="erd.png",
+            parent_type="docx_image",
+            parent_node=image_block_id,
+        )
+
+        patch_url = f"https://open.larksuite.com/open-apis/docx/v1/documents/{document_id}/blocks/{image_block_id}"
+        resp = httpx.patch(patch_url, headers=headers, json={"replace_image": {"token": file_token}})
+        data = resp.json()
+        if data.get("code", 0) != 0:
+            raise RuntimeError(f"Lark image block patch failed: {data.get('msg')}")
 
     def upload_category_erds(self, erd_map: dict[str, str], page_token: str = None, max_categories: int = 20, render_as_image: bool = True, replace: bool = True) -> None:
         """Upload multiple category ERDs to a Lark Doc.

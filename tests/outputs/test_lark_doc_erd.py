@@ -1,4 +1,4 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, call
 from lore.outputs.lark_doc import LarkDocOutput
 
 
@@ -11,34 +11,82 @@ def _make_output():
     )
 
 
+def _post_side_effect(url, **kwargs):
+    """Return appropriate responses for each POST in the 3-step image flow."""
+    resp = MagicMock(status_code=200)
+    children = (kwargs.get("json") or {}).get("children", [])
+    if children and children[0].get("block_type") == 27:
+        resp.json.return_value = {"code": 0, "data": {"children": ["img_block_id_123"]}}
+    else:
+        resp.json.return_value = {"code": 0}
+    return resp
+
+
 def test_append_erd_to_doc_posts_heading_and_code_block():
     output = _make_output()
 
+    mock_renderer = MagicMock()
+    mock_renderer.render.return_value = b"\xff\xd8\xff"
+
     with patch("lore.outputs.lark_doc._get_tenant_token", return_value="tok"), \
-         patch("httpx.post") as mock_post:
-        mock_post.return_value = MagicMock(
-            status_code=200,
-            json=lambda: {"code": 0}
-        )
+         patch("lore.outputs.lark_doc.httpx.post", side_effect=_post_side_effect) as mock_post, \
+         patch("lore.outputs.lark_doc.httpx.patch") as mock_patch, \
+         patch("lore.outputs.lark_doc.MermaidRenderer", return_value=mock_renderer), \
+         patch.object(output, "_upload_image", return_value="file_tok_123"):
+        mock_patch.return_value = MagicMock(status_code=200, json=lambda: {"code": 0})
         output.append_erd_to_doc("sub_doc_456", "erDiagram\n  user { BIGINT id }")
 
-    mock_post.assert_called_once()
-    payload = mock_post.call_args[1]["json"]
-    block_types = [b["block_type"] for b in payload["children"]]
-    assert 3 in block_types   # heading1
-    assert 14 in block_types  # code block
-    assert payload["index"] == -1
-
-    all_text = str(payload)
+    # First POST: heading + code. Second POST: empty image block.
+    assert mock_post.call_count == 2
+    first_payload = mock_post.call_args_list[0][1]["json"]
+    block_types = [b["block_type"] for b in first_payload["children"]]
+    assert 3 in block_types
+    assert 14 in block_types
+    assert first_payload["index"] == -1
+    all_text = str(first_payload)
     assert "erDiagram" in all_text
     assert "Affected Tables" in all_text
+
+    # PATCH replaces image token
+    mock_patch.assert_called_once()
+    assert mock_patch.call_args[1]["json"]["replace_image"]["token"] == "file_tok_123"
+
+
+def test_append_erd_to_doc_skips_image_on_render_failure():
+    output = _make_output()
+
+    mock_renderer = MagicMock()
+    mock_renderer.render.side_effect = RuntimeError("render failed")
+
+    with patch("lore.outputs.lark_doc._get_tenant_token", return_value="tok"), \
+         patch("lore.outputs.lark_doc.httpx.post") as mock_post, \
+         patch("lore.outputs.lark_doc.MermaidRenderer", return_value=mock_renderer):
+        mock_post.return_value = MagicMock(status_code=200, json=lambda: {"code": 0})
+        output.append_erd_to_doc("sub_doc_456", "erDiagram\n  A ||--o{ B : has")
+
+    # Only the heading+code POST, no image block POST
+    assert mock_post.call_count == 1
+
+
+def test_append_erd_to_doc_skips_image_for_large_erd():
+    output = _make_output()
+    large_erd = "A" * 5001
+
+    with patch("lore.outputs.lark_doc._get_tenant_token", return_value="tok"), \
+         patch("lore.outputs.lark_doc.httpx.post") as mock_post, \
+         patch("lore.outputs.lark_doc.MermaidRenderer") as mock_renderer_cls:
+        mock_post.return_value = MagicMock(status_code=200, json=lambda: {"code": 0})
+        output.append_erd_to_doc("sub_doc_456", large_erd)
+
+    mock_renderer_cls.assert_not_called()
+    assert mock_post.call_count == 1
 
 
 def test_append_erd_to_doc_raises_on_lark_error():
     output = _make_output()
 
     with patch("lore.outputs.lark_doc._get_tenant_token", return_value="tok"), \
-         patch("httpx.post") as mock_post:
+         patch("lore.outputs.lark_doc.httpx.post") as mock_post:
         mock_post.return_value = MagicMock(
             status_code=200,
             json=lambda: {"code": 99, "msg": "permission denied"}

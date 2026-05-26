@@ -92,7 +92,7 @@ class ClaudeAnalyzer:
 
         response = self._client.messages.create(
             model=model,
-            max_tokens=1024,
+            max_tokens=4096,
             system=[{"type": "text", "text": _SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
             messages=[{"role": "user", "content": f"Analyze these schema changes:\n{json.dumps(changes_payload, indent=2)}"}],
         )
@@ -100,9 +100,11 @@ class ClaudeAnalyzer:
         try:
             text = response.content[0].text.strip()
             if text.startswith("```"):
-                text = text.split("```", 2)[1]
-                if text.startswith("json"):
-                    text = text[4:]
+                # Strip opening fence (```json or ```)
+                text = text[text.index("\n") + 1:]
+                # Strip closing fence
+                if "```" in text:
+                    text = text[:text.rindex("```")]
                 text = text.strip()
             raw = json.loads(text)
         except json.JSONDecodeError as exc:
