@@ -218,21 +218,24 @@ New ERD feature requested → erd-generator (implement) → erd-reviewer (review
 
 Tests mirror `lore/` package structure under `tests/`. Parsers are tested with raw unified diff strings constructed directly in tests — no real git repos needed. The Claude analyzer and Lark output are tested with mocked HTTP/API clients.
 
-### End-to-end test run
+### End-to-end test runs
 
-`scripts/test_run.py` runs a real pipeline against fixture migrations — no manual branch setup needed:
+Each script creates a temp branch, commits fixture migrations into `db/migrations/`, runs `lore analyze` (calls Claude, posts doc to Lark, appends focused ERD), then cleans up.
+
+| Script | Fixture set | Operations | Expected model |
+|---|---|---|---|
+| `scripts/test_run.py` | `migrations/` | CREATE TABLE, ADD COLUMN, DROP COLUMN | haiku |
+| `scripts/test_run_low.py` | `migrations_low/` | 2 × CREATE TABLE | haiku |
+| `scripts/test_run_medium.py` | `migrations_medium/` | CREATE TABLE + 4 × ADD COLUMN + INDEX | sonnet |
+| `scripts/test_run_high.py` | `migrations_high/` | DROP TABLE + DROP COLUMNs + ADD COLUMNs | sonnet |
 
 ```bash
-# From project root
-python scripts/test_run.py
+python scripts/test_run.py         # baseline
+python scripts/test_run_low.py     # low impact — haiku path
+python scripts/test_run_medium.py  # medium impact — sonnet path (volume)
+python scripts/test_run_high.py    # high impact — sonnet path (breaking ops)
 ```
 
-Flow:
-1. Creates a temp branch `test/fixture-run-<timestamp>`
-2. Commits fixture migrations from `tests/fixtures/migrations/` into `db/migrations/`
-3. Runs `lore analyze` — calls Claude, posts doc to Lark, appends focused ERD
-4. Deletes the temp branch and cleans up the committed files
-
-Fixtures: `tests/fixtures/migrations/` — three Flyway migrations covering CREATE TABLE, ADD COLUMN, and DROP COLUMN. Edit to test different scenarios.
+Model routing: haiku for <5 non-breaking changes; sonnet for ≥5 changes or any breaking op (`DROP`, `DROP_TABLE`, `ALTER`). Each script prints the expected model at startup so you can verify routing from the output.
 
 Prerequisites: `.env` must be populated (AWS + Lark credentials including `LARK_BASE_URL`).

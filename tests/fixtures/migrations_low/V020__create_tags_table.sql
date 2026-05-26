@@ -1,0 +1,7 @@
+CREATE TABLE tb_tag (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_tag_name ON tb_tag(name);

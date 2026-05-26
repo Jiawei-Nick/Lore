@@ -135,19 +135,24 @@ python -m pytest        # run all tests
 python -m pytest -v -k "test_name"  # run a single test
 ```
 
-### End-to-end test run
+### End-to-end test runs
 
-Triggers a real `lore analyze` against fixture migrations without touching any permanent branch:
+Each script creates a temporary branch, commits fixture migrations, runs a real `lore analyze` (posts to Lark), then cleans up.
+
+| Script | Fixture set | Operations | Expected model |
+|---|---|---|---|
+| `scripts/test_run.py` | `migrations/` | CREATE TABLE, ADD COLUMN, DROP COLUMN | haiku |
+| `scripts/test_run_low.py` | `migrations_low/` | 2 × CREATE TABLE | haiku |
+| `scripts/test_run_medium.py` | `migrations_medium/` | CREATE TABLE + 4 × ADD COLUMN + INDEX | sonnet |
+| `scripts/test_run_high.py` | `migrations_high/` | DROP TABLE + DROP COLUMNs + ADD COLUMNs | sonnet |
+
+Model routing rules: haiku for fewer than 5 non-breaking changes; sonnet for 5 or more changes, or any breaking operation (DROP TABLE, DROP COLUMN, ALTER).
 
 ```bash
-# From project root
-python scripts/test_run.py
+python scripts/test_run.py         # baseline
+python scripts/test_run_low.py     # low impact — haiku path
+python scripts/test_run_medium.py  # medium impact — sonnet path (volume)
+python scripts/test_run_high.py    # high impact — sonnet path (breaking ops)
 ```
 
-What it does:
-1. Creates a temporary branch `test/fixture-run-<timestamp>`
-2. Commits the fixture migrations from `tests/fixtures/migrations/`
-3. Runs `lore analyze` — posts a real report to Lark and appends a focused ERD
-4. Deletes the temp branch and removes the committed migration files
-
-Fixture migrations live in `tests/fixtures/migrations/` and cover CREATE, ADD COLUMN, and DROP COLUMN operations across two tables. Edit them to test different scenarios.
+Fixture migrations live in `tests/fixtures/migrations*/`. Each script prints the expected model routing at startup so you can verify Claude picked the right model from the output.
