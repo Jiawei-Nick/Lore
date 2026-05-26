@@ -2,6 +2,8 @@
 .claude/settings.local.json
 *.stackdump
 lore-schema.json
+ERD Diagram/
+erd_output/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

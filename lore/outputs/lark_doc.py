@@ -346,6 +346,46 @@ class LarkDocOutput(OutputPlugin):
 
         return file_token
 
+    def upload_file_to_folder(self, file_bytes: bytes, filename: str, folder_token: str, file_type: str = "image/png") -> str:
+        """Upload a file directly to a Lark Drive folder.
+
+        Args:
+            file_bytes: Raw file bytes
+            filename: Name for the uploaded file
+            folder_token: Target folder token
+            file_type: MIME type (default: image/png)
+
+        Returns:
+            file_token of the uploaded file
+        """
+        token = _get_tenant_token(self._app_id, self._app_secret)
+        headers = {"Authorization": f"Bearer {token}"}
+
+        # Lark Drive API expects multipart/form-data
+        files = {
+            "file_name": (None, filename),
+            "parent_type": (None, "explorer"),
+            "parent_node": (None, folder_token),
+            "size": (None, str(len(file_bytes))),
+            "file": (filename, file_bytes, file_type),
+        }
+
+        resp = httpx.post(_LARK_IMAGE_UPLOAD_URL, headers=headers, files=files, timeout=30.0)
+        data = resp.json()
+
+        # Check Lark API error code first (they return 200 even on errors)
+        if data.get("code", 0) != 0:
+            raise RuntimeError(f"Lark file upload failed: {data.get('msg')} (code: {data.get('code')})")
+
+        resp.raise_for_status()
+
+        file_token = data.get("data", {}).get("file_token")
+        if not file_token:
+            raise RuntimeError(f"Lark file upload returned no file_token: {data}")
+
+        _log.info(f"Uploaded {filename} to folder {folder_token}")
+        return file_token
+
     def update_erd_page(self, mermaid_erd: str, page_token: str = None, render_as_image: bool = True) -> None:
         """Update the ERD in the parent Lark Doc.
 
@@ -640,7 +680,9 @@ class LarkDocOutput(OutputPlugin):
         image_folder_token: str = None,
         code_folder_token: str = None
     ) -> list[tuple[str, str, str]]:
-        """Create a separate Lark Doc for each category ERD in the specified folder.
+        """DEPRECATED: Use create_dual_category_erd_documents() instead.
+
+        Create a separate Lark Doc for each category ERD in the specified folder.
 
         Args:
             erd_map: Dict mapping category name to ERD content
@@ -766,3 +808,216 @@ class LarkDocOutput(OutputPlugin):
 
         _log.info(f"Created {len(created_docs)} category ERD documents (skipped {skipped_count})")
         return created_docs
+
+    def create_dual_category_erd_documents(
+        self,
+        erd_map: dict[str, str],
+        image_folder_token: str,
+        code_folder_token: str
+    ) -> tuple[list[tuple[str, str, str]], list[tuple[str, str, str]]]:
+        """Create TWO documents for each category: one with PNG image, one with Mermaid code.
+
+        Args:
+            erd_map: Dict mapping category name to ERD content
+            image_folder_token: Folder token for PNG image documents
+            code_folder_token: Folder token for Mermaid code documents
+
+        Returns:
+            Tuple of (image_docs, code_docs) lists, each containing (category, doc_id, url) tuples
+        """
+        import time
+
+        if not image_folder_token or not code_folder_token:
+            raise ValueError("Both image_folder_token and code_folder_token are required")
+
+        token = _get_tenant_token(self._app_id, self._app_secret)
+        headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+        image_docs = []
+        code_docs = []
+        skipped_count = 0
+
+        # Sort categories by name for consistent ordering
+        sorted_categories = sorted(erd_map.items())
+
+        for category, erd_content in sorted_categories:
+            # Skip oversized ERDs
+            if len(erd_content) > 15000:
+                _log.info(f"Skipping {category} ({len(erd_content)} chars, exceeds 15KB limit)")
+                skipped_count += 1
+                continue
+
+            # 1. Create PNG image document in "ERD Diagram" folder
+            if len(erd_content) <= 5000:  # Only render if small enough
+                try:
+                    from lore.mermaid_renderer import MermaidRenderer
+                    renderer = MermaidRenderer(format="png")
+                    image_bytes = renderer.render(erd_content)
+                    filename = f"{category}.png"
+
+                    # Create document
+                    create_payload = {
+                        "folder_token": image_folder_token,
+                        "title": category,
+                    }
+                    resp = httpx.post(_LARK_DOC_CREATE_URL, headers=headers, json=create_payload, timeout=30.0)
+                    data = resp.json()
+
+                    if resp.status_code == 200 and data.get("code", 0) == 0:
+                        document_id = data.get("data", {}).get("document", {}).get("document_id")
+                        if document_id:
+                            # Upload image and add to document
+                            file_token = self._upload_image(image_bytes, image_type="image/jpeg", filename=filename, save_locally=True)
+                            blocks = [{"block_type": 27, "image": {"file_token": file_token}}]
+
+                            block_url = _LARK_DOC_UPDATE_URL.format(document_id=document_id, block_id=document_id)
+                            content_payload = {"children": blocks, "index": 0}
+                            resp = httpx.post(block_url, headers=headers, json=content_payload, timeout=60.0)
+                            data = resp.json()
+
+                            if resp.status_code == 200 and data.get("code", 0) == 0:
+                                url = f"https://open.larksuite.com/docx/{document_id}"
+                                image_docs.append((category, document_id, url))
+                                _log.info(f"Created PNG doc for {category}")
+                            else:
+                                _log.error(f"Failed to add image to {category} doc: {data.get('msg')}")
+                        else:
+                            _log.error(f"Failed to get document_id for {category} image doc")
+                    else:
+                        _log.error(f"Failed to create image doc for {category}: {data.get('msg')}")
+
+                    time.sleep(0.5)  # Rate limiting
+
+                except Exception as e:
+                    _log.error(f"Failed to create PNG doc for {category}: {e}")
+            else:
+                _log.info(f"Skipping PNG for {category} (too large: {len(erd_content)} chars)")
+
+            # 2. Create Mermaid code document in "ERD Diagram - Mermaid Code Base" folder
+            try:
+                # Create document
+                create_payload = {
+                    "folder_token": code_folder_token,
+                    "title": category,
+                }
+                resp = httpx.post(_LARK_DOC_CREATE_URL, headers=headers, json=create_payload, timeout=30.0)
+                data = resp.json()
+
+                if resp.status_code == 200 and data.get("code", 0) == 0:
+                    document_id = data.get("data", {}).get("document", {}).get("document_id")
+                    if document_id:
+                        # Add mermaid code block
+                        blocks = [{
+                            "block_type": 14,
+                            "code": {
+                                "elements": [{"text_run": {"content": erd_content}}],
+                                "style": {"language": 1},
+                            }
+                        }]
+
+                        block_url = _LARK_DOC_UPDATE_URL.format(document_id=document_id, block_id=document_id)
+                        content_payload = {"children": blocks, "index": 0}
+                        resp = httpx.post(block_url, headers=headers, json=content_payload, timeout=60.0)
+                        data = resp.json()
+
+                        if resp.status_code == 200 and data.get("code", 0) == 0:
+                            url = f"https://open.larksuite.com/docx/{document_id}"
+                            code_docs.append((category, document_id, url))
+                            _log.info(f"Created code doc for {category}")
+                        else:
+                            _log.error(f"Failed to add code to {category} doc: {data.get('msg')}")
+                    else:
+                        _log.error(f"Failed to get document_id for {category} code doc")
+                else:
+                    _log.error(f"Failed to create code doc for {category}: {data.get('msg')}")
+
+                time.sleep(0.5)  # Rate limiting
+
+            except Exception as e:
+                _log.error(f"Failed to create code doc for {category}: {e}")
+
+        _log.info(f"Created {len(image_docs)} PNG docs and {len(code_docs)} code docs (skipped {skipped_count} oversized)")
+        return image_docs, code_docs
+
+    def upload_erd_files_to_folders(
+        self,
+        erd_map: dict[str, str],
+        image_folder_token: str,
+        code_folder_token: str
+    ) -> tuple[list[str], list[str]]:
+        """Upload ERD files directly to Lark Drive folders (not as documents).
+
+        Args:
+            erd_map: Dict mapping category name to ERD content
+            image_folder_token: Folder token for PNG files
+            code_folder_token: Folder token for Mermaid .mmd files
+
+        Returns:
+            Tuple of (uploaded_pngs, uploaded_mmds) lists with filenames
+        """
+        import time
+
+        if not image_folder_token or not code_folder_token:
+            raise ValueError("Both image_folder_token and code_folder_token are required")
+
+        uploaded_pngs = []
+        uploaded_mmds = []
+        skipped_count = 0
+
+        # Sort categories by name for consistent ordering
+        sorted_categories = sorted(erd_map.items())
+
+        for category, erd_content in sorted_categories:
+            # Skip oversized ERDs
+            if len(erd_content) > 15000:
+                _log.info(f"Skipping {category} ({len(erd_content)} chars, exceeds 15KB limit)")
+                skipped_count += 1
+                continue
+
+            # 1. Upload PNG file to "ERD Diagram" folder (if small enough)
+            if len(erd_content) <= 5000:
+                try:
+                    from lore.mermaid_renderer import MermaidRenderer
+                    renderer = MermaidRenderer(format="png")
+                    image_bytes = renderer.render(erd_content)
+                    filename = f"{category}.png"
+
+                    # Upload PNG file directly to folder
+                    file_token = self.upload_file_to_folder(
+                        file_bytes=image_bytes,
+                        filename=filename,
+                        folder_token=image_folder_token,
+                        file_type="image/jpeg"
+                    )
+                    uploaded_pngs.append(filename)
+                    _log.info(f"Uploaded PNG: {filename}")
+
+                    time.sleep(0.5)  # Rate limiting
+
+                except Exception as e:
+                    _log.error(f"Failed to upload PNG for {category}: {e}")
+            else:
+                _log.info(f"Skipping PNG for {category} (too large: {len(erd_content)} chars)")
+
+            # 2. Upload .mmd file to "ERD Diagram - Mermaid Code Base" folder
+            try:
+                filename = f"{category}.mmd"
+                mmd_bytes = erd_content.encode('utf-8')
+
+                # Upload .mmd file directly to folder
+                file_token = self.upload_file_to_folder(
+                    file_bytes=mmd_bytes,
+                    filename=filename,
+                    folder_token=code_folder_token,
+                    file_type="text/plain"
+                )
+                uploaded_mmds.append(filename)
+                _log.info(f"Uploaded .mmd: {filename}")
+
+                time.sleep(0.5)  # Rate limiting
+
+            except Exception as e:
+                _log.error(f"Failed to upload .mmd for {category}: {e}")
+
+        _log.info(f"Uploaded {len(uploaded_pngs)} PNG files and {len(uploaded_mmds)} .mmd files (skipped {skipped_count} oversized)")
+        return uploaded_pngs, uploaded_mmds

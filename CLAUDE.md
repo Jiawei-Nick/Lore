@@ -32,11 +32,21 @@ cp lore-schema.example.json lore-schema.json   # copy once, then run analyze nor
 # lore-schema.json is gitignored (runtime state); lore-schema.example.json is the committed reference
 
 # Generate category-based ERDs from schema snapshot
-lore generate-erd --output-dir ./erd_output              # Save all categories to files (.mmd)
+lore generate-erd --output-dir ./erd_output              # Save to dual folders: "ERD Diagram - Mermaid Code Base/"
 lore generate-erd --overview --output-dir ./erd_output   # Save overview to file
-lore generate-erd --upload --max-categories 5            # Upload top 5 as images to Lark
-lore generate-erd --upload --overview                    # Upload overview (code block if >5KB)
-lore generate-erd --output-dir ./docs --upload --max-categories 10  # Both file + Lark
+
+# One-time setup: Create Lark Drive folders for ERD organization
+lore setup-erd-folders                                   # Creates "ERD Diagram" and "ERD Diagram - Mermaid Code Base"
+
+# Upload PNG and .mmd files directly to Lark Drive folders (recommended)
+lore generate-erd --upload --upload-files                # Uses LARK_ERD_IMAGE_FOLDER and LARK_ERD_CODE_FOLDER from env
+
+# Alternative: Create separate Lark Docs (one document per category)
+lore generate-erd --upload --separate-docs               # PNG docs + code docs in separate folders
+
+# Legacy: Upload to single parent document
+lore generate-erd --upload --max-categories 5            # Upload top 5 as images to parent doc
+lore generate-erd --upload --overview                    # Upload overview diagram
 ```
 
 ## Architecture
@@ -61,11 +71,11 @@ After the pipeline runs, `SchemaStore.apply()` + `SchemaStore.save()` update `lo
 - **`lore/parsers/flyway.py`** — shared `_FILE_HEADER`, `_ADDED_LINE`, `_parse_statement` helpers are imported directly by `raw_ddl.py` (intentional).
 - **`lore/analyzer/claude.py`** — model routing: `claude-haiku-4-5-20251001` for <5 non-breaking changes, `claude-sonnet-4-6` for ≥5 or any breaking change. Breaking ops: `{Operation.DROP, Operation.DROP_TABLE, Operation.ALTER}`. System prompt is sent with `cache_control: ephemeral` for prompt caching.
 - **`lore/outputs/lark.py`** — Legacy Lark Wiki API (deprecated, replaced by lark_doc.py).
-- **`lore/outputs/lark_doc.py`** — Lark Docs API integration. Uploads analysis reports and ERD diagrams. ERDs are rendered as images (via `mermaid_renderer.py`) when <5KB; larger diagrams use code blocks. Image upload uses block_type 27. API returns HTTP 200 even on errors; always check `data.get("code", 0) != 0` in the response body.
+- **`lore/outputs/lark_doc.py`** — Lark Docs API integration. Uploads analysis reports and ERD diagrams. Supports three ERD upload modes: (1) `upload_erd_files_to_folders()` uploads PNG and .mmd files directly to Lark Drive folders (recommended), (2) `create_dual_category_erd_documents()` creates separate Lark Docs with embedded images or code blocks, (3) legacy single-doc upload. ERDs are rendered as images when <5KB; larger diagrams use code blocks. Image upload uses block_type 27. API returns HTTP 200 even on errors; always check `data.get("code", 0) != 0` in the response body.
 - **`lore/db_introspect.py`** — database introspection for PostgreSQL and MySQL. Auto-detects DB type from connection URL scheme (`postgresql://` or `mysql://`). Uses `information_schema` queries for both. PostgreSQL requires `psycopg2-binary`, MySQL requires `pymysql`.
 - **`lore/schema_store.py`** — `lore-schema.json` is gitignored and updated incrementally on each `lore analyze` run. `lore analyze` never needs DB access after `lore init`.
 - **`lore/erd.py`** — Mermaid ERD generated from the schema snapshot. FK relationships inferred from `*_id` columns if the parent table exists in the snapshot. Type strings are sanitized: `VARCHAR(20)` → `VARCHAR_20_`. Used by `lore analyze` to show modified tables + related tables.
-- **`lore/erd_categorized.py`** — Category-based ERD generator. Groups tables by prefix (`tb_wallet_*` → wallet, `tb_user_*` → user, etc.) and generates separate `.mmd` files per category. Includes cross-category reference annotations. Used by `lore generate-erd` command for full schema documentation.
+- **`lore/erd_categorized.py`** — Category-based ERD generator. Groups tables by prefix (`tb_wallet_*` → wallet, `tb_user_*` → user, etc.) and generates separate `.mmd` files per category in dual-folder structure: "ERD Diagram/" for PNGs, "ERD Diagram - Mermaid Code Base/" for .mmd source files. Filenames use clean names without prefixes (e.g., `wallet.mmd`, not `erd_wallet.mmd`). Includes cross-category reference annotations. Used by `lore generate-erd` command for full schema documentation.
 - **`lore/mermaid_renderer.py`** — Renders Mermaid diagrams to images (JPEG) using mermaid.ink API. Used by `lore generate-erd --upload` to convert ERDs to images for Lark Docs. Skips rendering for diagrams >5KB (URL length limit). Falls back to code blocks on error.
 - **`lore/config.py`** — loads `lore.yaml`, substitutes `${ENV_VAR}` references, raises on unresolved vars.
 
