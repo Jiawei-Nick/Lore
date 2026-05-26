@@ -65,7 +65,7 @@ CLI (cli.py)
         └── OutputPlugin   → populates context.output_url
 ```
 
-After the pipeline runs, `SchemaStore.apply()` + `SchemaStore.save()` update `lore-schema.json` incrementally. A second call to `LarkWikiOutput.update_erd_page()` refreshes the Mermaid ERD on the Lark Wiki parent page.
+After the pipeline runs, `SchemaStore.apply()` + `SchemaStore.save()` update `lore-schema.json` incrementally. `LarkDocOutput.append_erd_to_doc()` appends a focused ERD to the analysis sub-page.
 
 ### Key modules
 
@@ -75,13 +75,13 @@ After the pipeline runs, `SchemaStore.apply()` + `SchemaStore.save()` update `lo
 - **`lore/parsers/flyway.py`** — shared `_FILE_HEADER`, `_ADDED_LINE`, `_parse_statement` helpers are imported directly by `raw_ddl.py` (intentional).
 - **`lore/analyzer/claude.py`** — model routing: `claude-haiku-4-5-20251001` for <5 non-breaking changes, `claude-sonnet-4-6` for ≥5 or any breaking change. Breaking ops: `{Operation.DROP, Operation.DROP_TABLE, Operation.ALTER}`. System prompt is sent with `cache_control: ephemeral` for prompt caching.
 - **`lore/outputs/lark.py`** — Legacy Lark Wiki API (deprecated, replaced by lark_doc.py).
-- **`lore/outputs/lark_doc.py`** — Lark Docs API integration. Uploads analysis reports and ERD diagrams. `upload_erd_files_to_folders()` uploads PNG and .mmd files directly to Lark Drive folders (recommended method). For legacy single-doc uploads, `update_erd_page()` can replace existing ERD sections in parent documents. ERDs are rendered as images when <5KB; larger diagrams use code blocks. Image upload uses block_type 27. API returns HTTP 200 even on errors; always check `data.get("code", 0) != 0` in the response body.
+- **`lore/outputs/lark_doc.py`** — Lark Docs API integration. Uploads analysis reports and ERD diagrams. `LarkDocOutput` takes a `base_url` param (tenant hostname from `LARK_BASE_URL`) used to build all doc URLs — do not hardcode `open.larksuite.com`. `upload_erd_files_to_folders()` uploads PNG and .mmd files directly to Lark Drive folders (recommended method). For legacy single-doc uploads, `update_erd_page()` can replace existing ERD sections in parent documents. ERDs are rendered as images when <5KB; larger diagrams use code blocks. Image upload uses block_type 27. API returns HTTP 200 even on errors; always check `data.get("code", 0) != 0` in the response body.
 - **`lore/db_introspect.py`** — database introspection for PostgreSQL and MySQL. Auto-detects DB type from connection URL scheme (`postgresql://` or `mysql://`). Uses `information_schema` queries for both. PostgreSQL requires `psycopg2-binary`, MySQL requires `pymysql`.
 - **`lore/schema_store.py`** — `lore-schema.json` is gitignored and updated incrementally on each `lore analyze` run. `lore analyze` never needs DB access after `lore init`.
 - **`lore/erd.py`** — Mermaid ERD generated from the schema snapshot. FK relationships inferred from `*_id` columns if the parent table exists in the snapshot. Type strings are sanitized: `VARCHAR(20)` → `VARCHAR_20_`. Used by `lore analyze` to show modified tables + related tables.
 - **`lore/erd_categorized.py`** — Category-based ERD generator. Groups tables by prefix (`tb_wallet_*` → wallet, `tb_user_*` → user, etc.) and generates separate `.mmd` files per category in dual-folder structure: "ERD Diagram/" for PNGs, "ERD Diagram - Mermaid Code Base/" for .mmd source files. Filenames use clean names without prefixes (e.g., `wallet.mmd`, not `erd_wallet.mmd`). Includes cross-category reference annotations. Used by `lore generate-erd` command for full schema documentation.
 - **`lore/mermaid_renderer.py`** — Renders Mermaid diagrams to images (JPEG) using mermaid.ink API. Used by `lore generate-erd --upload` to convert ERDs to images for Lark Docs. Skips rendering for diagrams >5KB (URL length limit). Falls back to code blocks on error.
-- **`lore/config.py`** — loads `lore.yaml`, substitutes `${ENV_VAR}` references, raises on unresolved vars.
+- **`lore/config.py`** — loads `lore.yaml`, substitutes `${ENV_VAR}` references, raises on unresolved vars. `LoreConfig.lark_base_url` defaults to `open.larksuite.com` if `LARK_BASE_URL` is unset.
 
 ### sqlglot API notes
 
@@ -98,14 +98,14 @@ The actual API uses `exp.Alter` (not `exp.AlterTable`). Actions are in `stmt.arg
 
 ```yaml
 # lore.yaml
-anthropic:
-  api_key: ${ANTHROPIC_API_KEY}
-
 lark:
   app_id: ${LARK_APP_ID}
   app_secret: ${LARK_APP_SECRET}
-  wiki_space_id: your-space-id
-  parent_node_token: your-parent-page-token
+  folder_token: ${LARK_FOLDER_TOKEN}
+  parent_doc_id: ${LARK_PARENT_DOC_ID}
+  base_url: ${LARK_BASE_URL}           # tenant hostname e.g. pj4w2l1pwuq.sg.larksuite.com
+  erd_image_folder: ${LARK_ERD_IMAGE_FOLDER}
+  erd_code_folder: ${LARK_ERD_CODE_FOLDER}
 
 repo:
   default_path: ./
@@ -217,3 +217,22 @@ New ERD feature requested → erd-generator (implement) → erd-reviewer (review
 ## Test layout
 
 Tests mirror `lore/` package structure under `tests/`. Parsers are tested with raw unified diff strings constructed directly in tests — no real git repos needed. The Claude analyzer and Lark output are tested with mocked HTTP/API clients.
+
+### End-to-end test run
+
+`scripts/test_run.py` runs a real pipeline against fixture migrations — no manual branch setup needed:
+
+```bash
+# From project root
+python scripts/test_run.py
+```
+
+Flow:
+1. Creates a temp branch `test/fixture-run-<timestamp>`
+2. Commits fixture migrations from `tests/fixtures/migrations/` into `db/migrations/`
+3. Runs `lore analyze` — calls Claude, posts doc to Lark, appends focused ERD
+4. Deletes the temp branch and cleans up the committed files
+
+Fixtures: `tests/fixtures/migrations/` — three Flyway migrations covering CREATE TABLE, ADD COLUMN, and DROP COLUMN. Edit to test different scenarios.
+
+Prerequisites: `.env` must be populated (AWS + Lark credentials including `LARK_BASE_URL`).

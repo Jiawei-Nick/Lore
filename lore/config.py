@@ -57,6 +57,7 @@ class LoreConfig:
     lark_parent_doc_id: str
     lark_erd_image_folder: str  # Optional: folder for image-rendered ERDs
     lark_erd_code_folder: str   # Optional: folder for code-based ERDs
+    lark_base_url: str          # Tenant-specific base URL e.g. pj4w2l1pwuq.sg.larksuite.com
     default_path: str
     default_branch: str
 
@@ -92,6 +93,7 @@ class LoreConfig:
             lark_parent_doc_id=_resolve(raw, "lark.parent_doc_id", required=False),
             lark_erd_image_folder=_resolve(raw, "lark.erd_image_folder", required=False),
             lark_erd_code_folder=_resolve(raw, "lark.erd_code_folder", required=False),
+            lark_base_url=_resolve(raw, "lark.base_url", required=False) or "open.larksuite.com",
             default_path=_resolve(raw, "repo.default_path", required=False) or "./",
             default_branch=_resolve(raw, "repo.default_branch", required=False) or "main",
         )

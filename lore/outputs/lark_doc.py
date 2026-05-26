@@ -24,20 +24,12 @@ def _get_tenant_token(app_id: str, app_secret: str) -> str:
 
 
 class LarkDocOutput(OutputPlugin):
-    def __init__(self, app_id: str, app_secret: str, folder_token: str, parent_doc_id: str = None) -> None:
-        """
-        Initialize Lark Doc output.
-
-        Args:
-            app_id: Lark app ID
-            app_secret: Lark app secret
-            folder_token: Folder token where docs will be created (from URL)
-            parent_doc_id: Optional parent document ID for ERD updates
-        """
+    def __init__(self, app_id: str, app_secret: str, folder_token: str, parent_doc_id: str = None, base_url: str = "open.larksuite.com") -> None:
         self._app_id = app_id
         self._app_secret = app_secret
         self._folder_token = folder_token
         self._parent_doc_id = parent_doc_id
+        self._base_url = base_url.rstrip("/")
 
     def _build_title(self, context: PipelineContext, run_date: date) -> str:
         risk = context.analysis.risk_level.value if context.analysis else "UNKNOWN"
@@ -135,7 +127,7 @@ class LarkDocOutput(OutputPlugin):
         if not document_id:
             raise RuntimeError(f"Lark doc create returned unexpected response: {data}")
 
-        url = f"https://open.larksuite.com/docx/{document_id}"
+        url = f"https://{self._base_url}/docx/{document_id}"
 
         # In Lark Docs (docx), the root block_id equals the document_id.
         block_url = _LARK_DOC_UPDATE_URL.format(document_id=document_id, block_id=document_id)
@@ -191,7 +183,7 @@ class LarkDocOutput(OutputPlugin):
         if data.get("code", 0) != 0:
             raise RuntimeError(f"Lark seed-content insert failed: {data}")
 
-        return document_id, f"https://open.larksuite.com/docx/{document_id}"
+        return document_id, f"https://{self._base_url}/docx/{document_id}"
 
     def create_folder(self, name: str, parent_folder_token: str) -> str:
         """Create a folder in Lark Drive.

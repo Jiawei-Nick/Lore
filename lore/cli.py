@@ -37,6 +37,7 @@ def init_parent(
         app_id=cfg.lark_app_id,
         app_secret=cfg.lark_app_secret,
         folder_token=cfg.lark_folder_token,
+        base_url=cfg.lark_base_url,
     )
     document_id, url = output.create_parent_doc(title=title)
     typer.echo(f"Created parent doc: {url}")
@@ -71,6 +72,7 @@ def setup_erd_folders(
         app_id=cfg.lark_app_id,
         app_secret=cfg.lark_app_secret,
         folder_token=parent,
+        base_url=cfg.lark_base_url,
     )
 
     # Create image folder
@@ -120,6 +122,7 @@ def setup_erd_folder(
         app_id=cfg.lark_app_id,
         app_secret=cfg.lark_app_secret,
         folder_token=cfg.lark_folder_token,
+        base_url=cfg.lark_base_url,
     )
 
     typer.echo(f"Creating subfolder '{subfolder_name}' in parent folder...")
@@ -231,6 +234,7 @@ def init(
         app_secret=cfg.lark_app_secret,
         folder_token=cfg.lark_folder_token,
         parent_doc_id=cfg.lark_parent_doc_id,
+        base_url=cfg.lark_base_url,
     )
 
     try:
@@ -261,6 +265,7 @@ def analyze(
         app_secret=cfg.lark_app_secret,
         folder_token=cfg.lark_folder_token,
         parent_doc_id=cfg.lark_parent_doc_id,
+        base_url=cfg.lark_base_url,
     )
 
     pipeline = Pipeline(
@@ -373,6 +378,7 @@ def generate_erd_command(
             app_secret=cfg.lark_app_secret,
             folder_token=target_folder,
             parent_doc_id=target_doc_id,
+            base_url=cfg.lark_base_url,
         )
 
         if upload_files:
@@ -406,12 +412,12 @@ def generate_erd_command(
                 typer.echo(f"  ... and {len(uploaded_mmds) - 10} more")
         elif individual:
             lark_output.upload_individual_category_erds(erd_map, page_token=target_doc_id, as_code=as_code)
-            doc_url = f"https://open.larksuite.com/docx/{target_doc_id}"
+            doc_url = f"https://{cfg.lark_base_url}/docx/{target_doc_id}"
             mode = "code blocks" if as_code else "images/code blocks"
             typer.echo(f"[OK] Uploaded individual category ERDs ({mode}) to Lark: {doc_url}")
         else:
             lark_output.upload_category_erds(erd_map, page_token=target_doc_id, max_categories=max_categories)
-            doc_url = f"https://open.larksuite.com/docx/{target_doc_id}"
+            doc_url = f"https://{cfg.lark_base_url}/docx/{target_doc_id}"
             typer.echo(f"[OK] Uploaded top {min(max_categories, len(erd_map))} category ERDs to Lark: {doc_url}")
             if len(erd_map) > max_categories:
                 typer.echo(f"  (showing top {max_categories} of {len(erd_map)} categories by table count)")

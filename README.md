@@ -24,6 +24,10 @@ export LARK_APP_SECRET="your-secret"
 export LARK_FOLDER_TOKEN="your-folder-token"
 export LARK_PARENT_DOC_ID="your-doc-id"
 
+# Tenant base URL — from your workspace URL (e.g. https://pj4w2l1pwuq.sg.larksuite.com/...)
+# Defaults to open.larksuite.com if not set
+export LARK_BASE_URL="your-tenant.sg.larksuite.com"
+
 # Optional: ERD folder organization (get tokens from `lore setup-erd-folders`)
 export LARK_ERD_IMAGE_FOLDER="your-image-folder-token"
 export LARK_ERD_CODE_FOLDER="your-code-folder-token"
@@ -32,8 +36,9 @@ export LARK_ERD_CODE_FOLDER="your-code-folder-token"
 **Where to get these:**
 - `ANTHROPIC_API_KEY` - https://console.anthropic.com/
 - `LARK_APP_ID` & `LARK_APP_SECRET` - https://open.feishu.cn/app
-- `LARK_FOLDER_TOKEN` - From Lark Drive folder URL: `https://xxx.feishu.cn/drive/folder/[FOLDER_TOKEN]`
-- `LARK_PARENT_DOC_ID` - From Lark Doc URL: `https://xxx.feishu.cn/docx/[DOC_ID]`
+- `LARK_FOLDER_TOKEN` - From Lark Drive folder URL: `https://xxx.larksuite.com/drive/folder/[FOLDER_TOKEN]`
+- `LARK_PARENT_DOC_ID` - From Lark Doc URL: `https://xxx.larksuite.com/docx/[DOC_ID]`
+- `LARK_BASE_URL` - Your tenant hostname from any Lark URL e.g. `pj4w2l1pwuq.sg.larksuite.com`
 - `LARK_ERD_*_FOLDER` - Run `lore setup-erd-folders` to create and get tokens
 
 ## Usage
@@ -94,6 +99,9 @@ lark:
   app_secret: ${LARK_APP_SECRET}
   folder_token: ${LARK_FOLDER_TOKEN}
   parent_doc_id: ${LARK_PARENT_DOC_ID}
+  base_url: ${LARK_BASE_URL}         # tenant hostname, defaults to open.larksuite.com
+  erd_image_folder: ${LARK_ERD_IMAGE_FOLDER}
+  erd_code_folder: ${LARK_ERD_CODE_FOLDER}
 
 repo:
   default_path: ./
@@ -127,3 +135,20 @@ Your Lark Drive folder builds a versioned changelog automatically:
 python -m pytest        # run all tests
 python -m pytest -v -k "test_name"  # run a single test
 ```
+
+### End-to-end test run
+
+Triggers a real `lore analyze` against fixture migrations without touching any permanent branch:
+
+```bash
+# From project root
+python scripts/test_run.py
+```
+
+What it does:
+1. Creates a temporary branch `test/fixture-run-<timestamp>`
+2. Commits the fixture migrations from `tests/fixtures/migrations/`
+3. Runs `lore analyze` — posts a real report to Lark and appends a focused ERD
+4. Deletes the temp branch and removes the committed migration files
+
+Fixture migrations live in `tests/fixtures/migrations/` and cover CREATE, ADD COLUMN, and DROP COLUMN operations across two tables. Edit them to test different scenarios.
