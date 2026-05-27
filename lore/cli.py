@@ -222,8 +222,14 @@ def init(
     typer.echo("Introspecting database schema...")
     tables = introspect_database(actual_url, schema)
 
+    # Extract database name from URL
+    from urllib.parse import urlparse
+    parsed = urlparse(actual_url)
+    db_name = parsed.path.lstrip('/') if parsed.path else None
+
     store = SchemaStore(path=schema_path)
     store.tables = tables
+    store.db_name = db_name
     store.save()
     typer.echo(f"Schema snapshot saved to {schema_path} ({len(tables)} tables)")
 
@@ -282,7 +288,7 @@ def analyze(
         schema_store=store,
     )
 
-    ctx = PipelineContext(repo_path=repo, branch=branch, base=base)
+    ctx = PipelineContext(repo_path=repo, branch=branch, base=base, db_schema_name=store.db_name)
     result = pipeline.run(ctx)
 
     if not result.migrations:

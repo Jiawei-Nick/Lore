@@ -57,3 +57,4 @@ class PipelineContext:
     migrations: list[Migration] = field(default_factory=list)
     analysis: AnalysisReport | None = None
     output_url: str | None = None
+    db_schema_name: str | None = None  # Database schema name for folder organization
