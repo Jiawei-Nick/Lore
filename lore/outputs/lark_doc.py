@@ -1,5 +1,6 @@
 import logging
 from datetime import date, datetime, timezone
+import time
 import httpx
 from lore.models import PipelineContext
 from lore.outputs.base import OutputPlugin
@@ -15,13 +16,140 @@ _LARK_FOLDER_CREATE_URL = "https://open.larksuite.com/open-apis/drive/v1/files/c
 _LARK_FILE_MOVE_URL = "https://open.larksuite.com/open-apis/drive/v1/files/{file_token}/move"  # Drive API for moving files
 
 
-def _get_tenant_token(app_id: str, app_secret: str) -> str:
-    resp = httpx.post(_LARK_AUTH_URL, json={"app_id": app_id, "app_secret": app_secret})
-    resp.raise_for_status()
-    data = resp.json()
-    if data.get("code", 0) != 0:
-        raise RuntimeError(f"Lark auth failed: {data.get('msg')}")
-    return data["tenant_access_token"]
+def _safe_http_request(method: str, url: str, max_retries: int = 2, **kwargs) -> httpx.Response:
+    """Make an HTTP request with retry logic and better error messages.
+
+    Args:
+        method: HTTP method (GET, POST, PATCH, DELETE)
+        url: Request URL
+        max_retries: Maximum retry attempts for transient failures
+        **kwargs: Additional arguments passed to httpx request
+
+    Returns:
+        httpx.Response object
+
+    Raises:
+        RuntimeError: On persistent network/HTTP errors
+    """
+    last_error = None
+
+    # Set default timeout if not provided
+    if "timeout" not in kwargs:
+        kwargs["timeout"] = 30.0
+
+    for attempt in range(max_retries):
+        try:
+            if method.upper() == "GET":
+                resp = httpx.get(url, **kwargs)
+            elif method.upper() == "POST":
+                resp = httpx.post(url, **kwargs)
+            elif method.upper() == "PATCH":
+                resp = httpx.patch(url, **kwargs)
+            elif method.upper() == "DELETE":
+                resp = httpx.delete(url, **kwargs)
+            else:
+                raise ValueError(f"Unsupported HTTP method: {method}")
+
+            return resp
+
+        except httpx.ConnectError as e:
+            last_error = e
+            error_msg = str(e)
+
+            if "SSL" in error_msg or "TLS" in error_msg or "handshake" in error_msg:
+                _log.warning(
+                    f"SSL/TLS connection failed (attempt {attempt + 1}/{max_retries}) to {url}: {error_msg}"
+                )
+            else:
+                _log.warning(
+                    f"Connection failed (attempt {attempt + 1}/{max_retries}) to {url}: {error_msg}"
+                )
+
+            if attempt < max_retries - 1:
+                wait_time = 2 ** attempt
+                time.sleep(wait_time)
+
+        except httpx.TimeoutException as e:
+            last_error = e
+            _log.warning(f"Request timeout (attempt {attempt + 1}/{max_retries}) to {url}: {e}")
+            if attempt < max_retries - 1:
+                time.sleep(2 ** attempt)
+
+    # All retries exhausted
+    raise RuntimeError(
+        f"HTTP {method} request to {url} failed after {max_retries} attempts. "
+        f"Last error: {last_error}"
+    )
+
+
+def _get_tenant_token(app_id: str, app_secret: str, max_retries: int = 3) -> str:
+    """Get Lark tenant access token with retry logic for network failures.
+
+    Args:
+        app_id: Lark app ID
+        app_secret: Lark app secret
+        max_retries: Maximum number of retry attempts (default: 3)
+
+    Returns:
+        Tenant access token string
+
+    Raises:
+        RuntimeError: If auth fails after all retries
+    """
+    last_error = None
+
+    for attempt in range(max_retries):
+        try:
+            resp = httpx.post(
+                _LARK_AUTH_URL,
+                json={"app_id": app_id, "app_secret": app_secret},
+                timeout=30.0
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            if data.get("code", 0) != 0:
+                raise RuntimeError(f"Lark auth failed: {data.get('msg')}")
+            return data["tenant_access_token"]
+
+        except httpx.ConnectError as e:
+            last_error = e
+            error_msg = str(e)
+
+            # Provide specific guidance for SSL errors
+            if "SSL" in error_msg or "TLS" in error_msg or "handshake" in error_msg:
+                _log.warning(
+                    f"SSL/TLS handshake failure (attempt {attempt + 1}/{max_retries}). "
+                    f"This may be caused by: corporate proxy, firewall, or expired certificates. "
+                    f"Error: {error_msg}"
+                )
+            else:
+                _log.warning(
+                    f"Network connection failed (attempt {attempt + 1}/{max_retries}): {error_msg}"
+                )
+
+            # Retry with exponential backoff
+            if attempt < max_retries - 1:
+                wait_time = 2 ** attempt  # 1s, 2s, 4s
+                _log.info(f"Retrying in {wait_time}s...")
+                time.sleep(wait_time)
+
+        except httpx.TimeoutException as e:
+            last_error = e
+            _log.warning(f"Request timeout (attempt {attempt + 1}/{max_retries}): {e}")
+            if attempt < max_retries - 1:
+                time.sleep(2 ** attempt)
+
+        except httpx.HTTPStatusError as e:
+            # Don't retry on HTTP errors (likely auth/permission issues)
+            raise RuntimeError(f"Lark auth HTTP error: {e}")
+
+    # All retries exhausted
+    raise RuntimeError(
+        f"Lark authentication failed after {max_retries} attempts. "
+        f"Last error: {last_error}. "
+        f"Please check: (1) network connectivity, (2) firewall/proxy settings, "
+        f"(3) SSL certificate validity, (4) Lark API credentials."
+    )
 
 
 class LarkDocOutput(OutputPlugin):
@@ -95,12 +223,27 @@ class LarkDocOutput(OutputPlugin):
         return blocks
 
     def run(self, context: PipelineContext) -> PipelineContext:
+        """Upload analysis report to Lark Docs.
+
+        Raises:
+            RuntimeError: On network/auth/API errors with detailed troubleshooting info
+        """
         run_dt = datetime.now(tz=timezone.utc)
         title = self._build_title(context, run_dt)
-
         blocks = self._build_blocks(context, run_dt)
 
-        token = _get_tenant_token(self._app_id, self._app_secret)
+        try:
+            token = _get_tenant_token(self._app_id, self._app_secret)
+        except RuntimeError as e:
+            _log.error(f"Failed to authenticate with Lark: {e}")
+            raise RuntimeError(
+                f"Lark authentication failed. Please verify:\n"
+                f"  1. LARK_APP_ID and LARK_APP_SECRET are correct\n"
+                f"  2. Network/firewall allows connections to open.larksuite.com\n"
+                f"  3. SSL certificates are valid\n"
+                f"Original error: {e}"
+            )
+
         headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
         # Create document
@@ -108,44 +251,68 @@ class LarkDocOutput(OutputPlugin):
             "folder_token": self._folder_token,
             "title": title,
         }
-        resp = httpx.post(_LARK_DOC_CREATE_URL, headers=headers, json=payload)
-        data = resp.json()
 
-        # Log full response for debugging
-        _log.info(f"Lark API Response Status: {resp.status_code}")
-        _log.info(f"Lark API Response Body: {data}")
+        try:
+            resp = _safe_http_request("POST", _LARK_DOC_CREATE_URL, headers=headers, json=payload)
+            data = resp.json()
 
-        if resp.status_code != 200:
-            error_msg = data.get("msg", "Unknown error")
-            raise RuntimeError(f"Lark doc create failed (HTTP {resp.status_code}): {error_msg}\nFull response: {data}")
+            # Log full response for debugging
+            _log.info(f"Lark API Response Status: {resp.status_code}")
+            _log.debug(f"Lark API Response Body: {data}")
 
-        if data.get("code", 0) != 0:
-            raise RuntimeError(f"Lark doc create failed: {data.get('msg')}\nFull response: {data}")
+            if resp.status_code != 200:
+                error_msg = data.get("msg", "Unknown error")
+                raise RuntimeError(f"Lark doc create failed (HTTP {resp.status_code}): {error_msg}\nFull response: {data}")
 
-        doc_data = data.get("data", {}).get("document", {})
-        document_id = doc_data.get("document_id")
+            if data.get("code", 0) != 0:
+                raise RuntimeError(f"Lark doc create failed: {data.get('msg')}\nFull response: {data}")
 
-        if not document_id:
-            raise RuntimeError(f"Lark doc create returned unexpected response: {data}")
+            doc_data = data.get("data", {}).get("document", {})
+            document_id = doc_data.get("document_id")
 
-        url = f"https://{self._base_url}/docx/{document_id}"
+            if not document_id:
+                raise RuntimeError(f"Lark doc create returned unexpected response: {data}")
+
+            url = f"https://{self._base_url}/docx/{document_id}"
+
+        except RuntimeError as e:
+            if "SSL" in str(e) or "TLS" in str(e):
+                raise RuntimeError(
+                    f"Network/SSL error when creating Lark document.\n"
+                    f"Possible causes:\n"
+                    f"  - Corporate proxy intercepting SSL connections\n"
+                    f"  - Firewall blocking HTTPS to open.larksuite.com\n"
+                    f"  - Expired/invalid SSL certificates\n"
+                    f"Original error: {e}"
+                )
+            raise
 
         # In Lark Docs (docx), the root block_id equals the document_id.
         block_url = _LARK_DOC_UPDATE_URL.format(document_id=document_id, block_id=document_id)
         content_payload = {"children": blocks, "index": 0}
-        resp = httpx.post(block_url, headers=headers, json=content_payload)
 
-        # Log response for debugging
-        if resp.status_code != 200:
-            _log.error(f"Lark API error: {resp.status_code}")
-            _log.error(f"Response body: {resp.text}")
+        try:
+            resp = _safe_http_request("POST", block_url, headers=headers, json=content_payload)
 
-        resp.raise_for_status()
-        data = resp.json()
-        if data.get("code", 0) != 0:
-            raise RuntimeError(f"Lark doc content update failed: {data.get('msg')}")
+            # Log response for debugging
+            if resp.status_code != 200:
+                _log.error(f"Lark API error: {resp.status_code}")
+                _log.error(f"Response body: {resp.text}")
+
+            resp.raise_for_status()
+            data = resp.json()
+            if data.get("code", 0) != 0:
+                raise RuntimeError(f"Lark doc content update failed: {data.get('msg')}")
+
+        except RuntimeError as e:
+            _log.error(f"Failed to update document content: {e}")
+            _log.info(f"Document was created but content upload failed. URL: {url}")
+            # Still return the URL so user can access the partial document
+            context.output_url = url
+            raise
 
         context.output_url = url
+        _log.info(f"Successfully uploaded analysis to Lark: {url}")
         return context
 
     def create_parent_doc(self, title: str = "Lore — Schema ERD") -> tuple[str, str]:
@@ -204,19 +371,25 @@ class LarkDocOutput(OutputPlugin):
             "folder_token": parent_folder_token,
         }
 
-        resp = httpx.post(_LARK_FOLDER_CREATE_URL, headers=headers, json=payload, timeout=30.0)
-        data = resp.json()
+        try:
+            resp = _safe_http_request("POST", _LARK_FOLDER_CREATE_URL, headers=headers, json=payload, timeout=30.0)
+            data = resp.json()
 
-        if data.get("code", 0) != 0:
-            raise RuntimeError(f"Lark folder creation failed: {data.get('msg')} (code: {data.get('code')})")
+            if data.get("code", 0) != 0:
+                raise RuntimeError(f"Lark folder creation failed: {data.get('msg')} (code: {data.get('code')})")
 
-        resp.raise_for_status()
+            resp.raise_for_status()
 
-        folder_token = data.get("data", {}).get("token")
-        if not folder_token:
-            raise RuntimeError(f"Lark folder creation returned no token: {data}")
+            folder_token = data.get("data", {}).get("token")
+            if not folder_token:
+                raise RuntimeError(f"Lark folder creation returned no token: {data}")
 
-        return folder_token
+            _log.info(f"Created folder '{name}' with token {folder_token}")
+            return folder_token
+
+        except RuntimeError as e:
+            _log.error(f"Failed to create folder '{name}': {e}")
+            raise
 
     def move_document_to_folder(self, document_id: str, target_folder_token: str) -> None:
         """Move a document to a specific folder.
@@ -403,20 +576,25 @@ class LarkDocOutput(OutputPlugin):
             "file": (filename, image_bytes, image_type),
         }
 
-        resp = httpx.post(_LARK_IMAGE_UPLOAD_URL, headers=headers, files=files, timeout=30.0)
-        data = resp.json()
+        try:
+            resp = _safe_http_request("POST", _LARK_IMAGE_UPLOAD_URL, headers=headers, files=files, timeout=30.0)
+            data = resp.json()
 
-        # Check Lark API error code first (they return 200 even on errors)
-        if data.get("code", 0) != 0:
-            raise RuntimeError(f"Lark image upload failed: {data.get('msg')} (code: {data.get('code')})")
+            # Check Lark API error code first (they return 200 even on errors)
+            if data.get("code", 0) != 0:
+                raise RuntimeError(f"Lark image upload failed: {data.get('msg')} (code: {data.get('code')})")
 
-        resp.raise_for_status()
+            resp.raise_for_status()
 
-        file_token = data.get("data", {}).get("file_token")
-        if not file_token:
-            raise RuntimeError(f"Lark image upload returned no file_token: {data}")
+            file_token = data.get("data", {}).get("file_token")
+            if not file_token:
+                raise RuntimeError(f"Lark image upload returned no file_token: {data}")
 
-        return file_token
+            return file_token
+
+        except RuntimeError as e:
+            _log.error(f"Failed to upload image '{filename}': {e}")
+            raise RuntimeError(f"Image upload failed for '{filename}': {e}")
 
     def upload_file_to_folder(self, file_bytes: bytes, filename: str, folder_token: str, file_type: str = "image/png") -> str:
         """Upload a file directly to a Lark Drive folder.
@@ -442,21 +620,26 @@ class LarkDocOutput(OutputPlugin):
             "file": (filename, file_bytes, file_type),
         }
 
-        resp = httpx.post(_LARK_IMAGE_UPLOAD_URL, headers=headers, files=files, timeout=30.0)
-        data = resp.json()
+        try:
+            resp = _safe_http_request("POST", _LARK_IMAGE_UPLOAD_URL, headers=headers, files=files, timeout=30.0)
+            data = resp.json()
 
-        # Check Lark API error code first (they return 200 even on errors)
-        if data.get("code", 0) != 0:
-            raise RuntimeError(f"Lark file upload failed: {data.get('msg')} (code: {data.get('code')})")
+            # Check Lark API error code first (they return 200 even on errors)
+            if data.get("code", 0) != 0:
+                raise RuntimeError(f"Lark file upload failed: {data.get('msg')} (code: {data.get('code')})")
 
-        resp.raise_for_status()
+            resp.raise_for_status()
 
-        file_token = data.get("data", {}).get("file_token")
-        if not file_token:
-            raise RuntimeError(f"Lark file upload returned no file_token: {data}")
+            file_token = data.get("data", {}).get("file_token")
+            if not file_token:
+                raise RuntimeError(f"Lark file upload returned no file_token: {data}")
 
-        _log.info(f"Uploaded {filename} to folder {folder_token}")
-        return file_token
+            _log.info(f"Uploaded {filename} to folder {folder_token}")
+            return file_token
+
+        except RuntimeError as e:
+            _log.error(f"Failed to upload file '{filename}' to folder {folder_token}: {e}")
+            raise
 
     def update_erd_page(self, mermaid_erd: str, page_token: str = None, render_as_image: bool = True, replace_existing: bool = True) -> None:
         """Update the ERD in the parent Lark Doc.
