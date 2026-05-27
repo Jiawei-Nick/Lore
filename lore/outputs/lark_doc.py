@@ -14,6 +14,7 @@ _LARK_DOC_RAW_CONTENT_URL = "https://open.larksuite.com/open-apis/docx/v1/docume
 _LARK_IMAGE_UPLOAD_URL = "https://open.larksuite.com/open-apis/drive/v1/medias/upload_all"  # Drive API for doc images
 _LARK_FOLDER_CREATE_URL = "https://open.larksuite.com/open-apis/drive/v1/files/create_folder"  # Drive API for folder creation
 _LARK_FILE_MOVE_URL = "https://open.larksuite.com/open-apis/drive/v1/files/{file_token}/move"  # Drive API for moving files
+_LARK_FOLDER_LIST_URL = "https://open.larksuite.com/open-apis/drive/v1/files?folder_token={folder_token}"  # Drive API for listing files in folder
 
 
 def _safe_http_request(method: str, url: str, max_retries: int = 2, **kwargs) -> httpx.Response:
@@ -298,17 +299,30 @@ class LarkDocOutput(OutputPlugin):
 
         headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
-        # Create or get subfolder for database schema
+        # Folder organization:
+        # - Test branches (test/*) → "Database Schema Change Report" (flat)
+        # - Real branches → "Database Schema Change Report" > "{db_name}" (nested)
         target_folder_token = self._folder_token
-        if context.db_schema_name:
-            try:
-                # Try to create subfolder (idempotent - will succeed if exists)
-                target_folder_token = self.create_folder(context.db_schema_name, self._folder_token)
-                _log.info(f"Using subfolder '{context.db_schema_name}' for document")
-            except RuntimeError as e:
-                # If folder creation fails, fall back to root folder
-                _log.warning(f"Could not create subfolder, using root folder: {e}")
-                target_folder_token = self._folder_token
+        is_test_branch = context.branch.startswith("test/")
+
+        try:
+            # Step 1: Get or create "Database Schema Change Report" parent folder
+            parent_folder_name = "Database Schema Change Report"
+            parent_folder_token = self.get_or_create_folder(parent_folder_name, self._folder_token)
+            _log.info(f"Using parent folder '{parent_folder_name}'")
+
+            # Step 2: For non-test branches with db_name, get or create database subfolder
+            if not is_test_branch and context.db_schema_name:
+                target_folder_token = self.get_or_create_folder(context.db_schema_name, parent_folder_token)
+                _log.info(f"Using database subfolder '{context.db_schema_name}' for real branch")
+            else:
+                # Test branches go directly into parent folder
+                target_folder_token = parent_folder_token
+                _log.info(f"Using parent folder directly for test branch")
+        except RuntimeError as e:
+            # If folder creation fails, fall back to root folder
+            _log.warning(f"Could not create folder hierarchy, using root folder: {e}")
+            target_folder_token = self._folder_token
 
         # Create document
         payload = {
@@ -417,19 +431,36 @@ class LarkDocOutput(OutputPlugin):
 
         return document_id, f"https://{self._base_url}/docx/{document_id}"
 
-    def create_folder(self, name: str, parent_folder_token: str) -> str:
-        """Create a folder in Lark Drive.
+    def get_or_create_folder(self, name: str, parent_folder_token: str) -> str:
+        """Get existing folder or create new one in Lark Drive.
 
         Args:
             name: Folder name
             parent_folder_token: Parent folder token
 
         Returns:
-            folder_token of the created folder
+            folder_token of the folder (existing or newly created)
         """
         token = _get_tenant_token(self._app_id, self._app_secret)
         headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
+        # First, try to find existing folder
+        try:
+            list_url = _LARK_FOLDER_LIST_URL.format(folder_token=parent_folder_token)
+            resp = _safe_http_request("GET", list_url, headers=headers, timeout=30.0)
+            data = resp.json()
+
+            if data.get("code", 0) == 0:
+                files = data.get("data", {}).get("files", [])
+                for file in files:
+                    if file.get("name") == name and file.get("type") == "folder":
+                        folder_token = file.get("token")
+                        _log.info(f"Found existing folder '{name}' with token {folder_token}")
+                        return folder_token
+        except Exception as e:
+            _log.warning(f"Failed to list folders, will try to create: {e}")
+
+        # Folder not found, create new one
         payload = {
             "name": name,
             "folder_token": parent_folder_token,
@@ -439,10 +470,25 @@ class LarkDocOutput(OutputPlugin):
             resp = _safe_http_request("POST", _LARK_FOLDER_CREATE_URL, headers=headers, json=payload, timeout=30.0)
             data = resp.json()
 
-            # Code 1061126 means folder already exists - this is not an error
+            # Code 1061126 means folder already exists but we couldn't find it
+            # This can happen due to timing/permissions, so query again
             if data.get("code", 0) == 1061126:
-                _log.info(f"Folder '{name}' already exists, reusing existing folder")
-                # Return parent token - caller will use parent folder since we can't get the existing folder's token
+                _log.info(f"Folder '{name}' already exists, querying for token")
+                try:
+                    list_url = _LARK_FOLDER_LIST_URL.format(folder_token=parent_folder_token)
+                    resp = _safe_http_request("GET", list_url, headers=headers, timeout=30.0)
+                    data = resp.json()
+                    if data.get("code", 0) == 0:
+                        files = data.get("data", {}).get("files", [])
+                        for file in files:
+                            if file.get("name") == name and file.get("type") == "folder":
+                                folder_token = file.get("token")
+                                _log.info(f"Retrieved existing folder '{name}' with token {folder_token}")
+                                return folder_token
+                except Exception:
+                    pass
+                # If still can't find it, return parent token as fallback
+                _log.warning(f"Could not retrieve token for existing folder '{name}', using parent token")
                 return parent_folder_token
 
             if data.get("code", 0) != 0:
