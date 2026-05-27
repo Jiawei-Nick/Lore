@@ -11,16 +11,19 @@ class SchemaStore:
     def __init__(self, path: str = "lore-schema.json") -> None:
         self._path = Path(path)
         self.tables: dict = {}
+        self.db_name: str | None = None  # Database/schema name
 
     def load(self) -> None:
         if self._path.exists():
             data = json.loads(self._path.read_text())
             self.tables = data.get("tables", {})
+            self.db_name = data.get("db_name")
 
     def save(self) -> None:
         data = {
             "version": "1.0",
             "generated_at": datetime.now(timezone.utc).isoformat(),
+            "db_name": self.db_name,
             "tables": self.tables,
         }
         self._path.write_text(json.dumps(data, indent=2))
