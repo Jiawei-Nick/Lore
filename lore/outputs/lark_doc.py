@@ -1,5 +1,5 @@
 import logging
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timezone, timedelta
 import time
 import httpx
 from lore.models import PipelineContext
@@ -162,7 +162,7 @@ class LarkDocOutput(OutputPlugin):
 
     def _build_title(self, context: PipelineContext, run_dt: datetime) -> str:
         risk = context.analysis.risk_level.value if context.analysis else "UNKNOWN"
-        return f"{run_dt.strftime('%Y-%m-%d %H:%M %z')} | {context.branch} | {risk}"
+        return f"{context.branch} | {run_dt.strftime('%Y-%m-%d %I:%M %p')} GMT+0800 | {risk}"
 
     def _build_blocks(self, context: PipelineContext, run_dt: datetime) -> list:
         """Build Lark Doc blocks. block_type: 2=text, 3=heading1, 4=heading2, 14=code."""
@@ -194,14 +194,40 @@ class LarkDocOutput(OutputPlugin):
             {"block_type": 3, "heading1": {"elements": [text("Schema Change Report")]}},
             {"block_type": 2, "text": {"elements": [
                 text(f"Branch: {context.branch}\n"),
-                text(f"Date: {run_dt.strftime('%Y-%m-%d %H:%M %z')}\n"),
-                text("Risk: ", bold=True),
+                text(f"Date: {run_dt.strftime('%Y-%m-%d %I:%M %p')} GMT+0800\n"),
+                text("Overall Risk: ", bold=True),
                 text(report.risk_level.value, bold=True, color=risk_color),
             ]}},
             {"block_type": 4, "heading2": {"elements": [text("Summary")]}},
-            {"block_type": 2, "text": {"elements": [text(report.summary)]}},
-            {"block_type": 4, "heading2": {"elements": [text("Changes")]}},
         ]
+
+        # Parse summary and add color-coded risk levels
+        summary_lines = report.summary.split('\n')
+        summary_elements = []
+        for line in summary_lines:
+            if line.strip():
+                # Check if line contains risk level tags [LOW], [MEDIUM], or [HIGH]
+                if '[LOW]' in line:
+                    parts = line.split('[LOW]')
+                    summary_elements.append(text(parts[0]))
+                    summary_elements.append(text('[LOW]', bold=True, color=4))  # green
+                    summary_elements.append(text('[LOW]'.join(parts[1:])))
+                elif '[MEDIUM]' in line:
+                    parts = line.split('[MEDIUM]')
+                    summary_elements.append(text(parts[0]))
+                    summary_elements.append(text('[MEDIUM]', bold=True, color=3))  # yellow
+                    summary_elements.append(text('[MEDIUM]'.join(parts[1:])))
+                elif '[HIGH]' in line:
+                    parts = line.split('[HIGH]')
+                    summary_elements.append(text(parts[0]))
+                    summary_elements.append(text('[HIGH]', bold=True, color=1))  # red
+                    summary_elements.append(text('[HIGH]'.join(parts[1:])))
+                else:
+                    summary_elements.append(text(line))
+            summary_elements.append(text('\n'))
+
+        blocks.append({"block_type": 2, "text": {"elements": summary_elements}})
+        blocks.append({"block_type": 4, "heading2": {"elements": [text("Changes")]}})
 
         for change in report.changes:
             line = f"• {change.table} — {change.operation.value}"
@@ -215,10 +241,34 @@ class LarkDocOutput(OutputPlugin):
         for item in report.impact:
             blocks.append({"block_type": 2, "text": {"elements": [text(f"• {item}")]}})
 
-        blocks.extend([
-            {"block_type": 4, "heading2": {"elements": [text("Reviewer Notes")]}},
-            {"block_type": 2, "text": {"elements": [text(report.reviewer_notes)]}},
-        ])
+        blocks.append({"block_type": 4, "heading2": {"elements": [text("Reviewer Notes")]}})
+
+        # Parse reviewer notes and add color-coded risk levels
+        reviewer_lines = report.reviewer_notes.split('\n')
+        reviewer_elements = []
+        for line in reviewer_lines:
+            if line.strip():
+                # Check if line contains risk level tags [LOW], [MEDIUM], or [HIGH]
+                if '[LOW]' in line:
+                    parts = line.split('[LOW]')
+                    reviewer_elements.append(text(parts[0]))
+                    reviewer_elements.append(text('[LOW]', bold=True, color=4))  # green
+                    reviewer_elements.append(text('[LOW]'.join(parts[1:])))
+                elif '[MEDIUM]' in line:
+                    parts = line.split('[MEDIUM]')
+                    reviewer_elements.append(text(parts[0]))
+                    reviewer_elements.append(text('[MEDIUM]', bold=True, color=3))  # yellow
+                    reviewer_elements.append(text('[MEDIUM]'.join(parts[1:])))
+                elif '[HIGH]' in line:
+                    parts = line.split('[HIGH]')
+                    reviewer_elements.append(text(parts[0]))
+                    reviewer_elements.append(text('[HIGH]', bold=True, color=1))  # red
+                    reviewer_elements.append(text('[HIGH]'.join(parts[1:])))
+                else:
+                    reviewer_elements.append(text(line))
+            reviewer_elements.append(text('\n'))
+
+        blocks.append({"block_type": 2, "text": {"elements": reviewer_elements}})
 
         return blocks
 
@@ -228,7 +278,9 @@ class LarkDocOutput(OutputPlugin):
         Raises:
             RuntimeError: On network/auth/API errors with detailed troubleshooting info
         """
-        run_dt = datetime.now(tz=timezone.utc)
+        # Use GMT+8 timezone
+        gmt8 = timezone(timedelta(hours=8))
+        run_dt = datetime.now(tz=gmt8)
         title = self._build_title(context, run_dt)
         blocks = self._build_blocks(context, run_dt)
 
@@ -246,9 +298,21 @@ class LarkDocOutput(OutputPlugin):
 
         headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
+        # Create or get subfolder for database schema
+        target_folder_token = self._folder_token
+        if context.db_schema_name:
+            try:
+                # Try to create subfolder (idempotent - will succeed if exists)
+                target_folder_token = self.create_folder(context.db_schema_name, self._folder_token)
+                _log.info(f"Using subfolder '{context.db_schema_name}' for document")
+            except RuntimeError as e:
+                # If folder creation fails, fall back to root folder
+                _log.warning(f"Could not create subfolder, using root folder: {e}")
+                target_folder_token = self._folder_token
+
         # Create document
         payload = {
-            "folder_token": self._folder_token,
+            "folder_token": target_folder_token,
             "title": title,
         }
 
@@ -374,6 +438,12 @@ class LarkDocOutput(OutputPlugin):
         try:
             resp = _safe_http_request("POST", _LARK_FOLDER_CREATE_URL, headers=headers, json=payload, timeout=30.0)
             data = resp.json()
+
+            # Code 1061126 means folder already exists - this is not an error
+            if data.get("code", 0) == 1061126:
+                _log.info(f"Folder '{name}' already exists, reusing existing folder")
+                # Return parent token - caller will use parent folder since we can't get the existing folder's token
+                return parent_folder_token
 
             if data.get("code", 0) != 0:
                 raise RuntimeError(f"Lark folder creation failed: {data.get('msg')} (code: {data.get('code')})")

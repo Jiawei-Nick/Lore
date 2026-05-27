@@ -27,6 +27,7 @@ lore init --db mysql://user:pass@host:3306/dbname
 
 # Connection management — save shortcuts for easy reuse
 lore connections add prod-replica --db postgresql://user:pass@host/db --desc "Production read replica"
+lore connections add staging-mysql --db mysql://root:password@localhost:3306/mydb --desc "Staging MySQL database"
 lore init --use prod-replica                     # Use saved connection
 lore init                                        # Interactive menu (if connections exist)
 lore connections list                            # List all saved connections
