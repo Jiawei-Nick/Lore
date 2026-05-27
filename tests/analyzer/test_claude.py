@@ -6,6 +6,10 @@ from lore.analyzer.claude import ClaudeAnalyzer, _MODEL_HAIKU, _MODEL_SONNET
 
 load_dotenv()
 
+# Clear AWS_BEARER_TOKEN_BEDROCK to avoid conflicts with test credentials
+if "AWS_BEARER_TOKEN_BEDROCK" in os.environ:
+    del os.environ["AWS_BEARER_TOKEN_BEDROCK"]
+
 _AWS_KEY = os.getenv("AWS_ACCESS_KEY_ID", "test-key")
 _AWS_SECRET = os.getenv("AWS_SECRET_ACCESS_KEY", "test-secret")
 _AWS_REGION = os.getenv("AWS_REGION", "ap-southeast-1")
