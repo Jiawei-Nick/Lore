@@ -5,6 +5,11 @@ lore-schema.json
 ERD Diagram/
 erd_output/
 
+# Node (Puppeteer PDF generation)
+node_modules/
+package.json
+package-lock.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
