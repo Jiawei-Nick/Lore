@@ -42,12 +42,35 @@ export LARK_ERD_CODE_FOLDER="your-code-folder-token"
 
 ## Usage
 
+### Connection Profiles
+
+Save database connections once and reuse them by name:
+
+```bash
+# Save a connection
+lore connections add prod-replica --db postgresql://user:pass@host/db --desc "Production read replica"
+lore connections add staging-mysql --db mysql://root:password@localhost:3306/mydb
+
+# List saved connections
+lore connections list
+
+# Edit description
+lore connections edit prod-replica --desc "New description"
+
+# Remove a connection
+lore connections remove staging-mysql --yes
+```
+
+Passwords are masked in all CLI output. Connections are stored in `~/.lore/connections.yaml`.
+
 ### Schema Analysis
 
 ```bash
-# One-time: introspect a live PostgreSQL or MySQL DB, write lore-schema.json
-lore init --db postgresql://user:pass@host/dbname
-lore init --db mysql://user:pass@host:3306/dbname
+# One-time: introspect a live DB and write lore-schema.json
+lore init --db postgresql://user:pass@host/dbname     # direct URL
+lore init --db postgresql://... --save-as prod-replica  # save for reuse
+lore init --use prod-replica                            # use saved connection
+lore init                                               # interactive menu (if connections exist)
 
 # Analyze a feature branch against main
 lore analyze --repo ./myapp --branch feature/add-phone
@@ -110,17 +133,20 @@ repo:
 ## What it produces
 
 Each `lore analyze` run:
-1. Creates a new Lark Doc titled `{date} | {branch} | {risk_level}` with the full change report in the specified folder
+1. Creates a new Lark Doc titled `{date} | {branch} | {risk_level}` inside an auto-created folder hierarchy
 2. Updates the Mermaid ERD block in the parent Lark Doc
 3. Updates `lore-schema.json` locally (gitignored)
 
-Your Lark Drive folder builds a versioned changelog automatically:
+Reports are organised automatically in Lark Drive:
 ```
-[Folder] DB Schema Reports
-  ├── [Parent Doc] ERD — updated on every run
-  ├── 2026-05-17 | feature/add-phone | LOW
-  └── 2026-05-15 | feature/user-audit | HIGH
+[Folder] Database Schema Change Report
+  ├── [Sub-folder] mydb
+  │     ├── 2026-05-17 | feature/add-phone | LOW
+  │     └── 2026-05-15 | feature/user-audit | HIGH
+  └── (test/* branches land flat in the parent folder)
 ```
+
+The sub-folder name matches your database name. Test branches (`test/*`) skip the sub-folder and go directly into "Database Schema Change Report".
 
 ## Supported migration formats
 

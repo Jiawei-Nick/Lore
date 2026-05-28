@@ -3,633 +3,875 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
 <title>lore — AI-Driven Schema Intelligence</title>
 <script>
   (function(){
-    var t = localStorage.getItem('lore-theme');
-    if (t === 'light') document.documentElement.setAttribute('data-theme','light');
+    function systemTheme() {
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    }
+    try {
+      var savedTheme = localStorage.getItem('lore-theme');
+      var theme = (savedTheme === 'light' || savedTheme === 'dark') ? savedTheme : systemTheme();
+      document.documentElement.setAttribute('data-theme', theme);
+      document.documentElement.setAttribute('data-theme-source', savedTheme ? 'manual' : 'system');
+    } catch (e) {
+      document.documentElement.setAttribute('data-theme', systemTheme());
+      document.documentElement.setAttribute('data-theme-source', 'system');
+    }
   })();
 </script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-/* ── Tokens ──────────────────────────────────────── */
+/*
+  lore visual system v4
+  Content-preserving refinement: system-default theme, slimmer navigation, clearer technology stack layout,
+  easier scanning, accessibility, responsive behavior, and print output.
+*/
 :root {
-  --bg:        #080d14;
-  --surface:   #0d1520;
+  color-scheme: dark;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  --bg:        #0b1220;
+  --surface:   #111827;
+  --surface-2: #0f172a;
   --card:      #111c2b;
-  --card-hi:   #162030;
-  --border:    #1e2f45;
-  --border-hi: #2a4060;
-  --cyan:      #00d4aa;
-  --cyan-dim:  rgba(0,212,170,.12);
-  --cyan-glow: rgba(0,212,170,.25);
+  --card-hi:   #172235;
+  --border:    #26364e;
+  --border-hi: #3b5573;
+  --cyan:      #2dd4bf;
+  --cyan-dim:  rgba(45, 212, 191, .12);
+  --cyan-glow: rgba(45, 212, 191, .28);
   --amber:     #f59e0b;
   --amber-dim: rgba(245,158,11,.12);
-  --rose:      #f43f5e;
-  --rose-dim:  rgba(244,63,94,.12);
-  --sky:       #38bdf8;
-  --sky-dim:   rgba(56,189,248,.12);
-  --text:      #e2eaf5;
-  --muted:     #6d8aaa;
-  --faint:     #3a5070;
-  --radius:    10px;
-  --sb-w:      224px;
+  --rose:      #fb7185;
+  --rose-dim:  rgba(251,113,133,.12);
+  --sky:       #60a5fa;
+  --sky-dim:   rgba(96,165,250,.12);
+  --text:      #eef4fb;
+  --muted:     #a8b5c7;
+  --faint:     #667892;
+  --radius:    16px;
+  --radius-sm: 10px;
+  --sb-w:      218px;
+  --measure:   1040px;
+  --shadow:    0 16px 45px rgba(0,0,0,.28);
+  --shadow-sm: 0 8px 24px rgba(0,0,0,.18);
 }
+
 [data-theme="light"] {
-  --bg:        #f0f4f9;
-  --surface:   #e6edf6;
+  color-scheme: light;
+  --bg:        #eef3f8;
+  --surface:   #f8fafc;
+  --surface-2: #edf3f9;
   --card:      #ffffff;
-  --card-hi:   #f8fafd;
-  --border:    #d4dde9;
-  --border-hi: #b8c9dc;
-  --cyan:      #008f74;
-  --cyan-dim:  rgba(0,143,116,.10);
-  --cyan-glow: rgba(0,143,116,.20);
-  --amber:     #d97706;
-  --amber-dim: rgba(217,119,6,.10);
-  --rose:      #e11d48;
-  --rose-dim:  rgba(225,29,72,.10);
-  --sky:       #0284c7;
-  --sky-dim:   rgba(2,132,199,.10);
-  --text:      #0f1e30;
-  --muted:     #4a6480;
-  --faint:     #9db5cc;
+  --card-hi:   #f9fbfe;
+  --border:    #d8e1ec;
+  --border-hi: #b7c7d9;
+  --cyan:      #0f766e;
+  --cyan-dim:  rgba(15,118,110,.09);
+  --cyan-glow: rgba(15,118,110,.20);
+  --amber:     #b45309;
+  --amber-dim: rgba(180,83,9,.10);
+  --rose:      #be123c;
+  --rose-dim:  rgba(190,18,60,.10);
+  --sky:       #2563eb;
+  --sky-dim:   rgba(37,99,235,.09);
+  --text:      #152238;
+  --muted:     #536579;
+  --faint:     #94a3b8;
+  --shadow:    0 18px 55px rgba(20,33,54,.10);
+  --shadow-sm: 0 8px 24px rgba(20,33,54,.08);
 }
 
-/* ── Reset ───────────────────────────────────────── */
-*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
-html { scroll-behavior:smooth; }
+/* Reset */
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; text-size-adjust: 100%; }
 body {
-  background: var(--bg);
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 18% -10%, var(--cyan-dim), transparent 34rem),
+    linear-gradient(180deg, var(--surface-2) 0%, var(--bg) 42%);
   color: var(--text);
-  font-family: 'Inter', sans-serif;
-  font-size: 14.5px;
-  line-height: 1.6;
+  font-family: var(--font-sans);
+  font-size: 15.5px;
+  line-height: 1.65;
+  letter-spacing: -0.006em;
   display: flex;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* ── Sidebar ─────────────────────────────────────── */
-.sidebar {
-  position: fixed;
-  top: 0; left: 0; bottom: 0;
-  width: var(--sb-w);
-  background: var(--surface);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  padding: 28px 0 24px;
-  z-index: 100;
-  overflow-y: auto;
-  scrollbar-width: none;
-}
-.sidebar::-webkit-scrollbar { display: none; }
+::selection { background: var(--cyan-dim); color: var(--text); }
 
-.sb-logo {
-  font-family: 'Syne', sans-serif;
-  font-weight: 800; font-size: 20px;
-  color: var(--cyan);
-  letter-spacing: -.02em;
-  padding: 0 22px;
-  margin-bottom: 6px;
-}
-.sb-tagline {
-  font-size: 10.5px; color: var(--muted);
-  padding: 0 22px;
-  margin-bottom: 28px;
-  font-family: 'DM Mono', monospace;
-  letter-spacing: .04em;
-  line-height: 1.5;
-}
-
-.sb-section-label {
-  font-family: 'DM Mono', monospace;
-  font-size: 9.5px; font-weight: 600;
-  letter-spacing: .12em; text-transform: uppercase;
-  color: var(--faint);
-  padding: 0 22px;
-  margin-bottom: 6px;
-  margin-top: 20px;
-}
-
-.sb-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  padding: 0 10px;
-}
-.sb-nav a {
-  color: var(--muted);
-  text-decoration: none;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 7px 12px;
-  border-radius: 7px;
-  transition: color .15s, background .15s;
-  white-space: nowrap;
-}
-.sb-nav a:hover { color: var(--text); background: var(--card); }
-.sb-nav a.active { color: var(--cyan); background: var(--cyan-dim); }
-
-.sb-divider {
-  border: none;
-  border-top: 1px solid var(--border);
-  margin: 20px 22px 0;
-}
-
-.sb-meta {
-  padding: 16px 22px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-.sb-meta-label {
-  font-family: 'DM Mono', monospace;
-  font-size: 9.5px; font-weight: 600;
-  letter-spacing: .12em; text-transform: uppercase;
-  color: var(--faint);
-  margin-bottom: 4px;
-}
-.tag {
-  display: inline-block;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  padding: 2px 8px;
-  font-size: 11px; color: var(--muted);
-  font-family: 'DM Mono', monospace;
-  align-self: flex-start;
-}
-
-.sb-bottom {
-  margin-top: auto;
-  padding: 20px 22px 0;
-}
-.theme-toggle {
-  width: 100%;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 12px;
-  cursor: pointer;
-  color: var(--muted);
-  font-size: 12px; font-weight: 500;
-  font-family: 'Inter', sans-serif;
-  display: flex; align-items: center; gap: 7px;
-  transition: background .15s, border-color .15s, color .15s;
-}
-.theme-toggle:hover { border-color: var(--cyan); color: var(--cyan); }
-
-/* ── Main content ────────────────────────────────── */
+/* Layout */
 .main {
   margin-left: var(--sb-w);
   min-height: 100vh;
   width: calc(100% - var(--sb-w));
-  background-image: radial-gradient(rgba(255,255,255,.03) 1px, transparent 1px);
-  background-size: 24px 24px;
 }
-[data-theme="light"] .main {
-  background-image: radial-gradient(rgba(0,0,0,.035) 1px, transparent 1px);
-}
-
 .page {
-  max-width: 880px;
-  padding: 0 48px 100px;
+  width: min(var(--measure), calc(100vw - var(--sb-w) - 72px));
+  padding: 0 0 96px;
+  margin: 0 auto;
 }
-
-/* ── Section layout ──────────────────────────────── */
 .section {
-  padding: 72px 0 56px;
+  padding: 80px 0 64px;
   border-top: 1px solid var(--border);
+  scroll-margin-top: 88px;
 }
 .section:first-child { border-top: none; }
-#hero { padding-top: 60px; }
+#hero { padding-top: 68px; padding-bottom: 58px; }
 
-/* ── Typography ──────────────────────────────────── */
-.section-label {
-  font-size: 10.5px; font-weight: 600; letter-spacing: .14em;
-  text-transform: uppercase; color: var(--muted);
-  margin-bottom: 8px;
-  font-family: 'DM Mono', monospace;
-}
-h2 {
-  font-family: 'Syne', sans-serif;
-  font-size: 28px; font-weight: 800;
-  letter-spacing: -.025em; color: var(--text);
-  margin-bottom: 14px; line-height: 1.15;
-}
-h3 {
-  font-family: 'Syne', sans-serif;
-  font-size: 15px; font-weight: 700;
-  color: var(--text); margin-bottom: 10px;
-  letter-spacing: -.01em;
-}
-p { color: var(--muted); margin-bottom: 12px; }
-ul { padding-left: 18px; color: var(--muted); }
-ul li { margin-bottom: 5px; }
-strong { color: var(--text); font-weight: 600; }
-code {
-  font-family: 'DM Mono', monospace;
-  font-size: 11.5px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 1px 6px;
-  color: var(--cyan);
-}
-[data-theme="light"] code { background: #edf1f7; border-color: #c0cfe0; }
-
-/* ── Grid ────────────────────────────────────────── */
-.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
-.grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
-
-/* ── Cards ───────────────────────────────────────── */
-.card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px 22px;
-}
-.card-hi {
-  background: var(--card-hi);
+/* Progress + accessibility */
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 300;
+  transform: translateY(-140%);
+  padding: 10px 14px;
   border: 1px solid var(--border-hi);
-  border-radius: var(--radius);
-  padding: 20px 22px;
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--text);
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  transition: transform .18s ease;
 }
-[data-theme="light"] .card,
-[data-theme="light"] .card-hi,
-[data-theme="light"] .pain-card,
-[data-theme="light"] .feature-card,
-[data-theme="light"] .metric-card,
-[data-theme="light"] .verify-card {
-  box-shadow: 0 1px 4px rgba(0,0,0,.07);
+.skip-link:focus { transform: translateY(0); }
+.progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 0;
+  background: linear-gradient(90deg, var(--cyan), var(--sky));
+  z-index: 240;
 }
 
-/* ── Hero ────────────────────────────────────────── */
-.hero-tag {
+/* Sidebar */
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: var(--sb-w);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 30px 14px 22px;
+  z-index: 160;
+  overflow-y: auto;
+  scrollbar-width: none;
+  backdrop-filter: blur(18px);
+}
+.sidebar::-webkit-scrollbar { display: none; }
+.sb-logo {
+  padding: 0 8px;
+  color: var(--text);
+  font-weight: 800;
+  font-size: 23px;
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+.sb-logo::after {
+  content: '';
   display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-left: 5px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 0 4px var(--cyan-dim);
+  vertical-align: 3px;
+}
+.sb-tagline {
+  padding: 8px 8px 26px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.sb-section-label,
+.sb-meta-label,
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.45;
+  font-weight: 700;
+  letter-spacing: .10em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.sb-section-label { padding: 0 8px; margin: 18px 0 8px; }
+.sb-nav { display: flex; flex-direction: column; gap: 3px; }
+.sb-nav a {
+  position: relative;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 13.5px;
+  line-height: 1.25;
+  font-weight: 600;
+  padding: 9px 10px 9px 14px;
+  border-radius: 10px;
+  transition: color .16s ease, background-color .16s ease;
+}
+.sb-nav a::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 50%;
+  width: 3px;
+  height: 0;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: var(--cyan);
+  transition: height .16s ease;
+}
+.sb-nav a:hover { color: var(--text); background: var(--cyan-dim); }
+.sb-nav a.active { color: var(--text); background: var(--cyan-dim); }
+.sb-nav a.active::before { height: 18px; }
+.sb-divider { border: 0; border-top: 1px solid var(--border); margin: 24px 8px 0; }
+.sb-meta { padding: 18px 8px 0; display: flex; flex-direction: column; gap: 7px; }
+.sb-meta-label { margin-bottom: 2px; }
+.tag {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 22px;
   background: var(--cyan-dim);
   border: 1px solid var(--cyan-glow);
-  border-radius: 4px;
-  padding: 3px 10px;
-  font-size: 11px; font-weight: 500; color: var(--cyan);
-  letter-spacing: .08em; text-transform: uppercase;
-  font-family: 'DM Mono', monospace;
-  margin-bottom: 22px;
+  border-radius: 999px;
+  padding: 2px 9px;
+  color: var(--cyan);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
 }
-.hero h1 {
-  font-family: 'Syne', sans-serif;
-  font-size: clamp(32px, 4.5vw, 52px);
+.sb-bottom { margin-top: auto; padding: 24px 8px 0; }
+.sb-bottom::before { content: ''; display: block; border-top: 1px solid var(--border); margin-bottom: 16px; }
+.theme-toggle,
+.mobile-menu-btn {
+  appearance: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--muted);
+  font: 650 13px/1 var(--font-sans);
+  cursor: pointer;
+  transition: border-color .16s ease, color .16s ease, background-color .16s ease, transform .16s ease;
+}
+.theme-toggle {
+  width: 100%;
+  padding: 10px 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.theme-toggle:hover,
+.mobile-menu-btn:hover { border-color: var(--cyan); color: var(--text); background: var(--cyan-dim); }
+.theme-toggle:active,
+.mobile-menu-btn:active { transform: translateY(1px); }
+
+/* Mobile chrome */
+.mobile-bar {
+  display: none;
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 58px;
+  z-index: 150;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(18px);
+}
+.mobile-title { font-size: 18px; font-weight: 800; letter-spacing: -.04em; color: var(--text); }
+.mobile-title::after { content: ''; display: inline-block; width: 6px; height: 6px; margin-left: 5px; border-radius: 50%; background: var(--cyan); vertical-align: 3px; }
+.mobile-menu-btn { padding: 9px 14px; }
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 10, 20, .44);
+  z-index: 145;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease;
+}
+body.nav-open .sidebar-backdrop { opacity: 1; pointer-events: auto; }
+
+/* Typography */
+.section-label { margin-bottom: 10px; }
+h1,h2,h3 { color: var(--text); text-wrap: balance; }
+h2 {
+  max-width: 760px;
+  font-size: clamp(28px, 3.2vw, 40px);
+  line-height: 1.12;
   font-weight: 800;
-  letter-spacing: -.035em;
-  line-height: 1.06;
-  margin-bottom: 18px;
+  letter-spacing: -0.045em;
+  margin-bottom: 16px;
+}
+h3 {
+  font-size: 16px;
+  line-height: 1.35;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  margin-bottom: 10px;
+}
+p { color: var(--muted); margin-bottom: 14px; max-width: 76ch; }
+ul { padding-left: 20px; color: var(--muted); }
+ul li { margin-bottom: 6px; }
+strong { color: var(--text); font-weight: 750; }
+em { color: inherit; }
+code {
+  font-family: var(--font-mono);
+  font-size: .86em;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 2px 6px;
+  color: var(--cyan);
+  white-space: nowrap;
+}
+
+/* Grids */
+.grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+
+/* Cards */
+.card,
+.card-hi,
+.pain-card,
+.feature-card,
+.metric-card,
+.verify-card,
+.arch-wrap {
+  background: color-mix(in srgb, var(--card) 96%, transparent);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+.card,
+.card-hi,
+.pain-card,
+.feature-card,
+.metric-card,
+.verify-card { padding: 22px 24px; }
+.card-hi { background: linear-gradient(180deg, var(--card-hi), var(--card)); }
+.card:has(table) { overflow-x: auto; }
+.pain-card,
+.feature-card,
+.metric-card,
+.verify-card { height: 100%; }
+.pain-card h3,
+.feature-card h3,
+.verify-card h3 { font-size: 15px; }
+.pain-card p,
+.feature-card p { font-size: 13.5px; line-height: 1.6; margin: 0; }
+.feature-card { transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
+.feature-card:hover { transform: translateY(-2px); border-color: var(--border-hi); box-shadow: var(--shadow); }
+
+/* Hero */
+.hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--cyan-glow);
+  border-radius: 999px;
+  background: var(--cyan-dim);
+  padding: 7px 12px;
+  color: var(--cyan);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+.hero-tag::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 4px var(--cyan-dim); }
+.hero h1 {
+  max-width: 860px;
+  font-size: clamp(42px, 6.4vw, 76px);
+  line-height: .98;
+  font-weight: 850;
+  letter-spacing: -0.07em;
+  margin-bottom: 22px;
 }
 .hero h1 em { font-style: normal; color: var(--cyan); }
 .hero-sub {
-  font-size: 16px; color: var(--muted);
-  max-width: 560px; line-height: 1.65;
-  margin-bottom: 36px;
-  font-weight: 300;
+  max-width: 690px;
+  color: var(--muted);
+  font-size: clamp(17px, 1.4vw, 20px);
+  line-height: 1.65;
+  margin-bottom: 34px;
 }
 .hero-stats {
-  display: flex; gap: 0; flex-wrap: wrap;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-  max-width: 660px;
-  margin-bottom: 60px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  max-width: 920px;
+  margin-bottom: 10px;
+  border: 0;
+  overflow: visible;
 }
 .hero-stat {
-  flex: 1; min-width: 130px;
-  padding: 16px 20px;
-  border-right: 1px solid var(--border);
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   background: var(--card);
+  box-shadow: var(--shadow-sm);
 }
-.hero-stat:last-child { border-right: none; }
+.hero-stat:last-child { border-right: 1px solid var(--border); }
 .hero-stat-num {
-  font-family: 'Syne', sans-serif;
-  font-size: 26px; font-weight: 800;
-  letter-spacing: -.03em; color: var(--cyan);
+  font-size: clamp(26px, 3vw, 34px);
   line-height: 1;
+  font-weight: 850;
+  letter-spacing: -0.055em;
+  color: var(--cyan);
 }
-.hero-stat-label { font-size: 11px; color: var(--muted); margin-top: 5px; line-height: 1.4; }
+.hero-stat-label { margin-top: 8px; color: var(--muted); font-size: 12.5px; line-height: 1.45; }
 
-/* ── Pain cards ──────────────────────────────────── */
-.pain-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 18px 20px;
+/* Business impact */
+.impact-num,
+.roi-num {
+  font-weight: 850;
+  line-height: 1;
+  letter-spacing: -0.055em;
 }
-.pain-card h3 { font-size: 13.5px; margin-bottom: 5px; }
-.pain-card p { font-size: 13px; margin: 0; }
+.impact-num { font-size: 30px; }
+.impact-label { margin-top: 7px; color: var(--muted); font-size: 12.5px; line-height: 1.5; }
 
-/* ── Workflow ─────────────────────────────────────── */
+/* Workflow */
 .workflow {
-  display: flex; align-items: stretch;
-  gap: 0; flex-wrap: wrap;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  border: 0;
+  overflow: visible;
 }
 .wf-step {
-  flex: 1; min-width: 120px;
-  display: flex; flex-direction: column;
-  padding: 16px;
-  background: var(--card);
-  border-right: 1px solid var(--border);
   position: relative;
-}
-.wf-step:last-child { border-right: none; }
-.wf-step::after {
-  content: '›';
-  position: absolute; right: -9px; top: 50%; transform: translateY(-50%);
-  color: var(--faint); font-size: 16px; z-index: 2;
-}
-.wf-step:last-child::after { display: none; }
-.wf-label { font-size: 12.5px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
-.wf-sub { font-size: 11px; color: var(--muted); line-height: 1.45; }
-
-/* ── Feature cards ────────────────────────────────── */
-.feature-card {
-  background: var(--card);
+  min-width: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 18px 20px;
-  transition: border-color .2s;
+  background: var(--card);
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
 }
-.feature-card:hover { border-color: var(--border-hi); }
-.feature-card h3 { font-size: 13px; margin-bottom: 6px; }
-.feature-card p { font-size: 12.5px; margin: 0; }
+.wf-step::after {
+  content: '→';
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--faint);
+  font-size: 13px;
+}
+.wf-step:last-child::after { display: none; }
+.wf-label { color: var(--text); font-size: 14px; font-weight: 750; margin-bottom: 5px; }
+.wf-sub { color: var(--muted); font-size: 12px; line-height: 1.5; }
 
-/* ── Table ────────────────────────────────────────── */
-table { width:100%; border-collapse:collapse; }
+/* Tables */
+table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 620px; }
 th {
-  text-align:left; font-size:11px; font-weight:600;
-  letter-spacing:.06em; text-transform:uppercase;
-  color:var(--muted); padding:9px 14px;
-  border-bottom:1px solid var(--border);
-  font-family:'DM Mono',monospace;
+  text-align: left;
+  color: var(--faint);
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: .07em;
+  text-transform: uppercase;
 }
 td {
-  padding:9px 14px; font-size:13px;
-  border-bottom:1px solid var(--border);
-  color:var(--muted); vertical-align:top;
+  color: var(--muted);
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13.5px;
+  line-height: 1.55;
+  vertical-align: top;
 }
-td:first-child { color:var(--text); font-weight:500; }
-tr:last-child td { border-bottom:none; }
+td:first-child { color: var(--text); font-weight: 700; }
+tr:last-child td { border-bottom: 0; }
 
-/* ── Stack ────────────────────────────────────────── */
+/* Stack */
 .stack-row {
-  display:flex; align-items:flex-start; gap:10px;
-  padding:10px 0; border-bottom:1px solid var(--border);
-  flex-wrap:wrap;
+  display: grid;
+  grid-template-columns: 124px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--border);
 }
-.stack-row:last-child { border-bottom:none; }
+.stack-row:last-child { border-bottom: 0; }
 .stack-layer {
-  font-family:'DM Mono',monospace;
-  font-size:10px; font-weight:500; letter-spacing:.08em;
-  text-transform:uppercase; color:var(--muted); min-width:90px;
-  padding-top: 3px;
+  padding-top: 5px;
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 750;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.stack-pills {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 .stack-pill {
-  display:inline-block;
-  background:var(--surface); border:1px solid var(--border);
-  border-radius:5px; padding:2px 9px;
-  font-size:11.5px; font-weight:500; color:var(--text);
-  margin:2px 2px 2px 0;
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  max-width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 4px 11px;
+  font-size: 12.5px;
+  line-height: 1.2;
+  font-weight: 650;
+  white-space: normal;
 }
 
-/* ── Pipeline ─────────────────────────────────────── */
-.pipeline { display:flex; flex-direction:column; }
+/* Pipeline */
+.pipeline { display: flex; flex-direction: column; }
 .pipe-step {
-  display:grid; grid-template-columns:22px 1fr;
-  gap:14px; padding:13px 0;
-  border-bottom:1px solid var(--border);
-  align-items:start;
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 14px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
 }
-.pipe-step:last-child { border-bottom:none; }
+.pipe-step:last-child { border-bottom: 0; }
 .pipe-num {
-  font-family:'DM Mono',monospace;
-  font-size:11px; font-weight:600; color:var(--muted);
-  padding-top:3px; flex-shrink:0;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--cyan);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
 }
-.pipe-name { font-size:13px; font-weight:600; color:var(--text); margin-bottom:3px; }
-.pipe-desc { font-size:12.5px; color:var(--muted); }
+.pipe-name { color: var(--text); font-size: 14px; font-weight: 750; margin-bottom: 4px; }
+.pipe-desc { color: var(--muted); font-size: 13px; line-height: 1.6; }
 
-/* ── Timeline ─────────────────────────────────────── */
-.timeline { position:relative; padding-left:32px; }
+/* Timeline */
+.timeline { position: relative; padding-left: 34px; }
 .timeline::before {
-  content:''; position:absolute; left:9px; top:10px;
-  bottom:10px; width:1px; background:var(--border);
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 12px;
+  bottom: 12px;
+  width: 2px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--cyan), var(--amber), var(--border-hi));
+  opacity: .55;
 }
-.tl-item { position:relative; margin-bottom:32px; }
+.tl-item { position: relative; margin-bottom: 34px; }
+.tl-item:last-child { margin-bottom: 0; }
 .tl-dot {
-  position:absolute; left:-27px; top:5px;
-  width:11px; height:11px; border-radius:50%;
-  border:2px solid var(--faint); background:var(--bg);
+  position: absolute;
+  left: -29px;
+  top: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--card);
+  border: 3px solid var(--faint);
+  box-shadow: 0 0 0 5px var(--bg);
 }
-.tl-dot.done { background:var(--cyan); border-color:var(--cyan); }
-.tl-dot.next { border-color:var(--amber); }
-.tl-dot.future { border-color:var(--faint); }
+.tl-dot.done { border-color: var(--cyan); background: var(--cyan); }
+.tl-dot.next { border-color: var(--amber); }
+.tl-dot.future { border-color: var(--faint); }
 .tl-phase {
-  font-family:'DM Mono',monospace;
-  font-size:10px; font-weight:500; letter-spacing:.1em;
-  text-transform:uppercase; margin-bottom:5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
 }
-.tl-phase.done { color:var(--cyan); }
-.tl-phase.next { color:var(--amber); }
-.tl-phase.future { color:var(--muted); }
-.tl-title { font-size:15px; font-weight:600; color:var(--text); margin-bottom:8px; font-family:'Syne',sans-serif; }
-.tl-items { list-style:none; padding:0; }
+.tl-phase.done { color: var(--cyan); }
+.tl-phase.next { color: var(--amber); }
+.tl-phase.future { color: var(--faint); }
+.tl-title { color: var(--text); font-size: 18px; line-height: 1.35; font-weight: 780; letter-spacing: -0.025em; margin-bottom: 10px; }
+.tl-items { list-style: none; padding: 0; }
 .tl-items li {
-  font-size:12.5px; color:var(--muted);
-  padding:3px 0; display:flex; align-items:baseline; gap:8px;
+  display: flex;
+  gap: 9px;
+  align-items: baseline;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.55;
+  padding: 3px 0;
 }
-.tl-items li::before { content:'–'; color:var(--faint); flex-shrink:0; }
+.tl-items li::before { content: '—'; color: var(--faint); flex: 0 0 auto; }
 
-/* ── Metric cards ─────────────────────────────────── */
-.metric-card {
-  background:var(--card); border:1px solid var(--border);
-  border-radius:var(--radius); padding:18px 20px;
-}
+/* Metrics */
 .metric-card.green { border-color: var(--cyan-glow); }
-.metric-card.blue  { border-color: rgba(56,189,248,.25); }
-.metric-card.amber { border-color: rgba(245,158,11,.25); }
-.metric-card.rose  { border-color: rgba(244,63,94,.25); }
+.metric-card.blue  { border-color: color-mix(in srgb, var(--sky) 28%, var(--border)); }
+.metric-card.amber { border-color: color-mix(in srgb, var(--amber) 28%, var(--border)); }
+.metric-card.rose  { border-color: color-mix(in srgb, var(--rose) 28%, var(--border)); }
 .metric-label {
-  font-family:'DM Mono',monospace;
-  font-size:10.5px; color:var(--muted); margin-bottom:10px; font-weight:500;
-  letter-spacing:.04em; text-transform:uppercase;
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.45;
+  font-weight: 800;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
 }
-.metric-compare {
-  display:flex; align-items:center; gap:10px; margin-bottom:10px;
-}
-.metric-before {
-  font-family:'Syne',sans-serif;
-  font-size:22px; font-weight:800; color:var(--rose);
-  text-decoration:line-through; opacity:.7;
-}
-.metric-arrow { color:var(--faint); font-size:16px; }
+.metric-compare { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+.metric-before,
 .metric-after {
-  font-family:'Syne',sans-serif;
-  font-size:22px; font-weight:800; color:var(--cyan);
+  font-size: clamp(22px, 2.6vw, 30px);
+  line-height: 1;
+  font-weight: 850;
+  letter-spacing: -0.055em;
 }
+.metric-before { color: var(--rose); text-decoration: line-through; text-decoration-thickness: 2px; opacity: .72; }
+.metric-after { color: var(--cyan); }
+.metric-arrow { color: var(--faint); font-size: 18px; }
 .metric-delta {
-  display:inline-block;
-  background:var(--cyan-dim); border:1px solid var(--cyan-glow);
-  border-radius:20px; padding:2px 9px;
-  font-size:11px; font-weight:700; color:var(--cyan);
-  font-family:'DM Mono',monospace;
+  display: inline-flex;
+  min-height: 26px;
+  align-items: center;
+  border: 1px solid var(--cyan-glow);
+  border-radius: 999px;
+  background: var(--cyan-dim);
+  color: var(--cyan);
+  padding: 3px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
 }
-.metric-card.blue  .metric-delta { background:var(--sky-dim); border-color:rgba(56,189,248,.25); color:var(--sky); }
-.metric-card.amber .metric-delta { background:var(--amber-dim); border-color:rgba(245,158,11,.25); color:var(--amber); }
-.metric-card.rose  .metric-delta { background:var(--rose-dim); border-color:rgba(244,63,94,.25); color:var(--rose); }
-.metric-desc { font-size:12px; color:var(--muted); margin-top:8px; }
+.metric-card.blue  .metric-delta { background: var(--sky-dim); border-color: color-mix(in srgb, var(--sky) 28%, transparent); color: var(--sky); }
+.metric-card.amber .metric-delta { background: var(--amber-dim); border-color: color-mix(in srgb, var(--amber) 28%, transparent); color: var(--amber); }
+.metric-card.rose  .metric-delta { background: var(--rose-dim); border-color: color-mix(in srgb, var(--rose) 28%, transparent); color: var(--rose); }
+.metric-desc { color: var(--muted); font-size: 13px; line-height: 1.6; margin: 10px 0 0; }
 
-/* ── Bar chart ────────────────────────────────────── */
-.bar-group { margin-bottom:18px; }
-.bar-header {
-  display:flex; justify-content:space-between;
-  font-size:12px; color:var(--muted); margin-bottom:7px;
-}
-.bar-row { display:flex; align-items:center; gap:10px; margin-bottom:5px; }
-.bar-row-label {
-  font-family:'DM Mono',monospace;
-  font-size:10px; font-weight:500; color:var(--muted);
-  text-transform:uppercase; letter-spacing:.05em; min-width:44px;
-}
-.bar-track {
-  flex:1; height:10px; border-radius:4px;
-  background:var(--border); overflow:hidden;
-}
-.bar-fill {
-  height:100%; border-radius:4px;
-  transform: scaleX(0); transform-origin: left;
-  transition: transform 1.1s cubic-bezier(.22,1,.36,1);
-}
+/* Bars */
+.bar-group { margin-bottom: 22px; }
+.bar-group:last-child { margin-bottom: 0; }
+.bar-header { display: flex; justify-content: space-between; color: var(--text); font-size: 13px; font-weight: 700; margin-bottom: 9px; }
+.bar-row { display: grid; grid-template-columns: 58px minmax(0,1fr) 78px; align-items: center; gap: 12px; margin-bottom: 7px; }
+.bar-row-label { color: var(--muted); font-family: var(--font-mono); font-size: 10.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.bar-track { height: 12px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 999px; transform: scaleX(0); transform-origin: left; transition: transform 1.1s cubic-bezier(.22,1,.36,1); }
 .bar-fill.animate { transform: scaleX(1); }
-.bar-before { background:rgba(244,63,94,.4); }
-.bar-after  { background:var(--cyan); }
-.bar-fill.near-zero {
-  transform: scaleX(1) !important;
-  width: 6px !important;
-  border-radius: 3px;
-}
-.bar-val { font-size:11px; color:var(--muted); min-width:52px; font-family:'DM Mono',monospace; }
+.bar-before { background: linear-gradient(90deg, var(--rose), color-mix(in srgb, var(--rose) 55%, transparent)); }
+.bar-after { background: linear-gradient(90deg, var(--cyan), color-mix(in srgb, var(--sky) 70%, var(--cyan))); }
+.bar-fill.near-zero { transform: scaleX(1) !important; width: 8px !important; border-radius: 999px; }
+.bar-val { color: var(--muted); font-family: var(--font-mono); font-size: 11px; text-align: right; white-space: nowrap; }
 
-/* ── Verify cards ─────────────────────────────────── */
-.verify-card {
-  background:var(--card); border:1px solid var(--border);
-  border-radius:var(--radius); padding:18px 20px;
-}
-.verify-card h3 { font-size:13px; margin-bottom:10px; }
-.verify-row {
-  display:flex; gap:10px; align-items:flex-start;
-  margin-bottom:6px; font-size:12px; color:var(--muted);
-}
-.verify-key {
-  min-width:88px; font-weight:600; color:var(--text); font-size:11px;
-  font-family:'DM Mono',monospace; flex-shrink:0; letter-spacing:.03em;
-}
+/* Verification */
+.verify-row { display: grid; grid-template-columns: 92px 1fr; gap: 10px; color: var(--muted); font-size: 13px; line-height: 1.55; margin-bottom: 9px; }
+.verify-row:last-child { margin-bottom: 0; }
+.verify-key { color: var(--text); font-family: var(--font-mono); font-size: 10.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
 
-/* ── ROI ──────────────────────────────────────────── */
-.roi-num {
-  font-family:'Syne',sans-serif;
-  font-size:48px; font-weight:800;
-  letter-spacing:-.04em; color:var(--cyan); line-height:1;
-}
-
-/* ── Check list ───────────────────────────────────── */
-.check-list { list-style:none; padding:0; }
+/* ROI */
+.roi-num { font-size: clamp(46px, 6vw, 68px); color: var(--cyan); }
+.check-list { list-style: none; padding: 0; }
 .check-list li {
-  padding:6px 0; border-bottom:1px solid var(--border);
-  font-size:13px; color:var(--muted);
-  display:flex; align-items:baseline; gap:8px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.55;
 }
-.check-list li:last-child { border-bottom:none; }
-.check-list li::before { content:'✓'; color:var(--cyan); font-weight:700; flex-shrink:0; }
+.check-list li:last-child { border-bottom: 0; }
+.check-list li::before { content: '✓'; color: var(--cyan); font-weight: 900; flex: 0 0 auto; }
 
-/* ── Accent helpers ───────────────────────────────── */
-.cyan  { color:var(--cyan); }
-.amber { color:var(--amber); }
-.rose  { color:var(--rose); }
-.sky   { color:var(--sky); }
+/* Helpers */
+.cyan { color: var(--cyan); }
+.amber { color: var(--amber); }
+.rose { color: var(--rose); }
+.sky { color: var(--sky); }
 
-/* ── Impact stat ──────────────────────────────────── */
-.impact-num {
-  font-family:'Syne',sans-serif;
-  font-size:26px; font-weight:800; line-height:1.1;
-}
-.impact-label { font-size:11.5px; color:var(--muted); margin-top:4px; }
-
-/* ── Arch SVG wrapper ─────────────────────────────── */
-.arch-wrap {
-  background:var(--card); border:1px solid var(--border);
-  border-radius:var(--radius); padding:24px; overflow-x:auto;
-}
+/* Architecture SVG */
+.arch-wrap { padding: 24px; overflow-x: auto; }
+.arch-wrap svg { display: block; min-width: 780px; }
 [data-theme="light"] .arch-wrap svg rect[fill="#111c2b"] { fill: #ffffff; }
-[data-theme="light"] .arch-wrap svg rect[stroke="#1e2f45"] { stroke: #d4dde9; }
-[data-theme="light"] .arch-wrap svg text[fill="#e2eaf5"] { fill: #0f1e30; }
-[data-theme="light"] .arch-wrap svg text[fill="#6d8aaa"] { fill: #4a6480; }
-[data-theme="light"] .arch-wrap svg text[fill="#3a5070"] { fill: #9db5cc; }
+[data-theme="light"] .arch-wrap svg rect[stroke="#1e2f45"] { stroke: #d8e1ec; }
+[data-theme="light"] .arch-wrap svg text[fill="#e2eaf5"] { fill: #152238; }
+[data-theme="light"] .arch-wrap svg text[fill="#6d8aaa"] { fill: #536579; }
+[data-theme="light"] .arch-wrap svg text[fill="#3a5070"] { fill: #94a3b8; }
 [data-theme="light"] .arch-wrap svg line[stroke="#3a5070"],
-[data-theme="light"] .arch-wrap svg path[stroke="#3a5070"] { stroke: #9db5cc; }
-[data-theme="light"] .arch-wrap marker#a path { fill: #9db5cc; }
+[data-theme="light"] .arch-wrap svg path[stroke="#3a5070"] { stroke: #94a3b8; }
+[data-theme="light"] .arch-wrap marker#a path { fill: #94a3b8; }
 
-/* ── Scroll reveal ────────────────────────────────── */
-.reveal {
-  opacity:0; transform:translateY(16px);
-  transition: opacity .5s ease, transform .5s ease;
-  will-change: opacity, transform;
-}
-.reveal.visible { opacity:1; transform:translateY(0); }
+/* Reveal animation */
+/* Keep content visible by default. Motion is treated as progressive enhancement, not a dependency. */
+.reveal { opacity: 1; transform: none; transition: opacity .24s ease, transform .24s ease; }
+.reveal.visible { opacity: 1; transform: none; }
 
-/* ── Theme transition ─────────────────────────────── */
-body, .sidebar, .card, .card-hi, .pain-card, .feature-card,
-.metric-card, .verify-card, .arch-wrap,
-.hero-stat, .wf-step, .stack-pill, code,
-.timeline::before, .tl-dot, .bar-track, footer,
-h2, h3, p, td, th, .section-label, .tl-phase {
-  transition: background-color .25s ease, border-color .25s ease, color .25s ease;
-}
-
-/* ── Footer ───────────────────────────────────────── */
+/* Footer */
 footer {
-  padding: 40px 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding: 42px 0 20px;
   border-top: 1px solid var(--border);
-  color: var(--muted); font-size: 12.5px;
-  margin-top: 80px;
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 82px;
+}
+.footer-copy { min-width: 220px; }
+.footer-stack { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+footer .tag { margin: 0; vertical-align: middle; }
+
+/* Focus */
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--cyan) 55%, transparent);
+  outline-offset: 3px;
 }
 
-/* ── Focus accessibility ──────────────────────────── */
-a:focus-visible, button:focus-visible {
-  outline: 2px solid var(--cyan);
-  outline-offset: 2px;
-  border-radius: 4px;
+/* Theme transitions */
+body, .sidebar, .mobile-bar, .card, .card-hi, .pain-card, .feature-card, .metric-card,
+.verify-card, .arch-wrap, .hero-stat, .wf-step, .stack-pill, code, .bar-track, footer,
+h2, h3, p, td, th, .section-label, .tl-phase, .tag {
+  transition: background-color .25s ease, border-color .25s ease, color .25s ease, box-shadow .25s ease;
 }
 
-/* ── Mobile ───────────────────────────────────────── */
-@media(max-width:860px) {
-  :root { --sb-w: 0px; }
-  .sidebar { transform: translateX(-100%); }
-  .main { margin-left: 0; width: 100%; }
-  .page { padding: 0 20px 80px; }
-  h2 { font-size: 22px; }
-  .grid-2,.grid-3,.grid-4 { grid-template-columns: 1fr; }
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *,*::before,*::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+  .reveal { opacity: 1; transform: none; }
+  .bar-fill { transform: scaleX(1); }
+}
+
+/* Print / PDF */
+@media print {
+  @page { margin: 14mm; }
+  :root, [data-theme="light"] {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #f6f8fb;
+    --card: #ffffff;
+    --card-hi: #ffffff;
+    --border: #d5dce5;
+    --border-hi: #b8c3d1;
+    --text: #111827;
+    --muted: #374151;
+    --faint: #6b7280;
+    --cyan: #0f766e;
+    --sky: #1d4ed8;
+    --amber: #92400e;
+    --rose: #9f1239;
+    --shadow: none;
+    --shadow-sm: none;
+  }
+  body { display: block; background: #fff !important; color: #111827; font-size: 10.5pt; line-height: 1.45; }
+  .sidebar, .mobile-bar, .progress-bar, .skip-link, .sidebar-backdrop { display: none !important; }
+  .main { margin: 0; width: 100%; min-height: auto; }
+  .page { width: 100%; max-width: none; padding: 0; }
+  .section { padding: 18pt 0; border-top: 1pt solid #d5dce5; scroll-margin-top: 0; }
+  #hero { padding-top: 0; }
+  /* Each section starts on a new page — content within flows freely */
+  .section:not(#hero) { break-before: page; page-break-before: always; }
+  /* Individual cards and atomic blocks stay together, but grids can flow across pages */
+  .card, .card-hi, .pain-card, .feature-card, .metric-card, .verify-card, .arch-wrap, .hero-stat, .wf-step { box-shadow: none !important; break-inside: avoid; page-break-inside: avoid; }
+  .pipe-step, .tl-item, .bar-group { break-inside: avoid; page-break-inside: avoid; }
+  /* Headings and labels always stay with the content below them */
+  h2 { font-size: 22pt; break-after: avoid; page-break-after: avoid; }
+  h3 { font-size: 12pt; break-after: avoid; page-break-after: avoid; }
+  .section-label { break-after: avoid; page-break-after: avoid; }
+  .pipe-name, .tl-phase, .tl-title, .metric-label, .bar-header { break-after: avoid; page-break-after: avoid; }
+  .reveal { opacity: 1 !important; transform: none !important; }
+  .bar-fill { transform: scaleX(1) !important; }
+  .hero h1 { font-size: 32pt; letter-spacing: -0.04em; }
+  .workflow { grid-template-columns: repeat(5, 1fr); }
+  a { color: inherit; text-decoration: none; }
+  code { color: #0f766e; background: #f6f8fb; }
+  footer { margin-top: 24pt; padding: 12pt 0 0; break-before: avoid; page-break-before: avoid; }
+}
+
+/* Responsive */
+@media (max-width: 1180px) {
+  .page { width: calc(100vw - var(--sb-w) - 40px); }
+  .hero-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .workflow { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .wf-step::after { display: none; }
-  .wf-step { border-right: none; border-bottom: 1px solid var(--border); }
-  .wf-step:last-child { border-bottom: none; }
-  .hero-stats { flex-direction: column; }
-  .hero-stat { border-right: none; border-bottom: 1px solid var(--border); }
-  .hero-stat:last-child { border-bottom: none; }
+}
+
+@media (max-width: 940px) {
+  :root { --sb-w: 0px; }
+  body { display: block; }
+  .mobile-bar { display: flex; }
+  .sidebar {
+    width: min(84vw, 306px);
+    transform: translateX(-105%);
+    transition: transform .22s ease;
+    box-shadow: var(--shadow);
+  }
+  body.nav-open .sidebar { transform: translateX(0); }
+  .main { margin-left: 0; width: 100%; padding-top: 58px; }
+  .page { width: min(100% - 34px, 820px); }
+  #hero { padding-top: 44px; }
+  .section { padding: 62px 0 48px; }
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .workflow { grid-template-columns: 1fr; }
+  .hero-stats { grid-template-columns: 1fr 1fr; }
+  .arch-wrap { padding: 18px; }
+}
+
+@media (max-width: 620px) {
+  body { font-size: 15px; }
+  .page { width: min(100% - 28px, 560px); }
+  .section { padding: 52px 0 42px; }
+  .hero h1 { font-size: clamp(38px, 12vw, 54px); }
+  .hero-sub { font-size: 16px; }
+  .hero-stats { grid-template-columns: 1fr; }
+  .stack-row { grid-template-columns: 1fr; gap: 8px; padding: 14px 0; }
+  .stack-layer { padding-top: 0; }
+  .footer-stack { justify-content: flex-start; }
+  .card, .card-hi, .pain-card, .feature-card, .metric-card, .verify-card { padding: 18px; }
+  .bar-row { grid-template-columns: 54px minmax(0,1fr); }
+  .bar-val { grid-column: 2; text-align: left; }
+  .verify-row { grid-template-columns: 1fr; gap: 2px; }
+  table { min-width: 560px; }
+  .metric-before, .metric-after { font-size: 24px; }
+  .roi-num { font-size: 46px; }
 }
 </style>
 </head>
 <body>
+<a class="skip-link" href="#hero">Skip to content</a>
+<div class="progress-bar" id="progressBar" aria-hidden="true"></div>
+<header class="mobile-bar" aria-label="Mobile navigation">
+  <div class="mobile-title">lore</div>
+  <button class="mobile-menu-btn" id="menuBtn" type="button" aria-controls="sidebar" aria-expanded="false">Menu</button>
+</header>
+<div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
 
 <!-- ── Sidebar ──────────────────────────────────────── -->
 <aside class="sidebar" id="sidebar">
@@ -648,17 +890,6 @@ a:focus-visible, button:focus-visible {
     <a href="#roi" data-section="roi">ROI</a>
   </nav>
 
-  <hr class="sb-divider">
-
-  <div class="sb-meta">
-    <div class="sb-meta-label">Stack</div>
-    <span class="tag">Python 3.11+</span>
-    <span class="tag">Claude API</span>
-    <span class="tag">Lark Wiki</span>
-    <span class="tag">sqlglot</span>
-    <span class="tag">Mermaid ERD</span>
-  </div>
-
   <div class="sb-bottom">
     <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()" aria-label="Toggle theme">
       <span id="themeIcon">☀</span><span id="themeLabel">Light</span>
@@ -676,7 +907,7 @@ a:focus-visible, button:focus-visible {
   <div class="hero">
     <h1>Your database changes,<br><em>documented automatically.</em></h1>
     <p class="hero-sub">
-      Run <code style="font-size:14px;">lore analyze</code> on a branch. Get a risk-scored report in Lark Wiki and an up-to-date ERD — without touching a wiki page.
+      Run <code style="font-size:14px;">lore analyze</code> on a branch. Get a risk-scored report in Lark Docs and an up-to-date ERD — without touching a wiki page.
     </p>
     <div class="hero-stats">
       <div class="hero-stat">
@@ -747,7 +978,7 @@ a:focus-visible, button:focus-visible {
 <div id="solution" class="section">
   <div class="section-label">Proposed Solution</div>
   <h2>One command. Full schema history. Living ERD.</h2>
-  <p>lore runs in your CI or locally. It extracts migration diffs, parses changes, sends them to Claude for risk analysis, and publishes structured reports to Lark Wiki — updating the ERD diagram automatically.</p>
+  <p>lore runs in your CI or locally. It extracts migration diffs, parses changes, sends them to Claude for risk analysis, and publishes structured reports to Lark Docs — updating the ERD diagram automatically.</p>
 
   <div class="workflow reveal" style="margin:20px 0;">
     <div class="wf-step">
@@ -764,7 +995,7 @@ a:focus-visible, button:focus-visible {
     </div>
     <div class="wf-step">
       <div class="wf-label">Publish</div>
-      <div class="wf-sub">Versioned child page written to Lark Wiki</div>
+      <div class="wf-sub">Versioned child page in "Database Schema Change Report" folder</div>
     </div>
     <div class="wf-step">
       <div class="wf-label">Sync ERD</div>
@@ -775,7 +1006,7 @@ a:focus-visible, button:focus-visible {
   <div class="grid-3 reveal">
     <div class="feature-card">
       <h3>Multi-Format Parser</h3>
-      <p>CompositeParser routes Flyway SQL, Liquibase XML/YAML, and raw DDL. Format detected per-file — no config required.</p>
+      <p>CompositeParser routes Flyway SQL, Liquibase XML, and raw DDL. Format detected per-file — no config required.</p>
     </div>
     <div class="feature-card">
       <h3>Smart Model Routing</h3>
@@ -787,15 +1018,31 @@ a:focus-visible, button:focus-visible {
     </div>
     <div class="feature-card">
       <h3>Living ERD</h3>
-      <p>Mermaid diagram rebuilt from <code>lore-schema.json</code> after each run. FK edges inferred from <code>*_id</code> columns.</p>
+      <p>Mermaid diagram rebuilt from <code>lore-schema.json</code> after each <code>analyze</code> run. FK edges inferred from <code>*_id</code> columns. <code>lore generate-erd</code> produces category-based ERDs by table prefix.</p>
     </div>
     <div class="feature-card">
       <h3>Versioned Reports</h3>
-      <p>Each run creates an immutable child page titled <code>DATE | BRANCH | RISK</code>. History accretes automatically.</p>
+      <p>Each run creates an immutable child page titled <code>DATE | BRANCH | RISK</code> inside <strong>Database Schema Change Report</strong> &gt; <code>{db_name}</code>. History accretes automatically.</p>
+    </div>
+    <div class="feature-card">
+      <h3>ERD Image Rendering</h3>
+      <p>Diagrams ≤5KB are rendered to JPEG via mermaid.ink and uploaded as images. Larger diagrams fall back to fenced code blocks automatically.</p>
     </div>
     <div class="feature-card">
       <h3>Plugin Architecture</h3>
       <p>Source, Parser, Analyzer, Output — each a single <code>run(context)</code> method. New formats don't touch the pipeline.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Connection Profiles</h3>
+      <p>Save DB connections with <code>lore connections add</code>. Use them with <code>lore init --use prod-replica</code> or pick from an interactive menu. Passwords masked in all CLI output. Stored in <code>~/.lore/connections.yaml</code>.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Organised Report Folders</h3>
+      <p>Analysis reports land in a <strong>Database Schema Change Report</strong> parent folder, then a per-database sub-folder. Test branches go flat into the parent. Folder hierarchy created automatically on first run.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Resilient Lark API</h3>
+      <p>All Lark API calls use retry logic with configurable <code>max_retries</code>. HTTP 200 error bodies are detected and surfaced explicitly — silent failures eliminated.</p>
     </div>
   </div>
 </div>
@@ -808,25 +1055,25 @@ a:focus-visible, button:focus-visible {
   <h3 style="margin-bottom:10px;">Objectives</h3>
   <div class="grid-2 reveal" style="margin-bottom:24px;">
     <div class="card">
-      <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--cyan);margin-bottom:6px;">100%</div>
+      <div style="font-family:var(--font-sans);font-size:22px;font-weight:800;color:var(--cyan);margin-bottom:6px;">100%</div>
       <div style="font-size:12.5px;color:var(--muted);">Schema documentation coverage on every analyzed branch — no manual wiki entries</div>
     </div>
     <div class="card">
-      <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--sky);margin-bottom:6px;">&lt;$0.01</div>
+      <div style="font-family:var(--font-sans);font-size:22px;font-weight:800;color:var(--sky);margin-bottom:6px;">&lt;$0.01</div>
       <div style="font-size:12.5px;color:var(--muted);">Cost per analysis run — Haiku for small changes, Sonnet only when complexity warrants it</div>
     </div>
     <div class="card">
-      <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--amber);margin-bottom:6px;">5 in 5</div>
+      <div style="font-family:var(--font-sans);font-size:22px;font-weight:800;color:var(--amber);margin-bottom:6px;">5 in 5</div>
       <div style="font-size:12.5px;color:var(--muted);">Breaking changes flagged before merge — DROP, ALTER escalate to HIGH risk automatically</div>
     </div>
     <div class="card">
-      <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--rose);margin-bottom:6px;">&lt;10 s</div>
+      <div style="font-family:var(--font-sans);font-size:22px;font-weight:800;color:var(--rose);margin-bottom:6px;">&lt;10 s</div>
       <div style="font-size:12.5px;color:var(--muted);">Full pipeline — diff, parse, analyze, publish, ERD update — on a typical feature branch</div>
     </div>
   </div>
 
   <h3 style="margin-bottom:10px;">Target Users</h3>
-  <div class="card reveal" style="margin-bottom:24px;">
+  <div class="card reveal table-wrap" style="margin-bottom:24px;">
     <table>
       <thead><tr><th>User</th><th>Primary Need</th></tr></thead>
       <tbody>
@@ -844,15 +1091,20 @@ a:focus-visible, button:focus-visible {
       <h3 style="margin-bottom:10px;">Functional Requirements</h3>
       <div class="card">
         <ul class="check-list">
-          <li>Multi-format migration parsing: Flyway, Liquibase (XML/YAML), raw DDL</li>
+          <li>Multi-format migration parsing: Flyway, Liquibase XML, raw DDL</li>
           <li>Auto-detection of migration format per file</li>
-          <li>Claude-powered risk analysis (LOW / MEDIUM / HIGH)</li>
+          <li>Claude-powered risk analysis (LOW / MEDIUM / HIGH) via AWS Bedrock</li>
           <li>Smart model routing based on change count and breaking ops</li>
           <li>Prompt caching via <code>cache_control: ephemeral</code></li>
-          <li>Versioned Lark Wiki child pages per run</li>
+          <li>Versioned Lark Docs child pages per run</li>
           <li>Mermaid ERD generation and live parent-page sync</li>
-          <li>Incremental <code>lore-schema.json</code> snapshot</li>
-          <li><code>lore init</code> — one-time DB introspection to seed snapshot</li>
+          <li>ERD image rendering via mermaid.ink (≤5KB), fallback to code block</li>
+          <li><code>lore generate-erd</code> — category-based ERDs from schema snapshot</li>
+          <li>Incremental <code>lore-schema.json</code> snapshot with committed example file</li>
+          <li><code>lore init</code> — one-time DB introspection (PostgreSQL + MySQL)</li>
+          <li>Connection profiles — save, list, edit, remove via <code>lore connections</code>; interactive menu on <code>lore init</code></li>
+          <li>Automatic folder organisation — "Database Schema Change Report" parent, per-database sub-folder</li>
+          <li>Lark API retry logic — transient failures retried; HTTP 200 error bodies detected</li>
         </ul>
       </div>
     </div>
@@ -865,9 +1117,10 @@ a:focus-visible, button:focus-visible {
           <li>No DB access required after <code>lore init</code></li>
           <li>Single config file (<code>lore.yaml</code>) with <code>${ENV_VAR}</code> substitution</li>
           <li>All secrets via environment variables — no credentials in repo</li>
-          <li>Lark API 200-OK error handling (check <code>data.code</code>, not just status)</li>
+          <li>Lark Docs API 200-OK error handling (check <code>data.code</code>, not just status)</li>
+          <li>AWS credentials via <code>lore.yaml</code> or <code>${ENV_VAR}</code> substitution</li>
           <li>Plugin system — new formats added without modifying pipeline</li>
-          <li>Full test coverage on parsers via raw diff strings</li>
+          <li>Full test coverage on parsers, analyzer, renderer, and CLI via mocks</li>
         </ul>
       </div>
     </div>
@@ -883,54 +1136,82 @@ a:focus-visible, button:focus-visible {
   <div class="card reveal" style="margin-bottom:24px;">
     <div class="stack-row">
       <span class="stack-layer">Runtime</span>
-      <span class="stack-pill">Python 3.11+</span>
+      <div class="stack-pills">
+        <span class="stack-pill">Python 3.11+</span>
       <span class="stack-pill">Type Hints</span>
       <span class="stack-pill">Dataclasses</span>
+      </div>
     </div>
     <div class="stack-row">
       <span class="stack-layer">CLI</span>
-      <span class="stack-pill">Typer</span>
+      <div class="stack-pills">
+        <span class="stack-pill">Typer</span>
       <span class="stack-pill">Rich</span>
+      </div>
     </div>
     <div class="stack-row">
       <span class="stack-layer">AI</span>
-      <span class="stack-pill">Anthropic SDK</span>
+      <div class="stack-pills">
+        <span class="stack-pill">Anthropic SDK</span>
+      <span class="stack-pill">AWS Bedrock</span>
       <span class="stack-pill">Claude Haiku 4.5</span>
       <span class="stack-pill">Claude Sonnet 4.6</span>
       <span class="stack-pill">Prompt Caching</span>
+      </div>
     </div>
     <div class="stack-row">
       <span class="stack-layer">Parsing</span>
-      <span class="stack-pill">sqlglot</span>
+      <div class="stack-pills">
+        <span class="stack-pill">sqlglot</span>
       <span class="stack-pill">lxml</span>
       <span class="stack-pill">PyYAML</span>
+      </div>
     </div>
     <div class="stack-row">
       <span class="stack-layer">DB Init</span>
-      <span class="stack-pill">psycopg2-binary</span>
+      <div class="stack-pills">
+        <span class="stack-pill">psycopg2-binary</span>
+      <span class="stack-pill">pymysql</span>
       <span class="stack-pill">information_schema</span>
+      </div>
     </div>
     <div class="stack-row">
       <span class="stack-layer">Source</span>
-      <span class="stack-pill">GitPython</span>
+      <div class="stack-pills">
+        <span class="stack-pill">GitPython</span>
       <span class="stack-pill">unified diff</span>
+      </div>
     </div>
     <div class="stack-row">
       <span class="stack-layer">Output</span>
-      <span class="stack-pill">httpx</span>
-      <span class="stack-pill">Lark Wiki API</span>
+      <div class="stack-pills">
+        <span class="stack-pill">httpx</span>
+      <span class="stack-pill">Lark Docs API</span>
       <span class="stack-pill">Mermaid ERD</span>
+      <span class="stack-pill">mermaid.ink</span>
+      <span class="stack-pill">Retry logic</span>
+      </div>
+    </div>
+    <div class="stack-row">
+      <span class="stack-layer">Connections</span>
+      <div class="stack-pills">
+        <span class="stack-pill">PyYAML</span>
+      <span class="stack-pill">~/.lore/connections.yaml</span>
+      <span class="stack-pill">Password masking</span>
+      </div>
     </div>
     <div class="stack-row">
       <span class="stack-layer">Tests</span>
-      <span class="stack-pill">pytest</span>
+      <div class="stack-pills">
+        <span class="stack-pill">pytest</span>
       <span class="stack-pill">unittest.mock</span>
+      </div>
     </div>
   </div>
 
   <h3 style="margin-bottom:10px;">System Architecture</h3>
   <div class="arch-wrap reveal" style="margin-bottom:24px;">
-    <svg viewBox="0 0 860 280" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="'DM Mono', monospace" font-size="11">
+    <svg viewBox="0 0 860 280" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="11">
       <defs>
         <marker id="a" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
           <path d="M0,0 L8,3 L0,6 Z" fill="#3a5070"/>
@@ -968,15 +1249,15 @@ a:focus-visible, button:focus-visible {
       <text x="411" y="157" text-anchor="middle" fill="#6d8aaa" font-size="9">Claude + routing</text>
       <rect x="496" y="122" width="120" height="44" rx="7" fill="#111c2b" stroke="#f59e0b" stroke-width="1.5"/>
       <text x="556" y="142" text-anchor="middle" fill="#e2eaf5" font-weight="700" font-size="11">Output Plugin</text>
-      <text x="556" y="157" text-anchor="middle" fill="#6d8aaa" font-size="9">LarkWikiOutput</text>
+      <text x="556" y="157" text-anchor="middle" fill="#6d8aaa" font-size="9">LarkDocOutput</text>
       <rect x="646" y="122" width="120" height="44" rx="7" fill="#111c2b" stroke="#1e2f45"/>
       <text x="706" y="142" text-anchor="middle" fill="#e2eaf5" font-weight="700" font-size="11">SchemaStore</text>
       <text x="706" y="157" text-anchor="middle" fill="#6d8aaa" font-size="9">apply + save</text>
       <rect x="196" y="210" width="120" height="44" rx="7" fill="#111c2b" stroke="#38bdf8" stroke-width="1.5"/>
-      <text x="256" y="230" text-anchor="middle" fill="#e2eaf5" font-weight="700" font-size="11">Anthropic API</text>
+      <text x="256" y="230" text-anchor="middle" fill="#e2eaf5" font-weight="700" font-size="11">AWS Bedrock</text>
       <text x="256" y="245" text-anchor="middle" fill="#6d8aaa" font-size="9">Haiku · Sonnet</text>
       <rect x="346" y="210" width="120" height="44" rx="7" fill="#111c2b" stroke="#f59e0b" stroke-width="1.5"/>
-      <text x="406" y="230" text-anchor="middle" fill="#e2eaf5" font-weight="700" font-size="11">Lark Wiki API</text>
+      <text x="406" y="230" text-anchor="middle" fill="#e2eaf5" font-weight="700" font-size="11">Lark Docs API</text>
       <text x="406" y="245" text-anchor="middle" fill="#6d8aaa" font-size="9">child pages + ERD</text>
       <rect x="496" y="210" width="120" height="44" rx="7" fill="#111c2b" stroke="#1e2f45"/>
       <text x="556" y="230" text-anchor="middle" fill="#e2eaf5" font-weight="700" font-size="11">ERD Generator</text>
@@ -1013,21 +1294,21 @@ a:focus-visible, button:focus-visible {
         <div class="pipe-num">3</div>
         <div>
           <div class="pipe-name">ClaudeAnalyzer — risk analysis with model routing</div>
-          <div class="pipe-desc">Breaking-change check runs first: any <code>DROP</code>, <code>DROP_TABLE</code>, or <code>ALTER</code> → <code>claude-sonnet-4-6</code>. Then count check: ≥5 changes → Sonnet. Otherwise → <code>claude-haiku-4-5-20251001</code>. System prompt sent with <code>cache_control: ephemeral</code>.</div>
+          <div class="pipe-desc">Breaking-change check runs first: any <code>DROP</code>, <code>DROP_TABLE</code>, or <code>ALTER</code> → <code>global.anthropic.claude-sonnet-4-6</code>. Then count check: ≥5 changes → Sonnet. Otherwise → <code>global.anthropic.claude-haiku-4-5-20251001-v1:0</code>. Invoked via AWS Bedrock cross-region inference. System prompt sent with <code>cache_control: ephemeral</code>.</div>
         </div>
       </div>
       <div class="pipe-step">
         <div class="pipe-num">4</div>
         <div>
-          <div class="pipe-name">LarkWikiOutput — publish versioned report</div>
-          <div class="pipe-desc">Creates child Wiki page titled <code>DATE | BRANCH | RISK_LEVEL</code> under configured parent node. Calls <code>raise_for_status()</code> first, then checks <code>data.get("code", 0) != 0</code>.</div>
+          <div class="pipe-name">LarkDocOutput — publish versioned report</div>
+          <div class="pipe-desc">Creates child Lark Docs page titled <code>DATE | BRANCH | RISK_LEVEL</code> inside <strong>Database Schema Change Report</strong> &gt; <code>{db_name}</code> sub-folder (test branches go flat into the parent). All Lark calls use retry logic; <code>data.get("code", 0) != 0</code> checked on every 200 OK response.</div>
         </div>
       </div>
       <div class="pipe-step">
         <div class="pipe-num">5</div>
         <div>
           <div class="pipe-name">SchemaStore + ERD — snapshot and diagram</div>
-          <div class="pipe-desc"><code>SchemaStore.apply()</code> + <code>save()</code> updates <code>lore-schema.json</code> incrementally. <code>generate_mermaid_erd()</code> builds the diagram. <code>LarkWikiOutput.update_erd_page()</code> patches the parent Wiki page.</div>
+          <div class="pipe-desc"><code>SchemaStore.apply()</code> + <code>save()</code> updates <code>lore-schema.json</code> incrementally. <code>generate_mermaid_erd()</code> builds the diagram. <code>LarkDocOutput.update_erd_page()</code> patches the parent Lark Docs page — renders as JPEG image via mermaid.ink when diagram ≤5KB, otherwise code block.</div>
         </div>
       </div>
     </div>
@@ -1036,20 +1317,20 @@ a:focus-visible, button:focus-visible {
   <h3 style="margin-bottom:10px;">AI Model Routing Logic</h3>
   <div class="grid-2 reveal">
     <div class="card" style="border-color:var(--cyan-glow);">
-      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--cyan);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;">Haiku Route — Fast &amp; Cheap</div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--cyan);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;">Haiku Route — Fast &amp; Cheap</div>
       <ul style="font-size:12.5px;">
         <li>Fewer than 5 total migration changes <em>and</em></li>
         <li>No breaking operations present</li>
-        <li>Model: <code>claude-haiku-4-5-20251001</code></li>
+        <li>Model: <code>global.anthropic.claude-haiku-4-5-20251001-v1:0</code></li>
         <li>Approx cost: &lt;$0.001 per run</li>
       </ul>
     </div>
     <div class="card" style="border-color:rgba(56,189,248,.3);">
-      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--sky);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;">Sonnet Route — Capable &amp; Thorough</div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--sky);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;">Sonnet Route — Capable &amp; Thorough</div>
       <ul style="font-size:12.5px;">
         <li>5 or more migration changes in a single run, <em>or</em></li>
         <li>Any breaking op: <code>DROP</code>, <code>DROP_TABLE</code>, <code>ALTER</code></li>
-        <li>Model: <code>claude-sonnet-4-6</code></li>
+        <li>Model: <code>global.anthropic.claude-sonnet-4-6</code></li>
         <li>Approx cost: ~$0.005–0.01 per run</li>
       </ul>
     </div>
@@ -1072,13 +1353,20 @@ a:focus-visible, button:focus-visible {
         <li>Liquibase XML + YAML parser — changeSet traversal</li>
         <li>Raw DDL parser — sqlglot <code>exp.Alter</code>, <code>exp.Create</code>, <code>exp.Drop</code></li>
         <li>CompositeParser — merge results from all three, deduplicate</li>
-        <li>Claude analyzer with smart Haiku/Sonnet routing</li>
+        <li>Claude analyzer with smart Haiku/Sonnet routing via AWS Bedrock cross-region inference</li>
         <li>Prompt caching with <code>cache_control: ephemeral</code></li>
-        <li>Lark Wiki output — versioned child pages per run</li>
-        <li>Mermaid ERD generation from schema snapshot, FK inference</li>
-        <li><code>lore-schema.json</code> incremental snapshot store</li>
-        <li><code>lore init</code> — one-time DB introspection (psycopg2)</li>
-        <li><code>lore.yaml</code> config loader with <code>${ENV_VAR}</code> substitution</li>
+        <li>Lark Docs output — versioned child pages per run</li>
+        <li>Mermaid ERD generation from schema snapshot, FK inference from <code>*_id</code> columns</li>
+        <li>ERD image rendering via mermaid.ink — JPEG when ≤5KB, code block fallback</li>
+        <li><code>lore generate-erd</code> — category-based ERDs by table prefix, file or Lark upload</li>
+        <li><code>lore-schema.json</code> incremental snapshot (gitignored; <code>lore-schema.example.json</code> committed)</li>
+        <li><code>lore init</code> — one-time DB introspection (PostgreSQL + MySQL)</li>
+        <li><code>lore.yaml</code> config loader with <code>${ENV_VAR}</code> substitution and AWS credentials</li>
+        <li>Connection profiles — <code>lore connections add/list/edit/remove</code>; <code>--save-as</code> and <code>--use</code> on <code>lore init</code>; interactive menu; stored in <code>~/.lore/connections.yaml</code></li>
+        <li>Automatic report folder hierarchy — "Database Schema Change Report" parent + per-database sub-folder; flat layout for test branches</li>
+        <li>Lark API resilience — retry logic on all HTTP calls; HTTP 200 error body detection eliminates silent failures</li>
+        <li>Tenant base URL support via <code>LARK_BASE_URL</code> — no hardcoded hostnames</li>
+        <li>77 unit tests across parsers, analyzer, renderer, CLI, and schema store</li>
       </ul>
     </div>
     <div class="tl-item">
@@ -1162,7 +1450,7 @@ a:focus-visible, button:focus-visible {
   </div>
 
   <div class="card reveal" style="margin-bottom:24px;">
-    <div style="font-family:'DM Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:18px;">Time investment per schema change (minutes)</div>
+    <div style="font-family:var(--font-mono);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:18px;">Time investment per schema change (minutes)</div>
     <div class="bar-group">
       <div class="bar-header"><span>Documentation time</span></div>
       <div class="bar-row">
@@ -1252,7 +1540,7 @@ a:focus-visible, button:focus-visible {
     </div>
     <div class="card">
       <div class="section-label" style="margin-bottom:10px;">Scales with activity</div>
-      <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px;font-family:'Syne',sans-serif;">More migrations = more value</div>
+      <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px;font-family:var(--font-sans);">More migrations = more value</div>
       <ul style="font-size:12.5px;">
         <li>12-person team → ~$56K/yr savings</li>
         <li>Model routing caps AI cost at ~$10/mo for typical teams</li>
@@ -1272,19 +1560,21 @@ a:focus-visible, button:focus-visible {
   </div>
 
   <div class="card-hi reveal" style="border-color:var(--cyan-glow);text-align:center;padding:44px 36px;">
-    <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--text);max-width:520px;margin:0 auto;line-height:1.5;">
+    <div style="font-family:var(--font-sans);font-size:20px;font-weight:700;color:var(--text);max-width:520px;margin:0 auto;line-height:1.5;">
       Schema documentation that stays current doesn't need a process. It needs <span class="cyan">lore analyze</span>.
     </div>
   </div>
 </div>
 
 <footer>
-  <strong style="color:var(--text);font-family:'Syne',sans-serif;">lore</strong> &nbsp;·&nbsp; AI-Driven Schema Intelligence &nbsp;·&nbsp;
-  <span class="tag">Python 3.11+</span>
-  <span class="tag">Claude API</span>
-  <span class="tag">Lark Wiki</span>
-  <span class="tag">sqlglot</span>
-  <span class="tag">Mermaid ERD</span>
+  <div class="footer-copy"><strong style="color:var(--text);font-family:var(--font-sans);">lore</strong> &nbsp;·&nbsp; AI-Driven Schema Intelligence</div>
+  <div class="footer-stack" aria-label="Technology stack">
+    <span class="tag">Python 3.11+</span>
+    <span class="tag">AWS Bedrock</span>
+    <span class="tag">Lark Docs</span>
+    <span class="tag">sqlglot</span>
+    <span class="tag">Mermaid ERD</span>
+  </div>
 </footer>
 
 </div>
@@ -1292,22 +1582,50 @@ a:focus-visible, button:focus-visible {
 
 <script>
 /* ── Theme ── */
+function getSystemTheme() {
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+}
+function getCurrentTheme() {
+  return document.documentElement.getAttribute('data-theme') || getSystemTheme();
+}
+function applyTheme(theme, source) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.documentElement.setAttribute('data-theme-source', source || 'manual');
+  updateToggle(theme === 'light');
+}
 function updateToggle(isLight) {
-  document.getElementById('themeIcon').textContent = isLight ? '☾' : '☀';
-  document.getElementById('themeLabel').textContent = isLight ? 'Dark' : 'Light';
+  var icon = document.getElementById('themeIcon');
+  var label = document.getElementById('themeLabel');
+  var button = document.getElementById('themeBtn');
+  var nextTheme = isLight ? 'Dark' : 'Light';
+  icon.textContent = isLight ? '☾' : '☀';
+  label.textContent = nextTheme;
+  button.setAttribute('aria-label', 'Switch to ' + nextTheme + ' theme');
+  button.setAttribute('title', 'Switch to ' + nextTheme + ' theme');
 }
 function toggleTheme() {
-  var isLight = document.documentElement.getAttribute('data-theme') === 'light';
-  if (isLight) {
-    document.documentElement.removeAttribute('data-theme');
-    localStorage.setItem('lore-theme','dark');
-  } else {
-    document.documentElement.setAttribute('data-theme','light');
-    localStorage.setItem('lore-theme','light');
-  }
-  updateToggle(!isLight);
+  var current = getCurrentTheme();
+  var next = current === 'light' ? 'dark' : 'light';
+  applyTheme(next, 'manual');
+  try { localStorage.setItem('lore-theme', next); } catch (e) {}
 }
-updateToggle(document.documentElement.getAttribute('data-theme') === 'light');
+
+(function initThemeControls(){
+  var savedTheme = null;
+  try { savedTheme = localStorage.getItem('lore-theme'); } catch (e) {}
+  applyTheme((savedTheme === 'light' || savedTheme === 'dark') ? savedTheme : getSystemTheme(), savedTheme ? 'manual' : 'system');
+
+  if (window.matchMedia) {
+    var systemPreference = window.matchMedia('(prefers-color-scheme: light)');
+    var onSystemChange = function(e) {
+      var hasManualTheme = false;
+      try { hasManualTheme = localStorage.getItem('lore-theme') === 'light' || localStorage.getItem('lore-theme') === 'dark'; } catch (err) {}
+      if (!hasManualTheme) applyTheme(e.matches ? 'light' : 'dark', 'system');
+    };
+    if (systemPreference.addEventListener) systemPreference.addEventListener('change', onSystemChange);
+    else if (systemPreference.addListener) systemPreference.addListener(onSystemChange);
+  }
+})();
 
 /* ── Active nav on scroll ── */
 var sections = document.querySelectorAll('[data-section]');
@@ -1317,7 +1635,9 @@ navLinks.forEach(function(a){ sectionEls[a.dataset.section] = document.getElemen
 
 function setActive(id) {
   navLinks.forEach(function(a){
-    a.classList.toggle('active', a.dataset.section === id);
+    var isActive = a.dataset.section === id;
+    a.classList.toggle('active', isActive);
+    if (isActive) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current');
   });
 }
 
@@ -1353,6 +1673,30 @@ var barObs = new IntersectionObserver(function(entries){
   });
 }, { threshold: 0.2 });
 document.querySelectorAll('.bar-group').forEach(function(g){ barObs.observe(g); });
+
+
+/* ── Mobile navigation + reading progress ── */
+var menuBtn = document.getElementById('menuBtn');
+var sidebarBackdrop = document.getElementById('sidebarBackdrop');
+function setNavOpen(open) {
+  document.body.classList.toggle('nav-open', open);
+  if (menuBtn) menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+if (menuBtn) menuBtn.addEventListener('click', function(){ setNavOpen(!document.body.classList.contains('nav-open')); });
+if (sidebarBackdrop) sidebarBackdrop.addEventListener('click', function(){ setNavOpen(false); });
+navLinks.forEach(function(a){ a.addEventListener('click', function(){ setNavOpen(false); }); });
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape') setNavOpen(false); });
+
+function updateProgress() {
+  var doc = document.documentElement;
+  var max = doc.scrollHeight - doc.clientHeight;
+  var pct = max > 0 ? (doc.scrollTop / max) * 100 : 0;
+  var bar = document.getElementById('progressBar');
+  if (bar) bar.style.width = pct + '%';
+}
+window.addEventListener('scroll', updateProgress, { passive: true });
+updateProgress();
+
 </script>
 </body>
 </html>

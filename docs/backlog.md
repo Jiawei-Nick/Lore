@@ -44,9 +44,9 @@ Features planned for future phases. Phase 1 scope is tracked in the implementati
 
 ## Improvements & Tech Debt
 
-- [ ] **MySQL / MariaDB introspection** — extend `lore init` beyond PostgreSQL
-- [ ] **YAML-format Liquibase parser** — current parser handles XML only; add YAML changeset support
-- [ ] **Lark China region support** — `open.feishu.cn` endpoint for Lark China deployments
+- [x] **MySQL / MariaDB introspection** — `lore init` supports `mysql://` and `jdbc:mysql://` via `pymysql` (shipped)
+- [ ] **YAML-format Liquibase parser** — file header regex detects `.yaml/.yml` but parsing still falls through to XML; actual YAML changeset parsing not implemented
+- [ ] **Lark China region support** — `LARK_BASE_URL` configures display URLs only; Lark API calls are still hardcoded to `open.larksuite.com`; needs dynamic endpoint routing for `open.feishu.cn`
 - [ ] **`lore diff` command** — show what changed in `lore-schema.json` between two points in time without triggering a full analyze run
 - [ ] **Config-driven model override** — allow per-repo override of model routing thresholds in `lore.yaml`
 - [ ] **Prompt caching warm-up** — pre-cache system prompt on startup to reduce first-run latency

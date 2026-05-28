@@ -75,7 +75,7 @@ Lark Docs provides more flexibility and doesn't require special Wiki space permi
 Edit your `.env` file:
 
 ```bash
-# Anthropic API Key
+# Anthropic API Key (or use AWS Bedrock — see CLAUDE.md)
 ANTHROPIC_API_KEY=sk-ant-your-actual-key-here
 
 # Lark App Credentials
@@ -85,6 +85,15 @@ LARK_APP_SECRET=your-app-secret-here
 # Lark Doc Configuration
 LARK_FOLDER_TOKEN=your-folder-token-here
 LARK_PARENT_DOC_ID=your-parent-doc-id-here
+
+# Tenant base URL — hostname from your Lark workspace URL
+# International: open.larksuite.com (default)
+# China: open.feishu.cn
+LARK_BASE_URL=your-tenant.sg.larksuite.com
+
+# Optional: ERD folder tokens — run `lore setup-erd-folders` to create and get these
+LARK_ERD_IMAGE_FOLDER=your-erd-image-folder-token
+LARK_ERD_CODE_FOLDER=your-erd-code-folder-token
 ```
 
 ### 6. Test Your Setup
@@ -130,14 +139,15 @@ After running `lore analyze`, the tool will:
 
 2. **Update the parent doc** with the latest ERD (Entity Relationship Diagram)
 
-3. Your folder structure will look like:
+3. Reports are organised automatically in a folder hierarchy:
    ```
-   📁 DB Schema Reports/
-      📄 ERD (Parent Doc) - Updated each run
-      📄 2026-05-18 | feature/add-phone | MEDIUM
-      📄 2026-05-17 | feature/user-audit | HIGH
-      📄 2026-05-15 | feature/add-index | LOW
+   📁 Database Schema Change Report/
+      📁 mydb/
+         📄 2026-05-18 | feature/add-phone | MEDIUM
+         📄 2026-05-17 | feature/user-audit | HIGH
+         📄 2026-05-15 | feature/add-index | LOW
    ```
+   Test branches (`test/*`) go flat into the parent folder instead of a sub-folder.
 
 ## API Reference
 
