@@ -30,6 +30,13 @@ Local CLI trigger. Manual run per branch.
 - [x] Schema store (`lore-schema.json`) incrementally updated on every run
 - [x] Mermaid ERD auto-updated on Lark parent page after each run
 - [x] MySQL introspection support alongside PostgreSQL
+- [x] Connection profiles — `lore connections add/list/edit/remove`; `--save-as` and `--use` on `lore init`; interactive selection menu; stored in `~/.lore/connections.yaml`
+- [x] `lore generate-erd` — category-based ERDs by table prefix; upload PNG and `.mmd` files to Lark Drive folders
+- [x] `lore setup-erd-folders` — one-time creation of ERD Drive folders
+- [x] Tenant base URL support via `LARK_BASE_URL` — no hardcoded hostnames
+- [x] Report folder hierarchy — reports land in "Database Schema Change Report" > `{db_name}` sub-folder; flat layout for `test/*` branches
+- [x] Lark API resilience — retry logic on all HTTP calls; HTTP 200 error body detection eliminates silent failures
+- [x] Prompt caching — system prompt sent with `cache_control: ephemeral` on every run
 
 ---
 
@@ -81,11 +88,11 @@ Enforce and enforce engineering standards automatically.
 
 ## Immediate Improvements (Tech Debt)
 
-- [ ] YAML-format Liquibase parser — current parser handles XML only
-- [ ] Lark China region support — `open.feishu.cn` endpoint for China deployments
+- [ ] YAML-format Liquibase parser — file header regex detects `.yaml/.yml` but YAML changeset parsing is not implemented
+- [ ] Lark China region support — `LARK_BASE_URL` configures display URLs only; Lark API calls are still hardcoded to `open.larksuite.com`; needs dynamic endpoint routing for `open.feishu.cn`
 - [ ] `lore diff` command — show what changed in `lore-schema.json` between two points in time without a full analyze run
 - [ ] Config-driven model override — allow per-repo override of model routing thresholds in `lore.yaml`
-- [ ] Prompt caching warm-up — pre-cache system prompt on startup to reduce first-run latency
+- [x] Prompt caching — system prompt cached with `cache_control: ephemeral` (shipped in Phase 1)
 
 ---
 
