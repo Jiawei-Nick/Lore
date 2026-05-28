@@ -75,7 +75,6 @@ After the pipeline runs, `SchemaStore.apply()` + `SchemaStore.save()` update `lo
 - **`lore/parsers/`** — three concrete parsers (Flyway, Liquibase, raw DDL) plus `CompositeParser` which runs all three and merges results. Each parser filters its own file types internally using `detect_format`.
 - **`lore/parsers/flyway.py`** — shared `_FILE_HEADER`, `_ADDED_LINE`, `_parse_statement` helpers are imported directly by `raw_ddl.py` (intentional).
 - **`lore/analyzer/claude.py`** — model routing: `claude-haiku-4-5-20251001` for <5 non-breaking changes, `claude-sonnet-4-6` for ≥5 or any breaking change. Breaking ops: `{Operation.DROP, Operation.DROP_TABLE, Operation.ALTER}`. System prompt is sent with `cache_control: ephemeral` for prompt caching.
-- **`lore/outputs/lark.py`** — Legacy Lark Wiki API (deprecated, replaced by lark_doc.py).
 - **`lore/outputs/lark_doc.py`** — Lark Docs API integration. Uploads analysis reports and ERD diagrams. `LarkDocOutput` takes a `base_url` param (tenant hostname from `LARK_BASE_URL`) used to build all doc URLs — do not hardcode `open.larksuite.com`. `upload_erd_files_to_folders()` uploads PNG and .mmd files directly to Lark Drive folders (recommended method). For legacy single-doc uploads, `update_erd_page()` can replace existing ERD sections in parent documents. ERDs are rendered as images when <5KB; larger diagrams use code blocks. Image upload uses block_type 27. API returns HTTP 200 even on errors; always check `data.get("code", 0) != 0` in the response body.
 - **`lore/db_introspect.py`** — database introspection for PostgreSQL and MySQL. Auto-detects DB type from connection URL scheme (`postgresql://` or `mysql://`). Uses `information_schema` queries for both. PostgreSQL requires `psycopg2-binary`, MySQL requires `pymysql`.
 - **`lore/schema_store.py`** — `lore-schema.json` is gitignored and updated incrementally on each `lore analyze` run. `lore analyze` never needs DB access after `lore init`.
@@ -175,7 +174,6 @@ Project-level Claude Code automations live in `.claude/`:
 # Agents — dispatched by Claude when the trigger condition is met
 
 Change to lore/outputs/lark_doc.py
-  or lore/outputs/lark.py
   or lore/mermaid_renderer.py           → lark-integration-reviewer
 
 Change to lore/analyzer/claude.py
@@ -198,7 +196,7 @@ User asks to add a new output destination       → /add-output
 
 | Agent | Trigger | What it checks |
 |---|---|---|
-| `lark-integration-reviewer` | Any edit to `lore/outputs/lark_doc.py`, `lark.py`, or `mermaid_renderer.py` | HTTP-200 error guards, token handling, image size limits |
+| `lark-integration-reviewer` | Any edit to `lore/outputs/lark_doc.py` or `mermaid_renderer.py` | HTTP-200 error guards, token handling, image size limits |
 | `schema-migration-analyzer` | Any edit to `claude.py` (model routing), `models.py` (enums), or parsers | Model routing thresholds, enum serialization, parser output shape |
 | `erd-generator` | Implementing any ERD feature | Writes ERD code following domain invariants (FK inference, size limits, type sanitization) |
 | `erd-reviewer` | After `erd-generator` completes; any edit to `lore/erd.py`, `erd_categorized.py`, or `mermaid_renderer.py` | FK inference, type sanitization, 100K char limit, 5KB mermaid.ink guard, category grouping |
